@@ -41,7 +41,7 @@ The fact itself.
 `scope` decides where the memory is loaded:
 
 - `global`: in every session. Use it for who the user is and for preferences not tied to one project.
-- `here`: only in this folder, its parent and child folders, and other checkouts of the same git remote.
+- `here`: only in this folder, its parent and child folders, and other checkouts of the same git remote. When the index marks the location as a throwaway folder (a scratch workspace or a Codex per-thread folder), `here` memories are filed under the project folder this session worked in most, so use `here` for project facts there too.
 
 Leave out ids, dates and provenance (session, host, folder, git remote). When your turn ends a hook adds them, moves the file into the repository and commits it.
 

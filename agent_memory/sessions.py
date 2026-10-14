@@ -22,7 +22,7 @@ def _claude_title(transcript):
     return title
 
 
-def _codex_title(session_id):
+def _codex_thread(session_id, column):
     home = Path(os.environ.get("CODEX_HOME", "~/.codex")).expanduser()
     dbs = sorted(home.glob("state_*.sqlite"))
     if not dbs or not session_id:
@@ -30,14 +30,28 @@ def _codex_title(session_id):
     try:
         con = sqlite3.connect(f"file:{dbs[-1]}?mode=ro", uri=True, timeout=1)
         try:
-            row = con.execute(
-                "select coalesce(nullif(name, ''), title) from threads where id = ?",
-                (session_id,)).fetchone()
+            row = con.execute(f"select {column} from threads where id = ?",
+                              (session_id,)).fetchone()
         finally:
             con.close()
     except sqlite3.Error:
         return ""
     return (row[0] or "") if row else ""
+
+
+def _codex_title(session_id):
+    return _codex_thread(session_id, "coalesce(nullif(name, ''), title)")
+
+
+def transcript_path(tool, session_id):
+    """Locate a session transcript when the hook payload did not carry one."""
+    if not session_id:
+        return ""
+    if tool == "codex":
+        return _codex_thread(session_id, "rollout_path")
+    claude = Path(os.environ.get("CLAUDE_CONFIG_DIR", "~/.claude")).expanduser()
+    hits = list(claude.glob(f"projects/*/{session_id}.jsonl"))
+    return str(hits[0]) if hits else ""
 
 
 def title(tool, session_id, transcript=None):

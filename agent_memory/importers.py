@@ -11,7 +11,7 @@ from datetime import datetime
 from functools import lru_cache
 from pathlib import Path
 
-from . import frontmatter, gitsync, sessions
+from . import frontmatter, gitsync, sessions, workdir
 from .context import detect
 from .store import load_all, memories_dir, normalize, read
 from .util import HOME, atomic_write, id_path, new_id, now, parse_time, slugify
@@ -90,28 +90,6 @@ def _transcript_cwd(project_dir, session_id):
     return None, None
 
 
-def _infer_workdir(transcript):
-    """Most-referenced existing project folder in a transcript, for scratch sessions.
-
-    Sessions started without a project folder still work on real repositories
-    through absolute paths; the folder they touch most is where the memory belongs.
-    """
-    pattern = re.compile(re.escape(str(HOME)) + r"/(?:repos|Documents|Library/CloudStorage/[^/\"\\]+)"
-                         r"/[^/\"\\\s]+")
-    counts = {}
-    try:
-        with open(transcript, encoding="utf-8", errors="replace") as f:
-            for raw in f:
-                for hit in pattern.findall(raw):
-                    counts[hit] = counts.get(hit, 0) + 1
-    except OSError:
-        return None
-    for path, n in sorted(counts.items(), key=lambda kv: -kv[1]):
-        if n >= 3 and os.path.isdir(path) and "scratch-workspaces" not in path:
-            return path
-    return None
-
-
 def claude_items():
     for mem_dir in sorted(CLAUDE_PROJECTS.glob("*/memory")):
         project_dir = mem_dir.parent
@@ -125,8 +103,8 @@ def claude_items():
             cwd, transcript = _transcript_cwd(project_dir, origin)
             cwd = cwd or _decode_project_dir(project_dir.name)
             original_cwd = None
-            if cwd and "/scratch-workspaces/" in cwd and transcript:
-                inferred = _infer_workdir(transcript)
+            if workdir.is_throwaway(cwd):
+                inferred = workdir.infer(transcript, cwd, workdir.default_exclude())
                 if inferred:
                     original_cwd, cwd = cwd, inferred
             created = legacy.get("modified") or meta.get("modified") or _mtime(path)
@@ -174,8 +152,14 @@ def _bullets(lines):
 
 def _codex_source(original, cwd=None, thread=None):
     title = sessions.title("codex", thread) if thread else ""
+    original_cwd = None
+    if thread and workdir.is_throwaway(cwd):
+        rollout = sessions.transcript_path("codex", thread)
+        inferred = workdir.infer(rollout, cwd, workdir.default_exclude())
+        if inferred:
+            original_cwd, cwd = cwd, inferred
     return {"tool": "codex", "session_id": thread, "session_name": title,
-            **_git_source(cwd), "imported_from": "codex memories",
+            **_git_source(cwd), "original_cwd": original_cwd, "imported_from": "codex memories",
             "original": "~/" + (CODEX_MEMORIES / original).relative_to(HOME).as_posix()}
 
 

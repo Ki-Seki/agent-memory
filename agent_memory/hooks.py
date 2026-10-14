@@ -12,7 +12,7 @@ import sys
 import time
 from pathlib import Path
 
-from . import capture, config, gitsync, select, store
+from . import capture, config, gitsync, select, store, workdir
 from .context import detect
 from .util import log, log_exc
 
@@ -59,13 +59,16 @@ def session_start(payload, tool, data_dir):
         "staging": str(sdir),
         "mem": str(config.BIN),
     }
-    return select.render(store.load_all(data_dir), ctx, paths)
+    return select.render(store.load_all(data_dir), ctx, paths,
+                         throwaway=workdir.is_throwaway(ctx.get("cwd")))
 
 
 def flush(payload, tool, data_dir, final):
     sdir = capture.session_dir(data_dir, tool, _session_id(payload))
     if not sdir.is_dir():
         return
+    if payload.get("transcript_path"):
+        capture.write_session(sdir, {"transcript_path": payload["transcript_path"]})
     committed = capture.flush(data_dir, sdir, final=final, lock_timeout=1.0 if final else 5.0)
     if committed and gitsync.has_remote(data_dir):
         gitsync.spawn_sync(data_dir, push=True)

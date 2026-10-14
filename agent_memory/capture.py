@@ -5,7 +5,7 @@ import shutil
 import time
 from pathlib import Path
 
-from . import frontmatter, gitsync, sessions
+from . import frontmatter, gitsync, sessions, workdir
 from .context import detect
 from .store import memories_dir, normalize, read, staging_dir
 from .util import atomic_write, id_path, log, new_id, now, now_iso
@@ -38,22 +38,37 @@ def read_session(sdir):
         return {}
 
 
+def relocate(ctx, transcript):
+    """Point a throwaway folder at the project the session worked in, if any."""
+    cwd = ctx.get("cwd")
+    if not workdir.is_throwaway(cwd):
+        return ctx
+    inferred = workdir.infer(transcript, cwd, workdir.default_exclude())
+    if not inferred:
+        return ctx
+    moved = detect(inferred)
+    moved.pop("git_commit", None)  # HEAD now may differ from what the session saw
+    return {**moved, "host": ctx.get("host", moved.get("host")), "original_cwd": cwd}
+
+
 def _source(session):
-    ctx = session.get("ctx") or {}
-    title = sessions.title(session.get("tool"), session.get("session_id"),
-                           session.get("transcript_path")) or session.get("session_title", "")
+    tool, sid = session.get("tool"), session.get("session_id")
+    transcript = session.get("transcript_path") or sessions.transcript_path(tool, sid)
+    ctx = relocate(session.get("ctx") or {}, transcript)
+    title = sessions.title(tool, sid, transcript) or session.get("session_title", "")
     src = {
-        "tool": session.get("tool"),
-        "session_id": session.get("session_id"),
+        "tool": tool,
+        "session_id": sid,
         "session_name": title,
         "model": session.get("model"),
         "host": ctx.get("host"),
         "cwd": ctx.get("cwd"),
+        "original_cwd": ctx.get("original_cwd"),
         "git_root": ctx.get("git_root"),
         "git_remote": ctx.get("git_remote"),
         "git_branch": ctx.get("git_branch"),
         "git_commit": ctx.get("git_commit"),
-        "transcript": session.get("transcript_path"),
+        "transcript": transcript,
     }
     return {k: v for k, v in src.items() if v}
 

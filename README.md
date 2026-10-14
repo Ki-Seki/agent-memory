@@ -19,6 +19,12 @@ repository (the data repository); this repository holds only the code that reads
 - **Rules.** [`PROTOCOL.md`](PROTOCOL.md) tells the agent what to save and how. Claude Code
   imports it from `~/.claude/CLAUDE.md`; Codex gets a copy in `~/.codex/AGENTS.md`.
 
+Sessions in throwaway folders (Claude Code scratch workspaces, Codex per-thread folders under
+`~/Documents/Codex/<date>/`) get their `here` memories filed under the project folder the
+transcript shows them working in most, with the original folder kept as `source.original_cwd`.
+`mem relocate` applies the same inference to existing memories. Patterns can be overridden with
+`throwaway_patterns` in `~/.config/agent-memory/config.json`.
+
 A `here` memory matches a session when they share the folder (100), the git checkout (90), the
 remote (80, other clones and worktrees), or when one folder contains the other (70 / 60). Home
 and its direct children such as `~/repos` are too broad to match through containment.
@@ -61,6 +67,7 @@ mem search WORDS... [--all]     full-text search; --all includes other locations
 mem show ID|NAME|PATH
 mem add --name N --type T --scope S --description D BODY|-
 mem flush                       commit anything left in staging
+mem relocate [PATH...] [--dry-run]  re-file memories recorded in throwaway folders
 mem sync [--pull-only]          pull --rebase and push the data repository
 mem doctor                      check the installation
 ```

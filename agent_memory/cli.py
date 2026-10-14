@@ -104,6 +104,46 @@ def cmd_flush(args):
             print(f"flushed {sdir.name}")
 
 
+def cmd_relocate(args):
+    """Re-attribute existing memories recorded in throwaway folders."""
+    from . import sessions, workdir
+    data = _data()
+    mdir = store.memories_dir(data)
+    moved = 0
+    for m in store.load_all(data):
+        src = m["source"]
+        if src.get("original_cwd") or not workdir.is_throwaway(src.get("cwd")):
+            continue
+        if args.only and not any(o in m["rel"] for o in args.only):
+            continue
+        transcript = src.get("transcript") or sessions.transcript_path(src.get("tool"),
+                                                                       src.get("session_id"))
+        ctx = capture.relocate({"cwd": src["cwd"], "host": src.get("host")}, transcript)
+        if not ctx.get("original_cwd"):
+            print(f"keep  {m['rel']}  (no project found)")
+            continue
+        print(f"move  {m['rel']}  {src['cwd']} -> {ctx['cwd']}")
+        moved += 1
+        if args.dry_run:
+            continue
+        meta, body = store.read(mdir / m["rel"])
+        source = dict(meta.get("source") or {})
+        for key in ("cwd", "git_root", "git_remote", "git_branch"):
+            source.pop(key, None)
+            if ctx.get(key):
+                source[key] = ctx[key]
+        source["original_cwd"] = ctx["original_cwd"]
+        if transcript:
+            source.setdefault("transcript", transcript)
+        meta["source"] = source
+        atomic_write(mdir / m["rel"], frontmatter.join(meta, body))
+    if moved and not args.dry_run:
+        with gitsync.Lock(data, timeout=30):
+            gitsync.commit(data, f"relocate: {moved} memories from throwaway folders\n\nTool: relocate")
+        gitsync.spawn_sync(data, push=True)
+    print(f"{moved} to move" if args.dry_run else f"moved {moved}")
+
+
 def cmd_sync(args):
     ok = gitsync.sync(_data(), push=not args.pull_only)
     if not args.quiet:
@@ -181,6 +221,11 @@ def main(argv=None):
 
     sp = sub.add_parser("flush", help="commit every staged memory now")
     sp.set_defaults(fn=cmd_flush)
+
+    sp = sub.add_parser("relocate", help="attribute memories from throwaway folders to real projects")
+    sp.add_argument("only", nargs="*", help="limit to memories whose path contains one of these")
+    sp.add_argument("--dry-run", action="store_true")
+    sp.set_defaults(fn=cmd_relocate)
 
     sp = sub.add_parser("sync", help="pull and push the data repository")
     sp.add_argument("--pull-only", action="store_true")

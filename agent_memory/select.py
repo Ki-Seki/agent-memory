@@ -72,14 +72,19 @@ def _take(items, budget):
     return out, used
 
 
-def render(memories, ctx, paths, budget=DEFAULT_BUDGET):
+THROWAWAY_NOTE = ("throwaway folder: `here` memories will be filed under the project "
+                  "this session works in")
+
+
+def render(memories, ctx, paths, budget=DEFAULT_BUDGET, throwaway=False):
     globals_, here = visible(memories, ctx)
+    location = describe(ctx) + (f" ({THROWAWAY_NOTE})" if throwaway else "")
     header = [
         "# Shared memory index",
         f"memories: {paths['memories']}",
         f"staging (write new memories here): {paths['staging']}",
         f"mem: {paths['mem']}",
-        f"location: {describe(ctx)}",
+        f"location: {location}",
     ]
     budget -= sum(len(h) + 1 for h in header) + 400  # headings and overflow notes
 

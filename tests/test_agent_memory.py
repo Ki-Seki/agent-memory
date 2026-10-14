@@ -168,6 +168,66 @@ class EndToEndTest(unittest.TestCase):
             self.assertEqual(run_hook("session-start", "codex", {"session_id": "x"}), "")
 
 
+class WorkdirTest(unittest.TestCase):
+    def setUp(self):
+        from agent_memory import workdir
+        self.workdir = workdir
+        self.home = ROOT / "home"
+        for d in ("repos/shared/proj-a/src", "repos/shared/proj-b", "repos/other",
+                  "Documents/Codex/2026-10-14/thread-x", "Library/Containers/app"):
+            (self.home / d).mkdir(parents=True, exist_ok=True)
+        (self.home / "repos/shared/proj-a/.git").mkdir(exist_ok=True)
+        self.cwd = str(self.home / "Documents/Codex/2026-10-14/thread-x")
+
+    def write(self, lines):
+        path = ROOT / "transcript.jsonl"
+        path.write_text("\n".join(json.dumps(l) for l in lines) + "\n")
+        return str(path)
+
+    def codex_call(self, text):
+        return {"type": "response_item", "payload": {"type": "function_call", "arguments": text}}
+
+    def test_throwaway_patterns(self):
+        h = str(self.home)
+        self.assertTrue(self.workdir.is_throwaway(self.cwd, self.home))
+        self.assertTrue(self.workdir.is_throwaway("/x/scratch-workspaces/a/b", self.home))
+        self.assertFalse(self.workdir.is_throwaway(h + "/Documents/Codex", self.home))
+        self.assertFalse(self.workdir.is_throwaway(h + "/repos/shared", self.home))
+
+    def test_descends_into_dominant_project(self):
+        h = str(self.home)
+        lines = [self.codex_call(f"cat {h}/repos/shared/proj-a/src/f{i}.py") for i in range(8)]
+        lines += [self.codex_call(f"ls {h}/repos/shared/proj-b")]
+        lines += [self.codex_call(f"ls {self.cwd}")] * 20  # the thread folder itself never wins
+        lines += [self.codex_call(f"ls {h}/Library/Containers/app")] * 20  # not a project root
+        got = self.workdir.infer(self.write(lines), self.cwd, home=self.home)
+        self.assertEqual(got, h + "/repos/shared/proj-a")
+
+    def test_stops_at_shared_folder_when_split(self):
+        h = str(self.home)
+        lines = [self.codex_call(f"ls {h}/repos/shared/proj-a")] * 3
+        lines += [self.codex_call(f"ls {h}/repos/shared/proj-b")] * 3
+        got = self.workdir.infer(self.write(lines), self.cwd, home=self.home)
+        self.assertEqual(got, h + "/repos/shared")
+
+    def test_ignores_injected_instructions(self):
+        h = str(self.home)
+        injected = {"type": "response_item", "payload": {
+            "type": "message", "role": "developer",
+            "content": [{"text": f"memory: {h}/repos/other " * 50}]}}
+        lines = [injected, self.codex_call(f"ls {h}/repos/shared/proj-a")]
+        self.assertIsNone(self.workdir.infer(self.write(lines), self.cwd, home=self.home))
+
+    def test_claude_transcript_and_excludes(self):
+        h = str(self.home)
+        lines = [{"type": "assistant", "message": {"content": f"edit {h}/repos/other/x.md"}}] * 5
+        lines += [{"type": "attachment", "content": f"{h}/repos/shared/proj-a " * 50}]
+        path = self.write(lines)
+        self.assertEqual(self.workdir.infer(path, self.cwd, home=self.home), h + "/repos/other")
+        self.assertIsNone(self.workdir.infer(path, self.cwd, exclude=[h + "/repos/other"],
+                                             home=self.home))
+
+
 class SyncTest(unittest.TestCase):
     def test_two_machines_converge(self):
         from agent_memory import gitsync
