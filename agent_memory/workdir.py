@@ -20,7 +20,8 @@ DEFAULT_THROWAWAY = [
 ]
 # Folders that only hold other folders; never the answer on their own.
 CONTAINERS = re.compile(r"^(Library/CloudStorage(/[^/]+)?|Library/Application Support|"
-                        r"Library/Mobile Documents|Documents|Documents/Codex|Desktop|Downloads)$")
+                        r"Library/Mobile Documents|Documents|Documents/Codex|"
+                        r"Documents/Codex/\d{4}-\d{2}-\d{2}|Desktop|Downloads)$")
 TAIL_BYTES = 8 * 1024 * 1024  # new memories are about recent work
 MIN_HITS = 3
 DESCEND_SHARE = 0.6

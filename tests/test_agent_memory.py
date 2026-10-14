@@ -210,6 +210,15 @@ class WorkdirTest(unittest.TestCase):
         got = self.workdir.infer(self.write(lines), self.cwd, home=self.home)
         self.assertEqual(got, h + "/repos/shared")
 
+    def test_dated_codex_folder_is_not_a_project(self):
+        h = str(self.home)
+        for t in ("a", "b"):
+            (self.home / "Documents/Codex/2026-08-25" / t).mkdir(parents=True, exist_ok=True)
+        # a session that looked at two Codex threads of one day worked in no project
+        lines = [self.codex_call(f"cat {h}/Documents/Codex/2026-08-25/{t}/notes.md") for t in "ab" * 3]
+        got = self.workdir.infer(self.write(lines), "/x/scratch-workspaces/s/t", home=self.home)
+        self.assertIsNone(got)
+
     def test_ignores_injected_instructions(self):
         h = str(self.home)
         injected = {"type": "response_item", "payload": {
