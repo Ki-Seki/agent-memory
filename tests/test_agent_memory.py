@@ -297,7 +297,12 @@ class InstallTest(unittest.TestCase):
 
     def test_install_uninstall_round_trip(self):
         before = self.snapshot()
+        rc = ROOT / "zshrc"
+        rc.write_text("export FOO=1\n")
+        rc_before = rc.read_text()
         with mock.patch.object(install, "LOCAL_BIN", ROOT / "bin" / "mem"), \
+                mock.patch.object(install, "_login_path", return_value=["/usr/bin"]), \
+                mock.patch.object(install, "_rc_file", return_value=rc), \
                 mock.patch("sys.stdout", io.StringIO()):
             install.install()
             mid = self.snapshot()
@@ -311,6 +316,7 @@ class InstallTest(unittest.TestCase):
             self.assertEqual(toml["skills"]["config"][0]["path"], "/x/SKILL.md")
             self.assertIn("Shared memory", mid[str(install.CODEX_DIR / "AGENTS.md")])
             self.assertIn("@", mid[str(install.CLAUDE_DIR / "CLAUDE.md")])
+            self.assertIn(install.PATH_LINE, rc.read_text())
 
             install.install()  # idempotent
             self.assertEqual(self.snapshot(), mid)
@@ -321,6 +327,7 @@ class InstallTest(unittest.TestCase):
 
             install.uninstall()
         after = self.snapshot()
+        self.assertEqual(rc.read_text(), rc_before)
         for path, text in before.items():
             if path.endswith("config.toml"):
                 self.assertEqual(after[path], text + '\n[projects."/new"]\ntrust_level = "trusted"\n')

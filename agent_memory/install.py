@@ -13,6 +13,7 @@ import os
 import re
 import shlex
 import shutil
+import subprocess
 import sys
 import tomllib
 from pathlib import Path
@@ -28,6 +29,10 @@ MISSING = "__missing__"
 CLAUDE_DIR = Path(os.environ.get("CLAUDE_CONFIG_DIR", HOME / ".claude"))
 CODEX_DIR = Path(os.environ.get("CODEX_HOME", HOME / ".codex"))
 LOCAL_BIN = HOME / ".local" / "bin" / "mem"
+
+SH_BEGIN = "# >>> agent-memory >>>"
+SH_END = "# <<< agent-memory <<<"
+PATH_LINE = 'export PATH="$HOME/.local/bin:$PATH"'
 
 HOOK_EVENTS = [("SessionStart", "session-start", 15),
                ("Stop", "stop", 15),
@@ -60,21 +65,21 @@ def _read(path):
         return None
 
 
-def _block(text, inner):
-    """Insert or replace our marked block in a Markdown file's text."""
+def _block(text, inner, begin=BEGIN, end_mark=END):
+    """Insert or replace our marked block in a file's text."""
     text = text or ""
-    block = f"{BEGIN}\n{inner.rstrip()}\n{END}\n"
-    if BEGIN in text and END in text:
-        start, end = text.index(BEGIN), text.index(END) + len(END)
+    block = f"{begin}\n{inner.rstrip()}\n{end_mark}\n"
+    if begin in text and end_mark in text:
+        start, end = text.index(begin), text.index(end_mark) + len(end_mark)
         return text[:start] + block.rstrip("\n") + text[end:]
     sep = "" if not text or text.endswith("\n\n") else ("\n" if text.endswith("\n") else "\n\n")
     return text + sep + block
 
 
-def _unblock(text):
-    if not text or BEGIN not in text or END not in text:
+def _unblock(text, begin=BEGIN, end_mark=END):
+    if not text or begin not in text or end_mark not in text:
         return text
-    start, end = text.index(BEGIN), text.index(END) + len(END)
+    start, end = text.index(begin), text.index(end_mark) + len(end_mark)
     out = text[:start].rstrip("\n") + text[end:].lstrip("\n")
     out = out.strip("\n")
     return out + "\n" if out else ""
@@ -137,6 +142,34 @@ def toml_unset(text, section, key):
 
 def _toml_literal(value):
     return json.dumps(value) if not isinstance(value, bool) else ("true" if value else "false")
+
+
+def _login_path():
+    """PATH of a fresh login shell, unaffected by whatever launched us."""
+    shell = os.environ.get("SHELL", "/bin/zsh")
+    env = {"HOME": str(HOME), "USER": os.environ.get("USER", ""), "SHELL": shell, "TERM": "dumb"}
+    try:
+        r = subprocess.run([shell, "-lic", 'printf "__P__%s__P__" "$PATH"'], env=env,
+                           capture_output=True, text=True, timeout=15)
+    except (OSError, subprocess.SubprocessError):
+        return None
+    m = re.search(r"__P__(.*?)__P__", r.stdout, re.S)
+    return m.group(1).split(":") if m else None
+
+
+def _rc_file():
+    shell = os.path.basename(os.environ.get("SHELL", "zsh"))
+    return HOME / (".bashrc" if shell == "bash" else ".zshrc")
+
+
+def _path_plan(plan, state):
+    """Make `mem` reachable from a new terminal when ~/.local/bin is not on PATH."""
+    path = _login_path()
+    if path is None or str(LOCAL_BIN.parent) in path:
+        return
+    rc = _rc_file()
+    plan.edit(rc, _block(_read(rc), PATH_LINE, SH_BEGIN, SH_END))
+    state["shell_rc"] = str(rc)
 
 
 # ---------------------------------------------------------------- planning
@@ -288,6 +321,7 @@ def install(dry_run=False, claude=True, codex=True):
         _claude_plan(plan, data_dir, state)
     if codex and CODEX_DIR.is_dir():
         _codex_plan(plan, data_dir, state)
+    _path_plan(plan, state)
 
     plan.show()
     link_ok = LOCAL_BIN.is_symlink() and LOCAL_BIN.resolve() == config.BIN.resolve()
@@ -381,6 +415,12 @@ def uninstall(dry_run=False):
         if text is not None:
             plan.edit(md, _unblock(text))  # keep the file: it existed (empty) before
 
+    rc = state.get("shell_rc")
+    if rc:
+        text = _read(rc)
+        if text is not None:
+            plan.edit(Path(rc), _unblock(text, SH_BEGIN, SH_END))
+
     plan.show()
     local = state.get("local_bin")
     if local:
@@ -421,6 +461,10 @@ def doctor():
         toml = _read(CODEX_DIR / "config.toml") or ""
         check(toml_get(toml, "memories", "use_memories") is False, "Codex native memories disabled")
         check(BEGIN in (_read(CODEX_DIR / "AGENTS.md") or ""), "Codex AGENTS.md has the protocol")
+    path = _login_path()
+    if path is not None:
+        check(str(LOCAL_BIN.parent) in path or SH_BEGIN in (_read(_rc_file()) or ""),
+              f"`mem` on a new terminal's PATH ({LOCAL_BIN.parent})")
     if data:
         check(gitsync.has_remote(data), "data repository has a remote (optional)")
         staged = list((data / "staging").glob("*/*.md")) if (data / "staging").exists() else []
