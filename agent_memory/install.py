@@ -31,7 +31,7 @@ LOCAL_BIN = HOME / ".local" / "bin" / "mem"
 
 HOOK_EVENTS = [("SessionStart", "session-start", 15),
                ("Stop", "stop", 15),
-               ("SessionEnd", "session-end", 5)]
+               ("SessionEnd", "session-end", 3)]  # Codex clamps SessionEnd to 3s
 
 
 # ---------------------------------------------------------------- helpers
