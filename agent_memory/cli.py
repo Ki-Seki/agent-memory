@@ -105,13 +105,10 @@ def cmd_flush(args):
 
 
 def cmd_sync(args):
-    data = _data()
-    with gitsync.Lock(data, timeout=60) as locked:
-        if not locked:
-            sys.exit("lock busy")
-        gitsync.sync(data, push=not args.pull_only)
+    ok = gitsync.sync(_data(), push=not args.pull_only)
     if not args.quiet:
-        print("synced")
+        print("synced" if ok else "sync failed; see .cache/agent-memory.log in the data repository")
+    return 0 if ok else 1
 
 
 def cmd_init(args):

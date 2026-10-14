@@ -66,23 +66,43 @@ def commit(data_dir, message):
     return True
 
 
+def _rebasing(data_dir):
+    git_dir = Path(data_dir) / ".git"
+    return (git_dir / "rebase-merge").exists() or (git_dir / "rebase-apply").exists()
+
+
 def sync(data_dir, push=True):
-    """Pull (rebase) and optionally push. Caller must hold the lock."""
+    """Fetch, rebase onto upstream and optionally push.
+
+    Only the local rebase holds the lock; network round trips do not, so hooks
+    that commit are never stuck behind a slow fetch or push.
+    """
     if not has_remote(data_dir):
-        return
-    r = git(data_dir, "pull", "--rebase", "--autostash", "-q", timeout=60)
+        return True
+    r = git(data_dir, "fetch", "-q", timeout=60)
     if r.returncode != 0:
-        log(data_dir, f"pull failed: {r.stderr.strip()}")
-        if (Path(data_dir) / ".git" / "rebase-merge").exists() or \
-                (Path(data_dir) / ".git" / "rebase-apply").exists():
-            git(data_dir, "rebase", "--abort")
-        return
+        log(data_dir, f"fetch failed: {r.stderr.strip()}")
+        return False
+    with Lock(data_dir, timeout=30) as locked:
+        if not locked:
+            log(data_dir, "sync skipped, lock busy")
+            return False
+        behind = git(data_dir, "rev-list", "--count", "HEAD..@{u}")
+        if behind.returncode == 0 and behind.stdout.strip() != "0":
+            r = git(data_dir, "-c", "commit.gpgsign=false", "rebase", "-q", "--autostash", "@{u}")
+            if r.returncode != 0:
+                log(data_dir, f"rebase failed, aborted: {r.stderr.strip()}")
+                if _rebasing(data_dir):
+                    git(data_dir, "rebase", "--abort")
+                return False
     if push:
         ahead = git(data_dir, "rev-list", "--count", "@{u}..HEAD")
         if ahead.returncode != 0 or ahead.stdout.strip() != "0":
             r = git(data_dir, "push", "-q", timeout=60)
             if r.returncode != 0:
                 log(data_dir, f"push failed: {r.stderr.strip()}")
+                return False
+    return True
 
 
 def spawn_sync(data_dir, push):

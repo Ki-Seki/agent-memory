@@ -168,6 +168,32 @@ class EndToEndTest(unittest.TestCase):
             self.assertEqual(run_hook("session-start", "codex", {"session_id": "x"}), "")
 
 
+class SyncTest(unittest.TestCase):
+    def test_two_machines_converge(self):
+        from agent_memory import gitsync
+        bare = ROOT / "remote.git"
+        subprocess.run(["git", "init", "-q", "--bare", "-b", "main", str(bare)], check=True)
+        install.init_data(DATA)
+        gitsync.git(DATA, "remote", "add", "origin", str(bare))
+        gitsync.git(DATA, "push", "-q", "-u", "origin", "main")
+        other = ROOT / "machine-b"
+        subprocess.run(["git", "clone", "-q", str(bare), str(other)], check=True)
+
+        for repo, name in ((DATA, "from-a"), (other, "from-b")):
+            path = repo / "memories" / "2026" / "10" / f"{name}.md"
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_text(f"---\nid: {name}\ntype: user\nscope: global\n---\n{name}\n")
+            gitsync.commit(repo, f"memory: {name}")
+
+        self.assertTrue(gitsync.sync(DATA))
+        self.assertTrue(gitsync.sync(other))
+        self.assertTrue(gitsync.sync(DATA))
+        for repo in (DATA, other):
+            names = {p.stem for p in (repo / "memories").rglob("*.md")}
+            self.assertTrue({"from-a", "from-b"} <= names, repo)
+        gitsync.git(DATA, "remote", "remove", "origin")
+
+
 CONFIG_TOML = '''model = "m"
 
 [features]
