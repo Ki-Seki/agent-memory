@@ -296,6 +296,8 @@ class Handler(BaseHTTPRequestHandler):
     def _run(self, fn):
         try:
             self._send(200, fn())
+        except (BrokenPipeError, ConnectionResetError):
+            pass  # the page went away (reload, closed tab) before the reply was written
         except ApiError as e:
             self._send(e.status, {"error": e.message})
         except Exception as e:

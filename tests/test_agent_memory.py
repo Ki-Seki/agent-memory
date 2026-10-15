@@ -468,6 +468,19 @@ class UiServerTest(unittest.TestCase):
         self.assertTrue(all(self.mem(i) is not None for i in ids))
 
 
+class DoctorTest(unittest.TestCase):
+    def test_only_recent_hook_errors_count(self):
+        import datetime as dt
+        log = ("2026-10-01T10:00:00+08:00 ERROR in hook stop (codex):\nTraceback ...\n"
+               "2026-10-14T09:00:00+08:00 flush claude-code-x: promoted=1 committed=True\n"
+               "2026-10-14T10:00:00+08:00 ERROR in ui /api/state:\nConnectionResetError\n"
+               "2026-10-14T11:00:00+08:00 ERROR in hook session-start (claude-code):\nTraceback ...\n")
+        now = dt.datetime.fromisoformat("2026-10-15T12:00:00+08:00")
+        self.assertEqual(install.recent_hook_errors(log, now),
+                         ["2026-10-14T11:00:00+08:00 hook session-start (claude-code)"])
+        self.assertEqual(install.recent_hook_errors(log, now + dt.timedelta(days=30)), [])
+
+
 class PackagingTest(unittest.TestCase):
     def test_hooks_run_the_package_with_python_m(self):
         from agent_memory import config
