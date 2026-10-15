@@ -72,8 +72,7 @@ def _take(items, budget):
     return out, used
 
 
-THROWAWAY_NOTE = ("throwaway folder: `here` memories will be filed under the project "
-                  "this session works in")
+THROWAWAY_NOTE = "throwaway folder: `here` memories will be filed under the project this session works in"
 
 
 def render(memories, ctx, paths, budget=DEFAULT_BUDGET, throwaway=False):

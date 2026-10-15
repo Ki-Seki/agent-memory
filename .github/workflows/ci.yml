@@ -16,7 +16,7 @@ concurrency:
 
 jobs:
   lint:
-    name: Lint
+    name: Lint and format
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -30,6 +30,7 @@ jobs:
           enable-cache: true
       - run: uv sync --locked --only-dev
       - run: uv run --locked --only-dev ruff check .
+      - run: uv run --locked --only-dev ruff format --check .
 
   test:
     name: Python ${{ matrix.python }} / ${{ matrix.os }}

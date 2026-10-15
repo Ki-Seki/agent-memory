@@ -7,9 +7,7 @@ from pathlib import Path
 
 import pytest
 
-spec = importlib.util.spec_from_file_location(
-    "release", Path(__file__).resolve().parents[1] / "scripts/release.py"
-)
+spec = importlib.util.spec_from_file_location("release", Path(__file__).resolve().parents[1] / "scripts/release.py")
 release = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(release)
 
@@ -67,9 +65,7 @@ def test_prepare_opens_a_version_pr_without_publishing(cli):
     assert not any(c[:2] == ("gh", "release") for c in calls)
 
 
-@pytest.mark.parametrize(
-    "change", [{"dirty": " M pyproject.toml"}, {"head": "local-only"}]
-)
+@pytest.mark.parametrize("change", [{"dirty": " M pyproject.toml"}, {"head": "local-only"}])
 def test_prepare_rejects_uncommitted_or_unpushed_work(cli, change):
     state, calls = cli
     state.update(change)
@@ -110,9 +106,7 @@ def test_publish_refuses_an_unreviewed_or_inconsistent_release(cli, change):
     assert not any(c[:3] == ("gh", "release", "create") for c in calls)
 
 
-@pytest.mark.parametrize(
-    "action,value", [("prepare", "rc"), ("publish", "patch"), ("publish", "0")]
-)
+@pytest.mark.parametrize("action,value", [("prepare", "rc"), ("publish", "patch"), ("publish", "0")])
 def test_bad_arguments_have_no_side_effects(cli, action, value):
     _, calls = cli
     with pytest.raises(SystemExit):

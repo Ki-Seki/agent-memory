@@ -32,13 +32,20 @@ def _git_source(cwd):
 def _record(*, name, typ, scope, description, body, created, source):
     when = parse_time(created) or now()
     memory_id = new_id(name, when)
-    meta = {"id": memory_id, "name": slugify(name), "type": typ, "scope": scope,
-            "description": " ".join(description.split())[:300], "created": when.isoformat(),
-            "source": {k: v for k, v in source.items() if v}}
+    meta = {
+        "id": memory_id,
+        "name": slugify(name),
+        "type": typ,
+        "scope": scope,
+        "description": " ".join(description.split())[:300],
+        "created": when.isoformat(),
+        "source": {k: v for k, v in source.items() if v},
+    }
     return memory_id, meta, body
 
 
 # ---------------------------------------------------------------- Claude Code
+
 
 def _decode_project_dir(name):
     """Recover a folder from Claude's dash-encoded project dir name, if it still exists."""
@@ -109,15 +116,24 @@ def claude_items():
                     original_cwd, cwd = cwd, inferred
             created = legacy.get("modified") or meta.get("modified") or _mtime(path)
             title = sessions.title("claude-code", origin, transcript) if transcript else ""
-            source = {"tool": "claude-code", "session_id": origin, "session_name": title,
-                      **_git_source(cwd),
-                      "original_cwd": original_cwd,
-                      "imported_from": "claude-code auto memory",
-                      "original": "~/" + path.relative_to(HOME).as_posix()}
-            yield _record(name=m["name"] or path.stem, typ=m["type"],
-                          scope="global" if m["type"] in ("user", "feedback") else "here",
-                          description=m["description"], body=body, created=created,
-                          source=source)
+            source = {
+                "tool": "claude-code",
+                "session_id": origin,
+                "session_name": title,
+                **_git_source(cwd),
+                "original_cwd": original_cwd,
+                "imported_from": "claude-code auto memory",
+                "original": "~/" + path.relative_to(HOME).as_posix(),
+            }
+            yield _record(
+                name=m["name"] or path.stem,
+                typ=m["type"],
+                scope="global" if m["type"] in ("user", "feedback") else "here",
+                description=m["description"],
+                body=body,
+                created=created,
+                source=source,
+            )
 
 
 def _mtime(path):
@@ -125,6 +141,7 @@ def _mtime(path):
 
 
 # ---------------------------------------------------------------- Codex
+
 
 def _sections(text):
     out, current = {}, None
@@ -158,9 +175,15 @@ def _codex_source(original, cwd=None, thread=None):
         inferred = workdir.infer(rollout, cwd, workdir.default_exclude())
         if inferred:
             original_cwd, cwd = cwd, inferred
-    return {"tool": "codex", "session_id": thread, "session_name": title,
-            **_git_source(cwd), "original_cwd": original_cwd, "imported_from": "codex memories",
-            "original": "~/" + (CODEX_MEMORIES / original).relative_to(HOME).as_posix()}
+    return {
+        "tool": "codex",
+        "session_id": thread,
+        "session_name": title,
+        **_git_source(cwd),
+        "original_cwd": original_cwd,
+        "imported_from": "codex memories",
+        "original": "~/" + (CODEX_MEMORIES / original).relative_to(HOME).as_posix(),
+    }
 
 
 def codex_items():
@@ -171,17 +194,28 @@ def codex_items():
         profile = " ".join(line.strip() for line in sec.get("User Profile", []) if line.strip())
         if profile:
             profile = profile.replace(ADHOC_TAG, "").strip()
-            yield _record(name="user-profile-from-codex", typ="user", scope="global",
-                          description="User profile as summarised by Codex: " + profile[:200],
-                          body=profile + "\n", created=created,
-                          source=_codex_source("memory_summary.md#user-profile"))
+            yield _record(
+                name="user-profile-from-codex",
+                typ="user",
+                scope="global",
+                description="User profile as summarised by Codex: " + profile[:200],
+                body=profile + "\n",
+                created=created,
+                source=_codex_source("memory_summary.md#user-profile"),
+            )
         for heading in ("User preferences", "General Tips"):
             for n, text in enumerate(_bullets(sec.get(heading, []))):
                 if ADHOC_TAG in text or text.startswith("Skills:"):
                     continue  # ad-hoc notes are imported from their own files
-                yield _record(name=" ".join(text.split()[:6]), typ="feedback", scope="global",
-                              description=text, body=text + "\n", created=created,
-                              source=_codex_source(f"memory_summary.md#{slugify(heading)}-{n}"))
+                yield _record(
+                    name=" ".join(text.split()[:6]),
+                    typ="feedback",
+                    scope="global",
+                    description=text,
+                    body=text + "\n",
+                    created=created,
+                    source=_codex_source(f"memory_summary.md#{slugify(heading)}-{n}"),
+                )
 
     handbook = CODEX_MEMORIES / "MEMORY.md"
     if handbook.exists():
@@ -189,26 +223,38 @@ def codex_items():
         for block in blocks:
             if not block.startswith("# Task Group: "):
                 continue
-            title = block.splitlines()[0][len("# Task Group: "):].strip()
+            title = block.splitlines()[0][len("# Task Group: ") :].strip()
             cwd = next(iter(re.findall(r"cwd=([^\s;,)]+)", block)), None)
             thread = next(iter(re.findall(r"thread_id=([0-9a-f-]{36})", block)), None)
             stamps = sorted(re.findall(r"updated_at=([0-9T:.+-]+Z?)", block))
-            yield _record(name=title, typ="project", scope="here",
-                          description=f"Codex task history: {title}", body=block.rstrip() + "\n",
-                          created=stamps[-1] if stamps else _mtime(handbook),
-                          source=_codex_source(f"MEMORY.md#{slugify(title)}", cwd, thread))
+            yield _record(
+                name=title,
+                typ="project",
+                scope="here",
+                description=f"Codex task history: {title}",
+                body=block.rstrip() + "\n",
+                created=stamps[-1] if stamps else _mtime(handbook),
+                source=_codex_source(f"MEMORY.md#{slugify(title)}", cwd, thread),
+            )
 
     for path in sorted((CODEX_MEMORIES / "extensions" / "ad_hoc" / "notes").glob("*.md")):
         body = path.read_text("utf-8")
         _, raw = frontmatter.split(body)
         desc = normalize({}, raw, path.stem)["description"]
         name = re.sub(r"^[0-9T_-]+", "", path.stem) or path.stem
-        yield _record(name=name, typ="reference", scope="global", description=desc, body=raw,
-                      created=_mtime(path),
-                      source=_codex_source(path.relative_to(CODEX_MEMORIES).as_posix()))
+        yield _record(
+            name=name,
+            typ="reference",
+            scope="global",
+            description=desc,
+            body=raw,
+            created=_mtime(path),
+            source=_codex_source(path.relative_to(CODEX_MEMORIES).as_posix()),
+        )
 
 
 # ---------------------------------------------------------------- driver
+
 
 def run(which, data_dir, dry_run=False):
     items = list(claude_items() if which == "claude" else codex_items())

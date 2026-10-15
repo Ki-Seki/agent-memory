@@ -6,15 +6,21 @@ someone tidies it, so nothing is rejected.
 
 import re
 
-DESCRIPTION_MAX = 150   # the index cuts longer descriptions (select.line)
+DESCRIPTION_MAX = 150  # the index cuts longer descriptions (select.line)
 BODY_MAX = 1500
 NEEDS_REASON = ("feedback", "project")
 
 _WHY = re.compile(r"\*\*\s*why\s*:?\s*\*\*", re.I)
 _HOW = re.compile(r"\*\*\s*how to apply\s*:?\s*\*\*", re.I)
 _WIKI = re.compile(r"\[\[([^\]]+)\]\]")
-KINDS = {"long": "too long", "reason": "without Why or How to apply", "heading": "opening with a heading",
-         "description": "with a description the index cuts", "links": "with broken links", "empty": "empty"}
+KINDS = {
+    "long": "too long",
+    "reason": "without Why or How to apply",
+    "heading": "opening with a heading",
+    "description": "with a description the index cuts",
+    "links": "with broken links",
+    "empty": "empty",
+}
 
 
 def check(m, body, names):

@@ -15,13 +15,15 @@ from . import config
 from .util import HOME, is_under
 
 DEFAULT_THROWAWAY = [
-    r"/scratch-workspaces/",                          # Claude Code, no folder chosen
-    r"^~/Documents/Codex/\d{4}-\d{2}-\d{2}/[^/]+",    # Codex desktop, one folder per thread
+    r"/scratch-workspaces/",  # Claude Code, no folder chosen
+    r"^~/Documents/Codex/\d{4}-\d{2}-\d{2}/[^/]+",  # Codex desktop, one folder per thread
 ]
 # Folders that only hold other folders; never the answer on their own.
-CONTAINERS = re.compile(r"^(Library/CloudStorage(/[^/]+)?|Library/Application Support|"
-                        r"Library/Mobile Documents|Documents|Documents/Codex|"
-                        r"Documents/Codex/\d{4}-\d{2}-\d{2}|Desktop|Downloads)$")
+CONTAINERS = re.compile(
+    r"^(Library/CloudStorage(/[^/]+)?|Library/Application Support|"
+    r"Library/Mobile Documents|Documents|Documents/Codex|"
+    r"Documents/Codex/\d{4}-\d{2}-\d{2}|Desktop|Downloads)$"
+)
 TAIL_BYTES = 8 * 1024 * 1024  # new memories are about recent work
 MIN_HITS = 3
 DESCEND_SHARE = 0.6
@@ -108,8 +110,9 @@ def infer(transcript, cwd=None, exclude=(), home=None):
     def descend(n, best):
         limit = MAX_DEPTH + (2 if best[0] == "Library" else 0)  # ~/Library/CloudStorage/<drive>/...
         while len(best) < limit and not home.joinpath(*best, ".git").exists():
-            kids = [(c, k) for k, c in counts.items()
-                    if len(k) == len(best) + 1 and k[:len(best)] == best and usable(k)]
+            kids = [
+                (c, k) for k, c in counts.items() if len(k) == len(best) + 1 and k[: len(best)] == best and usable(k)
+            ]
             if not kids:
                 break
             c, k = max(kids)

@@ -43,8 +43,9 @@ class Lock:
 
 
 def git(data_dir, *args, timeout=30):
-    return subprocess.run(["git", "-C", str(data_dir), *args], capture_output=True,
-                          text=True, timeout=timeout, env=_ENV)
+    return subprocess.run(
+        ["git", "-C", str(data_dir), *args], capture_output=True, text=True, timeout=timeout, env=_ENV
+    )
 
 
 def has_remote(data_dir):
@@ -112,8 +113,13 @@ def spawn_sync(data_dir, push):
     log_path = Path(data_dir) / ".cache" / "sync.out"
     try:
         with open(log_path, "a") as out:
-            subprocess.Popen(args, stdin=subprocess.DEVNULL, stdout=out, stderr=out,
-                             start_new_session=True,
-                             env={**os.environ, "AGENT_MEMORY_DATA": str(data_dir)})
+            subprocess.Popen(
+                args,
+                stdin=subprocess.DEVNULL,
+                stdout=out,
+                stderr=out,
+                start_new_session=True,
+                env={**os.environ, "AGENT_MEMORY_DATA": str(data_dir)},
+            )
     except OSError as e:
         log(data_dir, f"spawn sync failed: {e}")

@@ -18,7 +18,7 @@ def split(text):
     for i in range(1, len(lines)):
         if lines[i].strip() == FENCE:
             meta = parse("\n".join(lines[1:i]))
-            body = "\n".join(lines[i + 1:]).lstrip("\n")
+            body = "\n".join(lines[i + 1 :]).lstrip("\n")
             return meta, body
     return {}, text
 
@@ -28,8 +28,7 @@ def join(meta, body):
 
 
 def parse(block):
-    lines = [line.rstrip() for line in block.split("\n")
-             if line.strip() and not line.lstrip().startswith("#")]
+    lines = [line.rstrip() for line in block.split("\n") if line.strip() and not line.lstrip().startswith("#")]
     if not lines:
         return {}
     value, _ = _parse_map(lines, 0, _indent(lines[0]))
