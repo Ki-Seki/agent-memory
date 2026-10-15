@@ -74,8 +74,7 @@ def cmd_show(args):
 def cmd_index(args):
     data = _data()
     ctx = detect(args.cwd)
-    paths = {"memories": str(store.memories_dir(data)), "staging": "(per session)",
-             "mem": str(config.BIN)}
+    paths = {"memories": str(store.memories_dir(data)), "staging": "(per session)", "mem": str(config.BIN)}
     text = select.render(store.load_all(data), ctx, paths)
     print(text, end="")
     print(f"\n[{len(text)} characters]", file=sys.stderr)
@@ -88,8 +87,7 @@ def cmd_add(args):
     sdir = store.staging_dir(data) / f"cli-{slugify(args.name)}"
     sdir.mkdir(parents=True, exist_ok=True)
     capture.write_session(sdir, session)
-    meta = {"name": args.name, "type": args.type, "scope": args.scope,
-            "description": args.description}
+    meta = {"name": args.name, "type": args.type, "scope": args.scope, "description": args.description}
     atomic_write(sdir / f"{slugify(args.name)}.md", frontmatter.join(meta, body))
     capture.flush(data, sdir, final=True)
     print("saved")
@@ -107,6 +105,7 @@ def cmd_flush(args):
 def cmd_relocate(args):
     """Re-attribute existing memories recorded in throwaway folders."""
     from . import sessions, workdir
+
     data = _data()
     mdir = store.memories_dir(data)
     moved = 0
@@ -116,8 +115,7 @@ def cmd_relocate(args):
             continue
         if args.only and not any(o in m["rel"] for o in args.only):
             continue
-        transcript = src.get("transcript") or sessions.transcript_path(src.get("tool"),
-                                                                       src.get("session_id"))
+        transcript = src.get("transcript") or sessions.transcript_path(src.get("tool"), src.get("session_id"))
         ctx = capture.relocate({"cwd": src["cwd"], "host": src.get("host")}, transcript)
         if not ctx.get("original_cwd"):
             print(f"keep  {m['rel']}  (no project found)")
@@ -146,12 +144,14 @@ def cmd_relocate(args):
 
 def cmd_lint(args):
     from . import lint
+
     data = _data()
     mdir = store.memories_dir(data)
     memories = store.load_all(data)
     names = {m["name"] for m in memories if m["name"]}
-    picked = [m for m in memories
-              if not args.only or any(k in (m["id"], m["name"]) or k in m["rel"] for k in args.only)]
+    picked = [
+        m for m in memories if not args.only or any(k in (m["id"], m["name"]) or k in m["rel"] for k in args.only)
+    ]
     flagged, kinds = 0, {}
     for m in picked:
         try:
@@ -180,6 +180,7 @@ def cmd_lint(args):
 
 def cmd_ui(args):
     from . import ui, ui_server
+
     if args.fetch_model:
         return ui.fetch_model()
     ui_server.run(_data(), port=args.port, open_browser=not args.no_open, semantic=not args.keywords_only)
@@ -194,26 +195,31 @@ def cmd_sync(args):
 
 def cmd_init(args):
     from .install import init_data
+
     init_data(Path(args.data_dir).expanduser())
 
 
 def cmd_install(args):
     from .install import install
+
     install(dry_run=args.dry_run, claude=not args.no_claude, codex=not args.no_codex)
 
 
 def cmd_uninstall(args):
     from .install import uninstall
+
     uninstall(dry_run=args.dry_run)
 
 
 def cmd_import(args):
     from . import importers
+
     importers.run(args.source, _data(), dry_run=args.dry_run)
 
 
 def cmd_doctor(args):
     from .install import doctor
+
     doctor()
 
 
@@ -277,8 +283,9 @@ def main(argv=None):
     sp.add_argument("--port", type=int, default=8790)
     sp.add_argument("--no-open", action="store_true", help="print the link without opening a browser")
     sp.add_argument("--keywords-only", action="store_true", help="skip the embedding model")
-    sp.add_argument("--fetch-model", action="store_true",
-                    help="download the local embedding model (about 625 MB) and exit")
+    sp.add_argument(
+        "--fetch-model", action="store_true", help="download the local embedding model (about 625 MB) and exit"
+    )
     sp.set_defaults(fn=cmd_ui)
 
     sp = sub.add_parser("sync", help="pull and push the data repository")

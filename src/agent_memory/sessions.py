@@ -30,8 +30,7 @@ def _codex_thread(session_id, column):
     try:
         con = sqlite3.connect(f"file:{dbs[-1]}?mode=ro", uri=True, timeout=1)
         try:
-            row = con.execute(f"select {column} from threads where id = ?",
-                              (session_id,)).fetchone()
+            row = con.execute(f"select {column} from threads where id = ?", (session_id,)).fetchone()
         finally:
             con.close()
     except sqlite3.Error:

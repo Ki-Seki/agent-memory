@@ -42,17 +42,25 @@ def make_repo(path, remote=None):
 
 class FrontmatterTest(unittest.TestCase):
     def test_round_trip(self):
-        meta = {"id": "20261014-x-abcd", "name": "x", "type": "feedback", "scope": "global",
-                "description": "中文描述: with a colon #and hash", "supersedes": ["a", "b"],
-                "source": {"tool": "codex", "cwd": "/Users/a b/c", "session_name": "🌟261014"}}
+        meta = {
+            "id": "20261014-x-abcd",
+            "name": "x",
+            "type": "feedback",
+            "scope": "global",
+            "description": "中文描述: with a colon #and hash",
+            "supersedes": ["a", "b"],
+            "source": {"tool": "codex", "cwd": "/Users/a b/c", "session_name": "🌟261014"},
+        }
         text = frontmatter.join(meta, "Body line\n\n**Why:** because")
         back, body = frontmatter.split(text)
         self.assertEqual(back, meta)
         self.assertTrue(body.startswith("Body line"))
 
     def test_lenient_model_output(self):
-        text = ("---\nname: foo\ntype: User\nscope: GLOBAL\nmetadata:\n  type: feedback\n"
-                "supersedes:\n  - old-1\n  - old-2\n---\nThe fact.\n")
+        text = (
+            "---\nname: foo\ntype: User\nscope: GLOBAL\nmetadata:\n  type: feedback\n"
+            "supersedes:\n  - old-1\n  - old-2\n---\nThe fact.\n"
+        )
         meta, body = frontmatter.split(text)
         m = store.normalize(meta, body, "fallback")
         self.assertEqual((m["type"], m["scope"]), ("user", "global"))
@@ -67,9 +75,12 @@ class FrontmatterTest(unittest.TestCase):
 
 class RemoteTest(unittest.TestCase):
     def test_forms(self):
-        for url in ["git@github.com:Ki-Seki/gallery.git", "https://github.com/Ki-Seki/gallery",
-                    "https://user:tok@github.com/Ki-Seki/gallery.git",
-                    "ssh://git@github.com:22/Ki-Seki/gallery.git"]:
+        for url in [
+            "git@github.com:Ki-Seki/gallery.git",
+            "https://github.com/Ki-Seki/gallery",
+            "https://user:tok@github.com/Ki-Seki/gallery.git",
+            "ssh://git@github.com:22/Ki-Seki/gallery.git",
+        ]:
             self.assertEqual(normalize_remote(url), "github.com/ki-seki/gallery", url)
 
 
@@ -88,11 +99,24 @@ class ScoreTest(unittest.TestCase):
         self.assertEqual(select.location_score(remote, {"cwd": "/x/y/z/w", "git_remote": "github.com/a/b"}), 80)
 
     def test_budget(self):
-        mems = [{"id": f"m{i}", "name": "", "type": "feedback", "scope": "global" if i % 2 else "here",
-                 "description": "x" * 140, "created": "", "updated": "", "supersedes": [],
-                 "source": {"cwd": "/a/b/c/d"}, "rel": f"2026/10/m{i}.md"} for i in range(400)]
-        text = select.render(mems, {"cwd": "/a/b/c/d", "host": "h"},
-                             {"memories": "/m", "staging": "/s", "mem": "/bin/mem"})
+        mems = [
+            {
+                "id": f"m{i}",
+                "name": "",
+                "type": "feedback",
+                "scope": "global" if i % 2 else "here",
+                "description": "x" * 140,
+                "created": "",
+                "updated": "",
+                "supersedes": [],
+                "source": {"cwd": "/a/b/c/d"},
+                "rel": f"2026/10/m{i}.md",
+            }
+            for i in range(400)
+        ]
+        text = select.render(
+            mems, {"cwd": "/a/b/c/d", "host": "h"}, {"memories": "/m", "staging": "/s", "mem": "/bin/mem"}
+        )
         self.assertLess(len(text), 10000)
         self.assertIn("more: `mem list --global`", text)
         self.assertIn("more: `mem list --here`", text)
@@ -114,11 +138,13 @@ class EndToEndTest(unittest.TestCase):
         self.assertIn(str(sdir), ctx_text)
 
         (sdir / "local-fact.md").write_text(
-            "---\nname: local-fact\ntype: project\nscope: here\n"
-            "description: proj uses a frozen manifest\n---\nFact.\n", "utf-8")
+            "---\nname: local-fact\ntype: project\nscope: here\ndescription: proj uses a frozen manifest\n---\nFact.\n",
+            "utf-8",
+        )
         (sdir / "pref.md").write_text(
-            "---\nname: reply-language\ntype: feedback\nscope: global\n"
-            "description: reply in Chinese\n---\nPref.\n", "utf-8")
+            "---\nname: reply-language\ntype: feedback\nscope: global\ndescription: reply in Chinese\n---\nPref.\n",
+            "utf-8",
+        )
         run_hook("stop", "codex", payload)
 
         mems = {m["name"]: m for m in store.load_all(DATA)}
@@ -128,15 +154,14 @@ class EndToEndTest(unittest.TestCase):
         self.assertEqual(src["session_id"], "s1")
         self.assertEqual(src["git_remote"], "github.com/ki-seki/proj")
         self.assertEqual(src["cwd"], self.proj)
-        log = subprocess.run(["git", "-C", str(DATA), "log", "-1", "--format=%B"],
-                             capture_output=True, text=True).stdout
+        log = subprocess.run(
+            ["git", "-C", str(DATA), "log", "-1", "--format=%B"], capture_output=True, text=True
+        ).stdout
         self.assertIn("memory: +2", log)
         self.assertIn("Session-Id: s1", log)
 
-        here = json.loads(run_hook("session-start", "claude-code",
-                                   {"session_id": "s2", "cwd": self.proj}))
-        there = json.loads(run_hook("session-start", "claude-code",
-                                    {"session_id": "s3", "cwd": self.other}))
+        here = json.loads(run_hook("session-start", "claude-code", {"session_id": "s2", "cwd": self.proj}))
+        there = json.loads(run_hook("session-start", "claude-code", {"session_id": "s3", "cwd": self.other}))
         here = here["hookSpecificOutput"]["additionalContext"]
         there = there["hookSpecificOutput"]["additionalContext"]
         self.assertIn("frozen manifest", here)
@@ -156,7 +181,9 @@ class EndToEndTest(unittest.TestCase):
         sdir2 = capture.session_dir(DATA, "claude-code", "s2")
         (sdir2 / "new.md").write_text(
             f"---\nname: local-fact-v2\ntype: project\nscope: here\n"
-            f"supersedes: [{mems['local-fact']['id']}]\ndescription: v2\n---\nNew.\n", "utf-8")
+            f"supersedes: [{mems['local-fact']['id']}]\ndescription: v2\n---\nNew.\n",
+            "utf-8",
+        )
         run_hook("session-end", "claude-code", {"session_id": "s2", "cwd": self.proj})
         names = {m["name"] for m in store.load_all(DATA)}
         self.assertIn("local-fact-v2", names)
@@ -171,10 +198,16 @@ class EndToEndTest(unittest.TestCase):
 class WorkdirTest(unittest.TestCase):
     def setUp(self):
         from agent_memory import workdir
+
         self.workdir = workdir
         self.home = ROOT / "home"
-        for d in ("repos/shared/proj-a/src", "repos/shared/proj-b", "repos/other",
-                  "Documents/Codex/2026-10-14/thread-x", "Library/Containers/app"):
+        for d in (
+            "repos/shared/proj-a/src",
+            "repos/shared/proj-b",
+            "repos/other",
+            "Documents/Codex/2026-10-14/thread-x",
+            "Library/Containers/app",
+        ):
             (self.home / d).mkdir(parents=True, exist_ok=True)
         (self.home / "repos/shared/proj-a/.git").mkdir(exist_ok=True)
         self.cwd = str(self.home / "Documents/Codex/2026-10-14/thread-x")
@@ -231,9 +264,14 @@ class WorkdirTest(unittest.TestCase):
 
     def test_ignores_injected_instructions(self):
         h = str(self.home)
-        injected = {"type": "response_item", "payload": {
-            "type": "message", "role": "developer",
-            "content": [{"text": f"memory: {h}/repos/other " * 50}]}}
+        injected = {
+            "type": "response_item",
+            "payload": {
+                "type": "message",
+                "role": "developer",
+                "content": [{"text": f"memory: {h}/repos/other " * 50}],
+            },
+        }
         lines = [injected, self.codex_call(f"ls {h}/repos/shared/proj-a")]
         self.assertIsNone(self.workdir.infer(self.write(lines), self.cwd, home=self.home))
 
@@ -243,8 +281,7 @@ class WorkdirTest(unittest.TestCase):
         lines += [{"type": "attachment", "content": f"{h}/repos/shared/proj-a " * 50}]
         path = self.write(lines)
         self.assertEqual(self.workdir.infer(path, self.cwd, home=self.home), h + "/repos/other")
-        self.assertIsNone(self.workdir.infer(path, self.cwd, exclude=[h + "/repos/other"],
-                                             home=self.home))
+        self.assertIsNone(self.workdir.infer(path, self.cwd, exclude=[h + "/repos/other"], home=self.home))
 
 
 def by_desc_kw(data, desc):
@@ -254,6 +291,7 @@ def by_desc_kw(data, desc):
 class UiTest(unittest.TestCase):
     def setUp(self):
         from agent_memory import ui
+
         self.ui = ui
 
     def test_tokens_drop_noise_and_keep_words(self):
@@ -268,10 +306,12 @@ class UiTest(unittest.TestCase):
         self.assertFalse(any("users" in t or t.endswith("py") for t in toks))
 
     def test_similar_memories_are_closer(self):
-        docs = [("VPN access policy", "The staging route keeps VPN access on the gateway."),
-                ("Gateway route ACL", "The billing route on the gateway uses VPN access only."),
-                ("Reply language", "Write replies in Chinese for this user."),
-                ("Commit rules", "Each commit does one thing; ask before push.")]
+        docs = [
+            ("VPN access policy", "The staging route keeps VPN access on the gateway."),
+            ("Gateway route ACL", "The billing route on the gateway uses VPN access only."),
+            ("Reply language", "Write replies in Chinese for this user."),
+            ("Commit rules", "Each commit does one thing; ask before push."),
+        ]
         x, vocab = self.ui.vectorize(docs)
         sim = x @ x.T
         self.assertGreater(sim[0, 1], sim[0, 2])
@@ -280,16 +320,26 @@ class UiTest(unittest.TestCase):
     def test_build_state(self):
         data_dir = ROOT / "ui-data"
         shutil.rmtree(data_dir, ignore_errors=True)
-        for i, (desc, body) in enumerate([
+        for i, (desc, body) in enumerate(
+            [
                 ("VPN access policy", "The staging route keeps VPN access."),
                 ("Gateway route ACL", "The billing route uses VPN access only."),
                 ("Reply language", "Write replies in Chinese."),
                 ("Commit rules", "Each commit does one thing."),
-                ("Push rules", "Ask before every push and commit.")]):
+                ("Push rules", "Ask before every push and commit."),
+            ]
+        ):
             mdir = data_dir / "memories" / "2026" / "10"
             mdir.mkdir(parents=True, exist_ok=True)
-            meta = {"id": f"m{i}", "name": f"m{i}", "type": "feedback", "scope": "global",
-                    "description": desc, "created": "2026-10-01T10:00:00+08:00", "source": {"tool": "cli"}}
+            meta = {
+                "id": f"m{i}",
+                "name": f"m{i}",
+                "type": "feedback",
+                "scope": "global",
+                "description": desc,
+                "created": "2026-10-01T10:00:00+08:00",
+                "source": {"tool": "cli"},
+            }
             (mdir / f"m{i}.md").write_text(frontmatter.join(meta, body))
         with mock.patch.object(self.ui, "model_ready", return_value=False):  # no model in tests
             data = self.ui.build(data_dir)
@@ -307,6 +357,7 @@ class UiTest(unittest.TestCase):
 
     def test_keywords_prefer_names(self):
         import numpy as np
+
         vocab = ["actually", "choose", "routes", "gpu", "检索"]
         x = np.array([[0.9, 0.6, 0.5, 0.45, 0.4]])
         forms = {"choose": "Choose", "gpu": "GPU"}
@@ -315,6 +366,7 @@ class UiTest(unittest.TestCase):
 
     def test_closeness_spreads_bunched_cosines(self):
         import numpy as np
+
         rng = np.random.default_rng(1)
         base = rng.normal(size=16)
         v = base + 0.6 * rng.normal(size=(12, 16))  # every pair similar, like raw embeddings
@@ -326,8 +378,10 @@ class UiTest(unittest.TestCase):
         self.assertTrue((np.diag(c) == 1).all())
 
     def test_prose_drops_bookkeeping(self):
-        body = ("# Task Group: Gateway\n### rollout_summary_files\n- rollout_summaries/2026-x.md (cwd=/Users/a/b)\n"
-                "Keep VPN access on `staging` at /Users/a/repo/file.py, commit 3f2a9c1d.")
+        body = (
+            "# Task Group: Gateway\n### rollout_summary_files\n- rollout_summaries/2026-x.md (cwd=/Users/a/b)\n"
+            "Keep VPN access on `staging` at /Users/a/repo/file.py, commit 3f2a9c1d."
+        )
         text = self.ui.prose("Gateway policy", body)
         self.assertIn("VPN access", text)
         self.assertNotIn("rollout_summaries", text)
@@ -338,6 +392,7 @@ class UiTest(unittest.TestCase):
 class LintTest(unittest.TestCase):
     def setUp(self):
         from agent_memory import lint
+
         self.lint = lint
 
     def kinds(self, typ, body, desc="Short description", names=("other",)):
@@ -354,8 +409,15 @@ class LintTest(unittest.TestCase):
         self.assertEqual(self.kinds("user", "Fact. [[gone]]"), ["links"])
         self.assertEqual(self.kinds("user", "Fact.", desc="d" * 151), ["description"])
         self.assertEqual(self.kinds("user", "   \n"), ["empty"])
-        self.assertIn("no **How to apply:**", [m for _, m in self.lint.check(
-            {"type": "feedback", "description": "d"}, "Fact.\n\n**Why:** because.", set())])
+        self.assertIn(
+            "no **How to apply:**",
+            [
+                m
+                for _, m in self.lint.check(
+                    {"type": "feedback", "description": "d"}, "Fact.\n\n**Why:** because.", set()
+                )
+            ],
+        )
 
 
 class UiServerTest(unittest.TestCase):
@@ -366,14 +428,22 @@ class UiServerTest(unittest.TestCase):
         import threading
 
         from agent_memory import ui, ui_server
+
         cls.data = ROOT / "ui-server-data"
         shutil.rmtree(cls.data, ignore_errors=True)
         mdir = cls.data / "memories" / "2026" / "10"
         mdir.mkdir(parents=True)
         subprocess.run(["git", "init", "-q", "-b", "main", str(cls.data)], check=True)
         for name, desc in (("alpha", "alpha pref"), ("beta", "beta pref"), ("gamma", "gamma fact")):
-            meta = {"id": name, "name": name, "type": "feedback", "scope": "global", "description": desc,
-                    "created": "2026-10-01T10:00:00+08:00", "source": {"tool": "cli"}}
+            meta = {
+                "id": name,
+                "name": name,
+                "type": "feedback",
+                "scope": "global",
+                "description": desc,
+                "created": "2026-10-01T10:00:00+08:00",
+                "source": {"tool": "cli"},
+            }
             (mdir / f"{name}.md").write_text(frontmatter.join(meta, desc.upper()))
         subprocess.run(["git", "-C", str(cls.data), "add", "-A"], check=True)
         subprocess.run(["git", "-C", str(cls.data), "-c", "commit.gpgsign=false", "commit", "-qm", "seed"], check=True)
@@ -392,9 +462,12 @@ class UiServerTest(unittest.TestCase):
     def call(self, path, body=None, token=None, host=None, origin=None):
         import urllib.error
         import urllib.request
-        req = urllib.request.Request(f"http://127.0.0.1:{self.port}{path}",
-                                     data=None if body is None else json.dumps(body).encode(),
-                                     method="GET" if body is None else "POST")
+
+        req = urllib.request.Request(
+            f"http://127.0.0.1:{self.port}{path}",
+            data=None if body is None else json.dumps(body).encode(),
+            method="GET" if body is None else "POST",
+        )
         req.add_header("X-Mem-Token", self.server.token if token is None else token)
         for k, v in (("Host", host), ("Origin", origin)):
             if v:
@@ -420,8 +493,10 @@ class UiServerTest(unittest.TestCase):
 
     def test_edit_conflict_undo(self):
         m = self.mem("alpha")
-        status, res = self.call("/api/edit", {"id": "alpha", "base": m["hash"],
-                                              "change": {"description": "alpha pref, edited", "body": "New text."}})
+        status, res = self.call(
+            "/api/edit",
+            {"id": "alpha", "base": m["hash"], "change": {"description": "alpha pref, edited", "body": "New text."}},
+        )
         self.assertEqual(status, 200, res)
         edited = self.mem("alpha")
         self.assertEqual(edited["description"], "alpha pref, edited")
@@ -432,8 +507,10 @@ class UiServerTest(unittest.TestCase):
         self.assertEqual(self.mem("alpha")["description"], "alpha pref")
 
     def test_create_delete_undo(self):
-        status, res = self.call("/api/create", {"type": "project", "scope": "here", "description": "new fact",
-                                                "body": "N.", "place": {"path": str(ROOT)}})
+        status, res = self.call(
+            "/api/create",
+            {"type": "project", "scope": "here", "description": "new fact", "body": "N.", "place": {"path": str(ROOT)}},
+        )
         self.assertEqual(status, 200, res)
         new = self.mem(res["id"])
         self.assertEqual(new["meta"]["source"]["cwd"], os.path.realpath(ROOT))
@@ -443,26 +520,32 @@ class UiServerTest(unittest.TestCase):
         self.assertIsNone(self.mem(res["id"]))
         self.call("/api/undo", {"commit": gone["commit"]})
         self.assertIsNotNone(self.mem(res["id"]))
-        log = subprocess.run(["git", "-C", str(self.data), "log", "--format=%s", "-3"], capture_output=True,
-                             text=True).stdout
+        log = subprocess.run(
+            ["git", "-C", str(self.data), "log", "--format=%s", "-3"], capture_output=True, text=True
+        ).stdout
         self.assertIn("memory: undo", log)
-
 
     def test_bulk_delete_is_one_commit(self):
         ids = []
         for desc in ("bulk one", "bulk two"):
-            status, res = self.call("/api/create", {"type": "project", "scope": "global", "description": desc, "body": "B."})
+            status, res = self.call(
+                "/api/create", {"type": "project", "scope": "global", "description": desc, "body": "B."}
+            )
             self.assertEqual(status, 200, res)
             ids.append(res["id"])
         items = [{"id": i, "base": self.mem(i)["hash"]} for i in ids]
-        before = subprocess.run(["git", "-C", str(self.data), "rev-list", "--count", "HEAD"], capture_output=True, text=True).stdout
+        before = subprocess.run(
+            ["git", "-C", str(self.data), "rev-list", "--count", "HEAD"], capture_output=True, text=True
+        ).stdout
         status, res = self.call("/api/delete", {"items": items + [{"id": "missing-id"}]})
         self.assertEqual(status, 404)  # all or nothing
         self.assertIsNotNone(self.mem(ids[0]))
         status, res = self.call("/api/delete", {"items": items})
         self.assertEqual(status, 200, res)
         self.assertTrue(all(self.mem(i) is None for i in ids))
-        after = subprocess.run(["git", "-C", str(self.data), "rev-list", "--count", "HEAD"], capture_output=True, text=True).stdout
+        after = subprocess.run(
+            ["git", "-C", str(self.data), "rev-list", "--count", "HEAD"], capture_output=True, text=True
+        ).stdout
         self.assertEqual(int(after) - int(before), 1)
         self.assertEqual(self.call("/api/undo", {"commit": res["commit"]})[0], 200)
         self.assertTrue(all(self.mem(i) is not None for i in ids))
@@ -471,23 +554,29 @@ class UiServerTest(unittest.TestCase):
 class DoctorTest(unittest.TestCase):
     def test_only_recent_hook_errors_count(self):
         import datetime as dt
-        log = ("2026-10-01T10:00:00+08:00 ERROR in hook stop (codex):\nTraceback ...\n"
-               "2026-10-14T09:00:00+08:00 flush claude-code-x: promoted=1 committed=True\n"
-               "2026-10-14T10:00:00+08:00 ERROR in ui /api/state:\nConnectionResetError\n"
-               "2026-10-14T11:00:00+08:00 ERROR in hook session-start (claude-code):\nTraceback ...\n")
+
+        log = (
+            "2026-10-01T10:00:00+08:00 ERROR in hook stop (codex):\nTraceback ...\n"
+            "2026-10-14T09:00:00+08:00 flush claude-code-x: promoted=1 committed=True\n"
+            "2026-10-14T10:00:00+08:00 ERROR in ui /api/state:\nConnectionResetError\n"
+            "2026-10-14T11:00:00+08:00 ERROR in hook session-start (claude-code):\nTraceback ...\n"
+        )
         now = dt.datetime.fromisoformat("2026-10-15T12:00:00+08:00")
-        self.assertEqual(install.recent_hook_errors(log, now),
-                         ["2026-10-14T11:00:00+08:00 hook session-start (claude-code)"])
+        self.assertEqual(
+            install.recent_hook_errors(log, now), ["2026-10-14T11:00:00+08:00 hook session-start (claude-code)"]
+        )
         self.assertEqual(install.recent_hook_errors(log, now + dt.timedelta(days=30)), [])
 
 
 class PackagingTest(unittest.TestCase):
     def test_hooks_run_the_package_with_python_m(self):
         from agent_memory import config
+
         self.assertEqual(config.mem_command(), [sys.executable, "-m", "agent_memory"])
 
     def test_protocol_ships_inside_the_package(self):
         from agent_memory import config
+
         self.assertEqual(config.PROTOCOL.parent, config.PACKAGE_DIR)
         self.assertIn("# Shared memory", config.PROTOCOL.read_text())
 
@@ -495,6 +584,7 @@ class PackagingTest(unittest.TestCase):
 class SyncTest(unittest.TestCase):
     def test_two_machines_converge(self):
         from agent_memory import gitsync
+
         bare = ROOT / "remote.git"
         subprocess.run(["git", "init", "-q", "--bare", "-b", "main", str(bare)], check=True)
         install.init_data(DATA)
@@ -518,7 +608,7 @@ class SyncTest(unittest.TestCase):
         gitsync.git(DATA, "remote", "remove", "origin")
 
 
-CONFIG_TOML = '''model = "m"
+CONFIG_TOML = """model = "m"
 
 [features]
 memories = true
@@ -534,12 +624,14 @@ enabled = false
 
 [[skills.config]]
 path = "/x/SKILL.md"
-'''
+"""
 
 HOOKS_JSON = {"hooks": {"Stop": [{"hooks": [{"type": "command", "command": "otter Stop"}]}]}}
 
-SETTINGS = {"permissions": {"allow": ["Bash(ls:*)"]},
-            "hooks": {"SessionStart": [{"hooks": [{"type": "command", "command": "other"}]}]}}
+SETTINGS = {
+    "permissions": {"allow": ["Bash(ls:*)"]},
+    "hooks": {"SessionStart": [{"hooks": [{"type": "command", "command": "other"}]}]},
+}
 
 
 class InstallTest(unittest.TestCase):
@@ -554,9 +646,13 @@ class InstallTest(unittest.TestCase):
         install.STATE_FILE.unlink(missing_ok=True)
 
     def snapshot(self):
-        files = [install.CLAUDE_DIR / "settings.json", install.CLAUDE_DIR / "CLAUDE.md",
-                 install.CODEX_DIR / "config.toml", install.CODEX_DIR / "hooks.json",
-                 install.CODEX_DIR / "AGENTS.md"]
+        files = [
+            install.CLAUDE_DIR / "settings.json",
+            install.CLAUDE_DIR / "CLAUDE.md",
+            install.CODEX_DIR / "config.toml",
+            install.CODEX_DIR / "hooks.json",
+            install.CODEX_DIR / "AGENTS.md",
+        ]
         return {str(f): f.read_text() if f.exists() else None for f in files}
 
     def test_install_uninstall_round_trip(self):
@@ -564,22 +660,26 @@ class InstallTest(unittest.TestCase):
         rc = ROOT / "zshrc"
         rc.write_text("export FOO=1\n")
         rc_before = rc.read_text()
-        with mock.patch.object(install, "LOCAL_BIN", ROOT / "bin" / "mem"), \
-                mock.patch.object(install, "_login_path", return_value=["/usr/bin"]), \
-                mock.patch.object(install, "_rc_file", return_value=rc), \
-                mock.patch("sys.stdout", io.StringIO()):
+        with (
+            mock.patch.object(install, "LOCAL_BIN", ROOT / "bin" / "mem"),
+            mock.patch.object(install, "_login_path", return_value=["/usr/bin"]),
+            mock.patch.object(install, "_rc_file", return_value=rc),
+            mock.patch("sys.stdout", io.StringIO()),
+        ):
             install.install()
             mid = self.snapshot()
             settings = json.loads(mid[str(install.CLAUDE_DIR / "settings.json")])
             self.assertIs(settings["autoMemoryEnabled"], False)
             self.assertEqual(len(settings["hooks"]["SessionStart"]), 2)
             import tomllib
+
             toml = tomllib.loads(mid[str(install.CODEX_DIR / "config.toml")])
             self.assertIs(toml["memories"]["use_memories"], False)
             self.assertIn(str(DATA), toml["sandbox_workspace_write"]["writable_roots"])
             self.assertEqual(toml["skills"]["config"][0]["path"], "/x/SKILL.md")
             self.assertIn("Shared memory", mid[str(install.CODEX_DIR / "AGENTS.md")])
             from agent_memory import config
+
             self.assertIn(f"@{config.PROTOCOL_COPY}", mid[str(install.CLAUDE_DIR / "CLAUDE.md")])
             self.assertEqual(config.PROTOCOL_COPY.read_text(), config.PROTOCOL.read_text())
             hook = settings["hooks"]["SessionStart"][-1]["hooks"][0]["command"]

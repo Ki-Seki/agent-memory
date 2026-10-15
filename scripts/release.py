@@ -90,9 +90,7 @@ def publish(number):
     run("git", "fetch", "origin", "main", "--tags")
     run("git", "merge-base", "--is-ancestor", sha, "origin/main")
     with TemporaryDirectory() as directory:
-        Path(directory, "pyproject.toml").write_text(
-            run("git", "show", f"{sha}:pyproject.toml"), encoding="utf-8"
-        )
+        Path(directory, "pyproject.toml").write_text(run("git", "show", f"{sha}:pyproject.toml"), encoding="utf-8")
         version = run("uv", "version", "--short", "--directory", directory)
     tag = f"v{version}"
     require(

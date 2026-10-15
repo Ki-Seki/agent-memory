@@ -36,14 +36,17 @@ def session_start(payload, tool, data_dir):
     ctx = detect(payload.get("cwd"))
     sdir = capture.session_dir(data_dir, tool, sid)
     sdir.mkdir(parents=True, exist_ok=True)
-    capture.write_session(sdir, {
-        "tool": tool,
-        "session_id": sid,
-        "session_title": payload.get("session_title"),
-        "model": payload.get("model"),
-        "transcript_path": payload.get("transcript_path"),
-        "ctx": ctx,
-    })
+    capture.write_session(
+        sdir,
+        {
+            "tool": tool,
+            "session_id": sid,
+            "session_title": payload.get("session_title"),
+            "model": payload.get("model"),
+            "transcript_path": payload.get("transcript_path"),
+            "ctx": ctx,
+        },
+    )
 
     recovered = capture.recover_orphans(data_dir, keep=sdir)
     stamp = Path(data_dir) / ".cache" / "last-pull"
@@ -59,8 +62,7 @@ def session_start(payload, tool, data_dir):
         "staging": str(sdir),
         "mem": str(config.BIN),
     }
-    return select.render(store.load_all(data_dir), ctx, paths,
-                         throwaway=workdir.is_throwaway(ctx.get("cwd")))
+    return select.render(store.load_all(data_dir), ctx, paths, throwaway=workdir.is_throwaway(ctx.get("cwd")))
 
 
 def flush(payload, tool, data_dir, final):
@@ -82,10 +84,17 @@ def main(event, tool):
     try:
         if event == "session-start":
             text = session_start(payload, tool, data_dir)
-            print(json.dumps({"hookSpecificOutput": {
-                "hookEventName": "SessionStart",
-                "additionalContext": text,
-            }}, ensure_ascii=False))
+            print(
+                json.dumps(
+                    {
+                        "hookSpecificOutput": {
+                            "hookEventName": "SessionStart",
+                            "additionalContext": text,
+                        }
+                    },
+                    ensure_ascii=False,
+                )
+            )
         elif event in ("stop", "session-end"):
             flush(payload, tool, data_dir, final=event == "session-end")
         else:

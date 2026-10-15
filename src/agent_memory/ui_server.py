@@ -26,10 +26,11 @@ from .context import detect, hostname
 from .util import SCOPES, TYPES, atomic_write, id_path, log_exc, new_id, now_iso, slugify
 
 STATIC = Path(__file__).with_name("webui")
-MIME = {".html": "text/html; charset=utf-8", ".css": "text/css; charset=utf-8",
-        ".js": "text/javascript; charset=utf-8"}
-CSP = ("default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; "
-       "connect-src 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'none'")
+MIME = {".html": "text/html; charset=utf-8", ".css": "text/css; charset=utf-8", ".js": "text/javascript; charset=utf-8"}
+CSP = (
+    "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; "
+    "connect-src 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'none'"
+)
 PLACE_FIELDS = ("cwd", "git_root", "git_remote", "git_branch")
 SEARCH_HITS = 8
 
@@ -94,8 +95,7 @@ class UiApp:
         scores = self.vectors @ vec
         order = np.argsort(-scores)[:SEARCH_HITS]
         ids = [self.state["memories"][int(i)]["id"] for i in order]
-        return {"hits": [{"id": mid, "s": round(float(scores[i]), 3)} for mid, i in zip(ids, order)],
-                "semantic": True}
+        return {"hits": [{"id": mid, "s": round(float(scores[i]), 3)} for mid, i in zip(ids, order)], "semantic": True}
 
     # ------------------------------------------------------------ writes
 
@@ -109,8 +109,11 @@ class UiApp:
         path = self.mdir / self._find(mid)["rel"]
         text = path.read_text("utf-8")
         if base and hashlib.sha1(text.encode()).hexdigest()[:16] != base:
-            raise ApiError(409, "This memory changed on disk after you opened it (an agent may have "
-                                "edited it). Close it and open it again to see the new version.")
+            raise ApiError(
+                409,
+                "This memory changed on disk after you opened it (an agent may have "
+                "edited it). Close it and open it again to see the new version.",
+            )
         meta, body = frontmatter.split(text)
         return path, meta, body
 
@@ -129,8 +132,18 @@ class UiApp:
     def _commit(self, paths, message):
         rels = [str(Path(p).relative_to(self.data)) for p in ([paths] if isinstance(paths, (str, Path)) else paths)]
         gitsync.git(self.data, "add", "-A", "--", *rels)
-        r = gitsync.git(self.data, "-c", "commit.gpgsign=false", "commit", "-q", "--no-verify",
-                        "-m", message + "\n\nTool: ui", "--", *rels)
+        r = gitsync.git(
+            self.data,
+            "-c",
+            "commit.gpgsign=false",
+            "commit",
+            "-q",
+            "--no-verify",
+            "-m",
+            message + "\n\nTool: ui",
+            "--",
+            *rels,
+        )
         if r.returncode != 0:
             if "nothing" in r.stdout + r.stderr:
                 return None
@@ -203,13 +216,21 @@ class UiApp:
             source.update({k: ctx[k] for k in PLACE_FIELDS if ctx.get(k)})
         name = slugify(p.get("name") or desc)
         mid = new_id(name)
-        meta = {"id": mid, "name": name, "type": typ, "scope": scope, "description": desc,
-                "created": now_iso(), "source": source}
+        meta = {
+            "id": mid,
+            "name": name,
+            "type": typ,
+            "scope": scope,
+            "description": desc,
+            "created": now_iso(),
+            "source": source,
+        }
         path = self.mdir / id_path(mid)
 
         def write():
             atomic_write(path, frontmatter.join(meta, str(p.get("body", ""))))
             return {"id": mid, "commit": self._commit(path, f"memory: add {mid} (ui)")}
+
         return self._write(write)
 
     def edit(self, p):
@@ -219,8 +240,11 @@ class UiApp:
             if not changed:
                 return {"id": p.get("id"), "commit": None}
             atomic_write(path, frontmatter.join(meta, new_body))
-            return {"id": p.get("id"),
-                    "commit": self._commit(path, f"memory: edit {p.get('id')} ({', '.join(changed)}) (ui)")}
+            return {
+                "id": p.get("id"),
+                "commit": self._commit(path, f"memory: edit {p.get('id')} ({', '.join(changed)}) (ui)"),
+            }
+
         return self._write(write)
 
     def delete(self, p):
@@ -237,8 +261,10 @@ class UiApp:
                 message = f"memory: delete {items[0].get('id')} (ui)\n\n{loaded[0][1].get('description', '')}"
             else:
                 message = f"memory: delete {len(loaded)} memories (ui)\n\n" + "\n".join(
-                    f"- {it.get('id')}: {meta.get('description', '')}" for it, (_, meta, _) in zip(items, loaded))
+                    f"- {it.get('id')}: {meta.get('description', '')}" for it, (_, meta, _) in zip(items, loaded)
+                )
             return {"commit": self._commit([path for path, _, _ in loaded], message)}
+
         return self._write(write)
 
     def undo(self, p):
@@ -254,11 +280,21 @@ class UiApp:
             if r.returncode != 0:
                 gitsync.git(self.data, "revert", "--abort")
                 raise ApiError(409, "Could not undo: that memory changed again since. Edit it instead.")
-            gitsync.git(self.data, "-c", "commit.gpgsign=false", "commit", "-q", "--no-verify",
-                        "-m", f"memory: undo {rev} (ui)\n\nTool: ui", timeout=10)
+            gitsync.git(
+                self.data,
+                "-c",
+                "commit.gpgsign=false",
+                "commit",
+                "-q",
+                "--no-verify",
+                "-m",
+                f"memory: undo {rev} (ui)\n\nTool: ui",
+                timeout=10,
+            )
             if gitsync.has_remote(self.data):
                 gitsync.spawn_sync(self.data, push=True)
             return {"ok": True}
+
         return self._write(write)
 
 
@@ -272,8 +308,13 @@ class Handler(BaseHTTPRequestHandler):
     def _send(self, status, payload, ctype="application/json; charset=utf-8"):
         body = payload if isinstance(payload, bytes) else json.dumps(payload, ensure_ascii=False).encode()
         self.send_response(status)
-        for k, v in (("Content-Type", ctype), ("Content-Length", str(len(body))), ("Cache-Control", "no-store"),
-                     ("X-Content-Type-Options", "nosniff"), ("Referrer-Policy", "no-referrer")):
+        for k, v in (
+            ("Content-Type", ctype),
+            ("Content-Length", str(len(body))),
+            ("Cache-Control", "no-store"),
+            ("X-Content-Type-Options", "nosniff"),
+            ("Referrer-Policy", "no-referrer"),
+        ):
             self.send_header(k, v)
         if ctype.startswith("text/html"):
             self.send_header("Content-Security-Policy", CSP)
@@ -316,8 +357,11 @@ class Handler(BaseHTTPRequestHandler):
                 return self._send(404, {"error": "not found"})
             return self._send(200, path.read_bytes(), MIME[path.suffix])
         app, q = self.server.app, {k: v[0] for k, v in parse_qs(url.query).items()}
-        routes = {"/api/state": app.current, "/api/stamp": lambda: {"stamp": app.stamp()},
-                  "/api/search": lambda: app.search(q.get("q"))}
+        routes = {
+            "/api/state": app.current,
+            "/api/stamp": lambda: {"stamp": app.stamp()},
+            "/api/search": lambda: app.search(q.get("q")),
+        }
         if url.path not in routes:
             return self._send(404, {"error": "not found"})
         self._run(routes[url.path])
@@ -353,8 +397,11 @@ def make_server(data_dir, port=8790, semantic=True):
 
 def run(data_dir, port=8790, open_browser=True, semantic=True):
     if semantic and not ui.model_ready():
-        print("No local embedding model; similar memories use keywords only. "
-              "Run `mem ui --fetch-model` (about 625 MB) to also search by meaning.", flush=True)
+        print(
+            "No local embedding model; similar memories use keywords only. "
+            "Run `mem ui --fetch-model` (about 625 MB) to also search by meaning.",
+            flush=True,
+        )
     server = make_server(data_dir, port, semantic)
     print(f"Memories: {server.url}", flush=True)
     print("Keep this terminal open while you use it; Ctrl+C stops it.", flush=True)

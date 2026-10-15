@@ -148,10 +148,10 @@ def stamp_updates(data_dir):
 
 def commit(data_dir, session, label=""):
     stamp_updates(data_dir)
-    title = sessions.title(session.get("tool"), session.get("session_id"),
-                           session.get("transcript_path")) or session.get("session_title", "")
-    stat = gitsync.git(data_dir, "status", "--porcelain", "-uall", "--",
-                       "memories").stdout.splitlines()
+    title = sessions.title(
+        session.get("tool"), session.get("session_id"), session.get("transcript_path")
+    ) or session.get("session_title", "")
+    stat = gitsync.git(data_dir, "status", "--porcelain", "-uall", "--", "memories").stdout.splitlines()
     added = sum(1 for s in stat if s.startswith("??") or s.startswith("A"))
     deleted = sum(1 for s in stat if s[:2].strip() == "D")
     changed = len(stat) - added - deleted

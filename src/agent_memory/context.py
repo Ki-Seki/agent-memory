@@ -10,8 +10,7 @@ _GIT_ENV = {**os.environ, "GIT_OPTIONAL_LOCKS": "0", "GIT_TERMINAL_PROMPT": "0"}
 
 def _git(cwd, *args):
     try:
-        r = subprocess.run(["git", "-C", cwd, *args], capture_output=True, text=True,
-                           timeout=3, env=_GIT_ENV)
+        r = subprocess.run(["git", "-C", cwd, *args], capture_output=True, text=True, timeout=3, env=_GIT_ENV)
     except (OSError, subprocess.SubprocessError):
         return ""
     return r.stdout.strip() if r.returncode == 0 else ""

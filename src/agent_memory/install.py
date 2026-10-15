@@ -33,21 +33,26 @@ SH_BEGIN = "# >>> agent-memory >>>"
 SH_END = "# <<< agent-memory <<<"
 PATH_LINE = 'export PATH="$HOME/.local/bin:$PATH"'
 
-HOOK_EVENTS = [("SessionStart", "session-start", 15),
-               ("Stop", "stop", 15),
-               ("SessionEnd", "session-end", 3)]  # Codex clamps SessionEnd to 3s
+HOOK_EVENTS = [
+    ("SessionStart", "session-start", 15),
+    ("Stop", "stop", 15),
+    ("SessionEnd", "session-end", 3),
+]  # Codex clamps SessionEnd to 3s
 
 
 # ---------------------------------------------------------------- helpers
+
 
 def hook_command(event, tool):
     return " ".join(shlex.quote(a) for a in config.mem_command()) + f" hook {event} --tool {tool}"
 
 
 def _is_ours(group):
-    return any(("agent-memory" in h.get("command", "") or "agent_memory" in h.get("command", ""))
-               and " hook " in h.get("command", "")
-               for h in group.get("hooks", []))
+    return any(
+        ("agent-memory" in h.get("command", "") or "agent_memory" in h.get("command", ""))
+        and " hook " in h.get("command", "")
+        for h in group.get("hooks", [])
+    )
 
 
 def _home_rel(path):
@@ -135,7 +140,7 @@ def toml_unset(text, section, key):
     span = _toml_section("\n".join(lines), section)
     if span:  # drop the section if we emptied it
         i, j = span
-        if all(not line.strip() for line in lines[i + 1:j]):
+        if all(not line.strip() for line in lines[i + 1 : j]):
             del lines[i:j]
     return "\n".join(lines)
 
@@ -149,8 +154,9 @@ def _login_path():
     shell = os.environ.get("SHELL", "/bin/zsh")
     env = {"HOME": str(HOME), "USER": os.environ.get("USER", ""), "SHELL": shell, "TERM": "dumb"}
     try:
-        r = subprocess.run([shell, "-lic", 'printf "__P__%s__P__" "$PATH"'], env=env,
-                           capture_output=True, text=True, timeout=15)
+        r = subprocess.run(
+            [shell, "-lic", 'printf "__P__%s__P__" "$PATH"'], env=env, capture_output=True, text=True, timeout=15
+        )
     except (OSError, subprocess.SubprocessError):
         return None
     m = re.search(r"__P__(.*?)__P__", r.stdout, re.S)
@@ -174,9 +180,10 @@ def _path_plan(plan, state):
 
 # ---------------------------------------------------------------- planning
 
+
 class Plan:
     def __init__(self):
-        self.files = {}          # path -> (old_text or None, new_text or None)
+        self.files = {}  # path -> (old_text or None, new_text or None)
         self.state = {}
 
     def edit(self, path, new_text):
@@ -222,15 +229,22 @@ def _claude_plan(plan, data_dir, state):
     hooks = new.setdefault("hooks", {})
     for event, name, timeout in HOOK_EVENTS:
         groups = [g for g in hooks.get(event, []) if not _is_ours(g)]
-        groups.append({"hooks": [{"type": "command", "command": hook_command(name, "claude-code"),
-                                  "timeout": timeout}]})
+        groups.append(
+            {"hooks": [{"type": "command", "command": hook_command(name, "claude-code"), "timeout": timeout}]}
+        )
         hooks[event] = groups
 
     data = _home_rel(data_dir)
-    rules = [f"Read({data}/**)", f"Edit({data}/**)",
-             f"Bash({config.BIN} search:*)", f"Bash({config.BIN} list:*)",
-             f"Bash({config.BIN} show:*)",
-             "Bash(mem search:*)", "Bash(mem list:*)", "Bash(mem show:*)"]
+    rules = [
+        f"Read({data}/**)",
+        f"Edit({data}/**)",
+        f"Bash({config.BIN} search:*)",
+        f"Bash({config.BIN} list:*)",
+        f"Bash({config.BIN} show:*)",
+        "Bash(mem search:*)",
+        "Bash(mem list:*)",
+        "Bash(mem show:*)",
+    ]
     allow = new.setdefault("permissions", {}).setdefault("allow", [])
     added = [r for r in rules if r not in allow]
     allow.extend(added)
@@ -267,8 +281,10 @@ def _codex_plan(plan, data_dir, state):
         toml = toml_set(toml, "memories", key, "false")
     roots = toml_get(toml, "sandbox_workspace_write", "writable_roots")
     roots = [] if roots == MISSING else list(roots)
-    state.setdefault("codex.writable_roots.had_key", toml_get(
-        _read(toml_path) or "", "sandbox_workspace_write", "writable_roots") != MISSING)
+    state.setdefault(
+        "codex.writable_roots.had_key",
+        toml_get(_read(toml_path) or "", "sandbox_workspace_write", "writable_roots") != MISSING,
+    )
     if str(data_dir) not in roots:
         roots.append(str(data_dir))
         state["codex.writable_root"] = str(data_dir)
@@ -282,6 +298,7 @@ def _codex_plan(plan, data_dir, state):
 
 
 # ---------------------------------------------------------------- commands
+
 
 def _load_state():
     try:
@@ -302,12 +319,15 @@ def init_data(data_dir):
             "# agent-memory data\n\n"
             "One Markdown file per memory under `memories/YYYY/MM/`, written by Claude Code and\n"
             "Codex through the agent-memory hooks. Edit or delete files freely; every change is\n"
-            "a git commit.\n", "utf-8")
+            "a git commit.\n",
+            "utf-8",
+        )
     if not (data_dir / ".git").exists():
         gitsync.git(data_dir, "init", "-q", "-b", "main")
     gitsync.git(data_dir, "add", "-A")
-    gitsync.git(data_dir, "-c", "commit.gpgsign=false", "commit", "-q", "--no-verify",
-                "-m", "Initialize memory repository")
+    gitsync.git(
+        data_dir, "-c", "commit.gpgsign=false", "commit", "-q", "--no-verify", "-m", "Initialize memory repository"
+    )
     cfg = config.load()
     cfg["data_dir"] = str(data_dir)
     config.save(cfg)
@@ -397,8 +417,11 @@ def uninstall(dry_run=False):
         toml = _read(path) or ""
         for key in ("generate_memories", "use_memories"):
             prev = state.get(f"codex.memories.{key}", MISSING)
-            toml = toml_unset(toml, "memories", key) if prev == MISSING else \
-                toml_set(toml, "memories", key, _toml_literal(prev))
+            toml = (
+                toml_unset(toml, "memories", key)
+                if prev == MISSING
+                else toml_set(toml, "memories", key, _toml_literal(prev))
+            )
         root = state.get("codex.writable_root")
         roots = toml_get(toml, "sandbox_workspace_write", "writable_roots")
         if root and roots != MISSING:
@@ -473,21 +496,30 @@ def doctor():
         check(s.get("autoMemoryEnabled") is False, "Claude auto memory disabled")
         for event, _, _ in HOOK_EVENTS:
             check(any(_is_ours(g) for g in s.get("hooks", {}).get(event, [])), f"Claude {event} hook")
-        check(f"@{config.PROTOCOL_COPY}" in (_read(CLAUDE_DIR / "CLAUDE.md") or ""), "Claude CLAUDE.md imports PROTOCOL.md")
-        check(_read(config.PROTOCOL_COPY) == config.PROTOCOL.read_text("utf-8"),
-              "Claude's PROTOCOL.md copy is current (else run `mem install`)")
+        check(
+            f"@{config.PROTOCOL_COPY}" in (_read(CLAUDE_DIR / "CLAUDE.md") or ""),
+            "Claude CLAUDE.md imports PROTOCOL.md",
+        )
+        check(
+            _read(config.PROTOCOL_COPY) == config.PROTOCOL.read_text("utf-8"),
+            "Claude's PROTOCOL.md copy is current (else run `mem install`)",
+        )
     if state.get("codex"):
         doc = json.loads(_read(CODEX_DIR / "hooks.json") or "{}")
         for event, _, _ in HOOK_EVENTS:
             check(any(_is_ours(g) for g in doc.get("hooks", {}).get(event, [])), f"Codex {event} hook")
         toml = _read(CODEX_DIR / "config.toml") or ""
         check(toml_get(toml, "memories", "use_memories") is False, "Codex native memories disabled")
-        check(config.PROTOCOL.read_text("utf-8").rstrip() in (_read(CODEX_DIR / "AGENTS.md") or ""),
-              "Codex AGENTS.md has the current protocol (else run `mem install`)")
+        check(
+            config.PROTOCOL.read_text("utf-8").rstrip() in (_read(CODEX_DIR / "AGENTS.md") or ""),
+            "Codex AGENTS.md has the current protocol (else run `mem install`)",
+        )
     path = _login_path()
     if path is not None:
-        check(str(LOCAL_BIN.parent) in path or SH_BEGIN in (_read(_rc_file()) or ""),
-              f"`mem` on a new terminal's PATH ({LOCAL_BIN.parent})")
+        check(
+            str(LOCAL_BIN.parent) in path or SH_BEGIN in (_read(_rc_file()) or ""),
+            f"`mem` on a new terminal's PATH ({LOCAL_BIN.parent})",
+        )
     if data:
         check(gitsync.has_remote(data), "data repository has a remote (optional)")
         staged = list((data / "staging").glob("*/*.md")) if (data / "staging").exists() else []

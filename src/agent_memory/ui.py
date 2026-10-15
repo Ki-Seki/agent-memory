@@ -33,23 +33,28 @@ MODEL = {
     "dir": "qwen3-embedding-0.6b-int8",
     "repo": "onnx-community/Qwen3-Embedding-0.6B-ONNX",
     "revision": "c25a394dd583836952667c12f008335071b3f43d",
-    "files": {"onnx/model_quantized.onnx": "87cd124e0ef1fd1f223ebc283efccbaeac386d0b08344701c46975d0657b591f",
-              "config.json": None, "tokenizer.json": None, "tokenizer_config.json": None,
-              "special_tokens_map.json": None},
+    "files": {
+        "onnx/model_quantized.onnx": "87cd124e0ef1fd1f223ebc283efccbaeac386d0b08344701c46975d0657b591f",
+        "config.json": None,
+        "tokenizer.json": None,
+        "tokenizer_config.json": None,
+        "special_tokens_map.json": None,
+    },
     # Plain text, no instruction prefix: on known same-topic pairs (including Chinese/English
     # ones) this ranked partners closer than the topic or similarity instructions did.
     "instruction": "",
 }
 WORKER_DEPS = ["onnxruntime==1.31.0", "tokenizers==0.23.3", "numpy"]
-EMBED_CHARS = 2000        # characters of each memory given to the model
-TITLE_WEIGHT = 3          # description and name count this many times in keyword vectors
-NEIGHBORS = 6             # similar memories listed for each memory
-KEYWORDS = 4              # keywords shown for each memory
+EMBED_CHARS = 2000  # characters of each memory given to the model
+TITLE_WEIGHT = 3  # description and name count this many times in keyword vectors
+NEIGHBORS = 6  # similar memories listed for each memory
+KEYWORDS = 4  # keywords shown for each memory
 SEARCH_INSTRUCTION = "Instruct: Given a search query, retrieve memory notes about it\nQuery: "
 
 _ASCII = re.compile(r"[A-Za-z][A-Za-z0-9_+#-]*[A-Za-z0-9+#]|[A-Za-z]")
 _CJK = re.compile(r"[㐀-鿿]+")
-_STOP = set("""
+_STOP = set(
+    """
 a about above after again against all also am an and any are as at be because been before being
 below between both but by can could did do does doing done down during each either else etc even
 ever every few for from further get gets got had has have having he her here hers him his how i if
@@ -67,27 +72,35 @@ rollout_summary_files rollout_summaries applies_to reuse_rule keywords reusable 
 differently preferences apply how why outcome success partial history summary
 asked plus real never check checks verify verified evidence explicit said complete final current
 live state local source remote text path test symptom instead before after already actual ad-hoc
-""".split())
+""".split()
+)
 # Paths, URLs, hashes and ids say where something lives, not what it is about.
-_NOISE = re.compile(r"(?:https?://\S+|(?:~|/|\.\.?/)[\w.@%+-]+(?:/[\w.@%+-]*)+"
-                    r"|\b[\w.-]+\.(?:md|json|jsonl|py|ts|js|html|yaml|yml|toml|txt|sh)\b"
-                    r"|\b[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\b|\b[0-9a-f]{7,40}\b"
-                    r"|\b\d{4}-\d\d-\d\d(?:[T ][\d:.+-]+)?\b)")
+_NOISE = re.compile(
+    r"(?:https?://\S+|(?:~|/|\.\.?/)[\w.@%+-]+(?:/[\w.@%+-]*)+"
+    r"|\b[\w.-]+\.(?:md|json|jsonl|py|ts|js|html|yaml|yml|toml|txt|sh)\b"
+    r"|\b[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\b|\b[0-9a-f]{7,40}\b"
+    r"|\b\d{4}-\d\d-\d\d(?:[T ][\d:.+-]+)?\b)"
+)
 CJK_MAX = 4
-_STOP_CJK = set("""
+_STOP_CJK = set(
+    """
 的是 是的 一个 这个 那个 可以 需要 如果 因为 所以 但是 而且 或者 以及 我们 你们 他们 用户 时候 没有 不是 就是
 已经 进行 通过 使用 这样 这些 那些 什么 怎么 为了 之后 之前 然后 还是 一下 一些 这里 那里 其中 以后 以前 不要
 必须 应该 能够 只是 也是 都是 就会 会在 在这 这次 每次 一次 当前 目前 现在 之类 等等 方面 问题 内容 情况
 相关 进行 这种 时候 需要 不能 不会 只有 直接 所有 其他 自己 一样 部分 以上 以下 下来 起来 出来 每个 各个 任何 一定 先给
-""".split())
+""".split()
+)
 # Function characters that start no word: 的了和与… A string beginning with one is a fragment.
-_CJK_BAD_START = set("的了和与及或就都也把被让给并而时在是对向从个件等上不每一这那该各再又还才只很最更已将会能要可使于以之其此")
+_CJK_BAD_START = set(
+    "的了和与及或就都也把被让给并而时在是对向从个件等上不每一这那该各再又还才只很最更已将会能要可使于以之其此"
+)
 _CJK_KEEP = {"完成", "生成", "集成", "构成", "组成", "前后", "最后", "然后", "之后", "背后", "上一", "中文"}
 # ...and characters that end no word: a string ending in one runs into the next word.
 _CJK_BAD_END = set("的了着过是在和与及等上中里成到给把被让后不也都就又再才很一个这那各每将会能要可于以之其此任")
 
 
 # ------------------------------------------------------------ keyword vectors
+
 
 def clean(text):
     return _NOISE.sub(" ", text)
@@ -105,7 +118,7 @@ def chinese_words(texts):
         grams = set()
         for run in _CJK.findall(text):
             for n in range(2, CJK_MAX + 1):
-                grams.update(run[i:i + n] for i in range(len(run) - n + 1))
+                grams.update(run[i : i + n] for i in range(len(run) - n + 1))
         df.update(grams)
     frequent = {g for g, d in df.items() if d >= 2}
     words = set()
@@ -113,8 +126,11 @@ def chinese_words(texts):
         longer = [h for h in frequent if len(h) == len(g) + 1 and g in h]
         if not any(df[h] >= 0.8 * df[g] for h in longer):
             words.add(g)
-    return {w for w in words - _STOP_CJK
-            if (w[0] not in _CJK_BAD_START or w == "时间") and (w[-1] not in _CJK_BAD_END or w in _CJK_KEEP)}
+    return {
+        w
+        for w in words - _STOP_CJK
+        if (w[0] not in _CJK_BAD_START or w == "时间") and (w[-1] not in _CJK_BAD_END or w in _CJK_KEEP)
+    }
 
 
 def tokens(text, words=frozenset()):
@@ -136,8 +152,8 @@ def tokens(text, words=frozenset()):
         i = 0
         while i < len(run) - 1:
             for n in range(min(CJK_MAX, len(run) - i), 1, -1):
-                if run[i:i + n] in words:
-                    out.append(run[i:i + n])
+                if run[i : i + n] in words:
+                    out.append(run[i : i + n])
                     i += n
                     break
             else:
@@ -155,7 +171,8 @@ def _display_forms(texts):
 
 
 # Plain English words that score high in TF-IDF but say little about what a memory is about.
-_GENERIC = set("""
+_GENERIC = set(
+    """
 actually specified large small nontrivial declaring declared truth human builds build built pin pinned
 following follow follows needed need needs means mean simple simply clear clearly important exact exactly
 whole entire full fully main mainly certain directly direct proper properly various several general
@@ -163,7 +180,8 @@ correct correctly wrong instead later earlier often usually rather quite really 
 item items part parts kind way ways case cases point points detail details thing result results
 come comes edit edits edited anything something everything separate change changes changed
 fail fails failed code example examples
-""".split())
+""".split()
+)
 
 
 def _term_like(display):
@@ -271,13 +289,21 @@ def embed(data_dir, texts):
     if todo:
         out = cache_file.with_name("new-vectors.npy")
         out.parent.mkdir(parents=True, exist_ok=True)
-        job = {"model_dir": str(model_dir()), "out": str(out), "max_tokens": 512,
-               "texts": [MODEL["instruction"] + texts[i] for i in todo]}
+        job = {
+            "model_dir": str(model_dir()),
+            "out": str(out),
+            "max_tokens": 512,
+            "texts": [MODEL["instruction"] + texts[i] for i in todo],
+        }
         print(f"embedding {len(todo)} memories with {MODEL['name']}…", flush=True)
-        cmd = ["uv", "run", "--no-project", "--quiet"] + [a for dep in WORKER_DEPS for a in ("--with", dep)] \
+        cmd = (
+            ["uv", "run", "--no-project", "--quiet"]
+            + [a for dep in WORKER_DEPS for a in ("--with", dep)]
             + ["python", "-I", str(WORKER)]
-        r = subprocess.run(cmd, input=json.dumps(job), text=True, cwd=str(out.parent),
-                           env={**os.environ, "PYTHONWARNINGS": "ignore"})
+        )
+        r = subprocess.run(
+            cmd, input=json.dumps(job), text=True, cwd=str(out.parent), env={**os.environ, "PYTHONWARNINGS": "ignore"}
+        )
         if r.returncode != 0:
             print("embedding failed; falling back to keywords", file=sys.stderr)
             return None
@@ -307,9 +333,10 @@ def closeness(vectors):
 
 # ------------------------------------------------------------ page data
 
+
 def _short(path):
     home = str(HOME)
-    return "~" + path[len(home):] if path and (path == home or path.startswith(home + "/")) else path or ""
+    return "~" + path[len(home) :] if path and (path == home or path.startswith(home + "/")) else path or ""
 
 
 def _place(src):
@@ -355,30 +382,51 @@ def build(data_dir, semantic=True, vectors_out=None):
     for i, (m, raw, meta, body) in enumerate(items):
         order = [int(j) for j in np.argsort(-sim[i]) if j != i][:NEIGHBORS]
         src = m["source"]
-        rows.append({
-            "id": m["id"], "rel": m["rel"], "path": str(mdir / m["rel"]),
-            "hash": hashlib.sha1(raw.encode()).hexdigest()[:16], "raw": raw,
-            "meta": json.loads(json.dumps(meta, default=str)), "body": body,
-            "description": m["description"], "type": m["type"], "scope": m["scope"],
-            "place": _place(src) if m["scope"] == "here" else "",
-            "tool": src.get("tool") or "", "host": src.get("host") or "",
-            "created": m["created"], "updated": m["updated"],
-            "similar": [{"i": j, "s": round(float(sim[i, j]), 3)} for j in order if sim[i, j] > 0],
-            "keywords": [{"k": vocab[j], "t": forms.get(vocab[j], vocab[j])} for j in picks[i]],
-            "terms": [vocab[j] for j in np.flatnonzero(x[i])],
-            "issues": [message for _, message in lint.check(m, body, names)],
-        })
+        rows.append(
+            {
+                "id": m["id"],
+                "rel": m["rel"],
+                "path": str(mdir / m["rel"]),
+                "hash": hashlib.sha1(raw.encode()).hexdigest()[:16],
+                "raw": raw,
+                "meta": json.loads(json.dumps(meta, default=str)),
+                "body": body,
+                "description": m["description"],
+                "type": m["type"],
+                "scope": m["scope"],
+                "place": _place(src) if m["scope"] == "here" else "",
+                "tool": src.get("tool") or "",
+                "host": src.get("host") or "",
+                "created": m["created"],
+                "updated": m["updated"],
+                "similar": [{"i": j, "s": round(float(sim[i, j]), 3)} for j in order if sim[i, j] > 0],
+                "keywords": [{"k": vocab[j], "t": forms.get(vocab[j], vocab[j])} for j in picks[i]],
+                "terms": [vocab[j] for j in np.flatnonzero(x[i])],
+                "issues": [message for _, message in lint.check(m, body, names)],
+            }
+        )
         if m["scope"] == "here" and (src.get("git_remote") or src.get("cwd")):
             key = _place(src)
-            places.setdefault(key, {"key": key, "count": 0,
-                                    "ctx": {k: src[k] for k in ("cwd", "git_root", "git_remote", "git_branch", "host")
-                                            if src.get(k)}})
+            places.setdefault(
+                key,
+                {
+                    "key": key,
+                    "count": 0,
+                    "ctx": {k: src[k] for k in ("cwd", "git_root", "git_remote", "git_branch", "host") if src.get(k)},
+                },
+            )
             places[key]["count"] += 1
-    return {**base, "memories": rows, "method": method, "semantic": vectors is not None,
-            "places": sorted(places.values(), key=lambda p: (-p["count"], p["key"]))}
+    return {
+        **base,
+        "memories": rows,
+        "method": method,
+        "semantic": vectors is not None,
+        "places": sorted(places.values(), key=lambda p: (-p["count"], p["key"])),
+    }
 
 
 # ------------------------------------------------------------ query embedding
+
 
 class QueryEncoder:
     """A long-lived embedding worker for search queries (model loads once)."""
@@ -392,12 +440,20 @@ class QueryEncoder:
             return None
         with self.lock:
             if self.proc is None or self.proc.poll() is not None:
-                cmd = ["uv", "run", "--no-project", "--quiet"] + \
-                    [a for dep in WORKER_DEPS for a in ("--with", dep)] + \
-                    ["python", "-I", str(WORKER), "--serve", str(model_dir())]
-                self.proc = subprocess.Popen(cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE,
-                                             stderr=subprocess.DEVNULL, text=True, bufsize=1,
-                                             cwd=str(model_dir()))
+                cmd = (
+                    ["uv", "run", "--no-project", "--quiet"]
+                    + [a for dep in WORKER_DEPS for a in ("--with", dep)]
+                    + ["python", "-I", str(WORKER), "--serve", str(model_dir())]
+                )
+                self.proc = subprocess.Popen(
+                    cmd,
+                    stdin=subprocess.PIPE,
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.DEVNULL,
+                    text=True,
+                    bufsize=1,
+                    cwd=str(model_dir()),
+                )
             self.proc.stdin.write(json.dumps({"text": SEARCH_INSTRUCTION + text}) + "\n")
             self.proc.stdin.flush()
             line = self.proc.stdout.readline()
