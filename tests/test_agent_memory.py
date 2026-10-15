@@ -219,6 +219,16 @@ class WorkdirTest(unittest.TestCase):
         got = self.workdir.infer(self.write(lines), "/x/scratch-workspaces/s/t", home=self.home)
         self.assertIsNone(got)
 
+    def test_dead_end_container_gives_way(self):
+        h = str(self.home)
+        for t in ("a", "b"):
+            (self.home / "Documents/Codex/2026-08-25" / t).mkdir(parents=True, exist_ok=True)
+        # mostly talking about Codex thread folders, but the work happened in proj-a
+        lines = [self.codex_call(f"ls {h}/Documents/Codex/2026-08-25/{t}") for t in "ab" * 10]
+        lines += [self.codex_call(f"cat {h}/repos/shared/proj-a/src/f{i}.py") for i in range(5)]
+        got = self.workdir.infer(self.write(lines), "/x/scratch-workspaces/s/t", home=self.home)
+        self.assertEqual(got, h + "/repos/shared/proj-a")
+
     def test_ignores_injected_instructions(self):
         h = str(self.home)
         injected = {"type": "response_item", "payload": {

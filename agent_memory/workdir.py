@@ -105,25 +105,29 @@ def infer(transcript, cwd=None, exclude=(), home=None):
             return False
         return not any(p == b or is_under(p, b) for b in blocked)
 
-    top = [(n, k) for k, n in counts.items() if len(k) == 2 and usable(k)]
-    if not top:
-        return None
-    n, best = max(top)
-    if n < MIN_HITS:
-        return None
-    limit = MAX_DEPTH + (2 if best[0] == "Library" else 0)  # ~/Library/CloudStorage/<drive>/...
-    while len(best) < limit and not home.joinpath(*best, ".git").exists():
-        kids = [(c, k) for k, c in counts.items()
-                if len(k) == len(best) + 1 and k[:len(best)] == best and usable(k)]
-        if not kids:
+    def descend(n, best):
+        limit = MAX_DEPTH + (2 if best[0] == "Library" else 0)  # ~/Library/CloudStorage/<drive>/...
+        while len(best) < limit and not home.joinpath(*best, ".git").exists():
+            kids = [(c, k) for k, c in counts.items()
+                    if len(k) == len(best) + 1 and k[:len(best)] == best and usable(k)]
+            if not kids:
+                break
+            c, k = max(kids)
+            if c < DESCEND_SHARE * n and not CONTAINERS.match("/".join(best)):
+                break
+            n, best = c, k
+        return None if CONTAINERS.match("/".join(best)) else best
+
+    # Most referenced first; a container that leads nowhere (e.g. ~/Documents/Codex, whose
+    # children are all throwaway threads) gives way to the next candidate.
+    top = sorted(((n, k) for k, n in counts.items() if len(k) == 2 and usable(k)), reverse=True)
+    for n, key in top:
+        if n < MIN_HITS:
             break
-        c, k = max(kids)
-        if c < DESCEND_SHARE * n and not CONTAINERS.match("/".join(best)):
-            break
-        n, best = c, k
-    if CONTAINERS.match("/".join(best)):
-        return None
-    return str(home.joinpath(*best))
+        best = descend(n, key)
+        if best:
+            return str(home.joinpath(*best))
+    return None
 
 
 def default_exclude():
