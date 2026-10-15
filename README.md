@@ -134,3 +134,7 @@ prints, so other web pages cannot read or change memories.
   logged for you to resolve.
 - Session names come from Claude Code's `custom-title` transcript entries and Codex's thread
   database, when available.
+
+## License
+
+[MIT](LICENSE)
