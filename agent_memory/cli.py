@@ -144,6 +144,13 @@ def cmd_relocate(args):
     print(f"{moved} to move" if args.dry_run else f"moved {moved}")
 
 
+def cmd_ui(args):
+    from . import ui, ui_server
+    if args.fetch_model:
+        return ui.fetch_model()
+    ui_server.run(_data(), port=args.port, open_browser=not args.no_open, semantic=not args.keywords_only)
+
+
 def cmd_sync(args):
     ok = gitsync.sync(_data(), push=not args.pull_only)
     if not args.quiet:
@@ -226,6 +233,14 @@ def main(argv=None):
     sp.add_argument("only", nargs="*", help="limit to memories whose path contains one of these")
     sp.add_argument("--dry-run", action="store_true")
     sp.set_defaults(fn=cmd_relocate)
+
+    sp = sub.add_parser("ui", help="search, filter, read and edit memories in a local web page (needs numpy)")
+    sp.add_argument("--port", type=int, default=8790)
+    sp.add_argument("--no-open", action="store_true", help="print the link without opening a browser")
+    sp.add_argument("--keywords-only", action="store_true", help="skip the embedding model")
+    sp.add_argument("--fetch-model", action="store_true",
+                    help="download the local embedding model (about 625 MB) and exit")
+    sp.set_defaults(fn=cmd_ui)
 
     sp = sub.add_parser("sync", help="pull and push the data repository")
     sp.add_argument("--pull-only", action="store_true")

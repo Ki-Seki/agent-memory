@@ -69,8 +69,34 @@ mem add --name N --type T --scope S --description D BODY|-
 mem flush                       commit anything left in staging
 mem relocate [PATH...] [--dry-run]  re-file memories recorded in throwaway folders
 mem sync [--pull-only]          pull --rebase and push the data repository
+mem ui [--port N] [--no-open]   search, filter, read and edit memories in a local page
 mem doctor                      check the installation
 ```
+
+## Managing memories in a page
+
+`mem ui` starts a small server on `127.0.0.1` and opens a page listing every memory. Keep the
+terminal open while you use it. It needs `numpy`; the hooks do not.
+
+- **Find.** One search box (press `/`). Word matches appear as you type, with the matching words
+  marked; a moment later the local model adds memories close in meaning, across Chinese and
+  English. Filters narrow the list by type, where a memory loads (everywhere, or one project or
+  folder), which tool wrote it, and age; the order is newest, oldest, recently changed or A to Z.
+- **Read.** Click a row, or move with `j`/`k` and press Enter. The memory opens on the right with
+  every frontmatter field (including each `source` entry), the body rendered as Markdown with
+  `[[links]]` that open other memories, the file exactly as stored, and the most similar memories.
+- **Change.** Edit (`e`) or delete from the open memory, add one with New (`n`), or tick several
+  rows (`x`) and delete them together. Every change is one git commit, pushed in the background,
+  with Undo. If an agent edits the same file meanwhile, saving is refused rather than overwriting.
+
+Similar memories and search by meaning use Qwen3-Embedding-0.6B, int8 ONNX, on the CPU, in a
+separate `uv run --with onnxruntime --with tokenizers` environment; vectors are cached by content
+in `<data>/.cache/embeddings/`. Get the model once with `mem ui --fetch-model` (about 625 MB,
+pinned revision, checked by SHA-256). Without it, or with `--keywords-only`, similar memories
+come from keyword vectors and search matches words only.
+
+The server only listens on loopback, and every request needs the one-time token from the link it
+prints, so other web pages cannot read or change memories.
 
 ## Notes
 
