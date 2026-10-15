@@ -40,8 +40,9 @@ out after `mem ui --fetch-model` to also search by meaning.
   files in place. At the end of each turn a Stop hook stamps ids and provenance, moves staged
   files into `memories/`, commits, and pushes in the background. The agent never writes
   provenance itself.
-- **Rules.** [`PROTOCOL.md`](PROTOCOL.md) tells the agent what to save and how. Claude Code
-  imports it from `~/.claude/CLAUDE.md`; Codex gets a copy in `~/.codex/AGENTS.md`.
+- **Rules.** [`PROTOCOL.md`](src/agent_memory/PROTOCOL.md) tells the agent what to save and how.
+  `mem install` copies it to `~/.config/agent-memory/PROTOCOL.md`, which `~/.claude/CLAUDE.md`
+  imports, and into `~/.codex/AGENTS.md` for Codex.
 
 Sessions in throwaway folders (Claude Code scratch workspaces, Codex per-thread folders under
 `~/Documents/Codex/<date>/`) get their `here` memories filed under the project folder the
@@ -55,26 +56,30 @@ and its direct children such as `~/repos` are too broad to match through contain
 
 ## Setup
 
-Requires Python 3.11+ and git.
+Requires Python 3.11+, git and [uv](https://docs.astral.sh/uv/).
 
 ```bash
-bin/mem init ~/repos/agent-memory-data     # create the data repository and ~/.config/agent-memory
-bin/mem import claude --dry-run            # preview, then run without --dry-run
-bin/mem import codex --dry-run
-bin/mem install --dry-run                  # shows every change as a diff
-bin/mem install
+uv tool install "agent-memory-git[ui]"     # the mem command; [ui] adds numpy for mem ui
+mem init ~/repos/agent-memory-data     # create the data repository and ~/.config/agent-memory
+mem import claude --dry-run            # preview, then run without --dry-run
+mem import codex --dry-run
+mem install --dry-run                  # shows every change as a diff
+mem install
 ```
+
+To upgrade, run `uv tool upgrade agent-memory-git` and then `mem install`, which refreshes the
+protocol copies; `mem doctor` says when they are out of date.
 
 `install` edits, and records in `~/.config/agent-memory/install-state.json`:
 
 | File | Change |
 |---|---|
 | `~/.claude/settings.json` | SessionStart / Stop / SessionEnd hooks, `autoMemoryEnabled: false`, read/edit permission on the data repository, `mem search/list/show` allowed |
-| `~/.claude/CLAUDE.md` | a marked block importing `PROTOCOL.md` |
+| `~/.claude/CLAUDE.md` | a marked block importing `~/.config/agent-memory/PROTOCOL.md`, a copy of the protocol |
 | `~/.codex/hooks.json` | the same three hooks |
 | `~/.codex/config.toml` | `memories.generate_memories = false`, `memories.use_memories = false`, data repository added to `sandbox_workspace_write.writable_roots` |
 | `~/.codex/AGENTS.md` | a marked block with the protocol |
-| `~/.local/bin/mem` | symlink to `bin/mem` |
+| `~/.local/bin/mem` | symlink to `mem`, only if that file does not exist yet (`uv tool install` already puts one there) |
 
 Codex asks you to trust new hooks once: open `/hooks` in Codex and enable the three
 agent-memory hooks.
@@ -127,6 +132,22 @@ never be keywords, such as your own name, go in `keyword_stopwords` in
 
 The server only listens on loopback, and every request needs the one-time token from the link it
 prints, so other web pages cannot read or change memories.
+
+## Development
+
+```bash
+uv sync --all-extras          # dev tools and numpy
+uv run pytest
+uv run ruff check .
+```
+
+From a checkout, `bin/mem` (or `uv run mem`) runs the code in place; `mem install` from there
+points the hooks at that checkout, so edits take effect in the next session.
+`uv tool install --editable .` does the same with `mem` on PATH.
+
+To release, run `uv run scripts/release.py prepare patch` (or `minor`, `major`) to open a
+version PR. After it is merged, `uv run scripts/release.py publish <PR_NUMBER>` creates the GitHub
+Release, and GitHub Actions publishes it to PyPI.
 
 ## Notes
 

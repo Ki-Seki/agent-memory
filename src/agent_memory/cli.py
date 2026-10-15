@@ -6,7 +6,7 @@ from pathlib import Path
 
 from . import capture, config, frontmatter, gitsync, hooks, select, store
 from .context import detect
-from .util import TYPES, SCOPES, atomic_write, slugify
+from .util import SCOPES, TYPES, atomic_write, slugify
 
 
 def _data():

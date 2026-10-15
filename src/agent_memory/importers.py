@@ -168,7 +168,7 @@ def codex_items():
     if summary.exists():
         sec = _sections(summary.read_text("utf-8"))
         created = _mtime(summary)
-        profile = " ".join(l.strip() for l in sec.get("User Profile", []) if l.strip())
+        profile = " ".join(line.strip() for line in sec.get("User Profile", []) if line.strip())
         if profile:
             profile = profile.replace(ADHOC_TAG, "").strip()
             yield _record(name="user-profile-from-codex", typ="user", scope="global",

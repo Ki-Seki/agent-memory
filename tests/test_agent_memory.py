@@ -18,7 +18,7 @@ os.environ["CODEX_HOME"] = str(ROOT / "codex")
 DATA = ROOT / "data"
 os.environ["AGENT_MEMORY_DATA"] = str(DATA)
 
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "src"))
 
 from agent_memory import capture, frontmatter, hooks, install, select, store  # noqa: E402
 from agent_memory.context import normalize_remote  # noqa: E402
@@ -181,7 +181,7 @@ class WorkdirTest(unittest.TestCase):
 
     def write(self, lines):
         path = ROOT / "transcript.jsonl"
-        path.write_text("\n".join(json.dumps(l) for l in lines) + "\n")
+        path.write_text("\n".join(json.dumps(line) for line in lines) + "\n")
         return str(path)
 
     def codex_call(self, text):
@@ -364,6 +364,7 @@ class UiServerTest(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         import threading
+
         from agent_memory import ui, ui_server
         cls.data = ROOT / "ui-server-data"
         shutil.rmtree(cls.data, ignore_errors=True)
@@ -467,6 +468,19 @@ class UiServerTest(unittest.TestCase):
         self.assertTrue(all(self.mem(i) is not None for i in ids))
 
 
+class PackagingTest(unittest.TestCase):
+    def test_installed_package_runs_itself_with_python_m(self):
+        from agent_memory import config
+        with mock.patch.object(config, "CHECKOUT", None):
+            self.assertEqual(config.mem_command(), [sys.executable, "-m", "agent_memory"])
+        self.assertEqual(config.mem_command()[1:], [str(config.CHECKOUT / "bin" / "mem")])
+
+    def test_protocol_ships_inside_the_package(self):
+        from agent_memory import config
+        self.assertEqual(config.PROTOCOL.parent, config.PACKAGE_DIR)
+        self.assertIn("# Shared memory", config.PROTOCOL.read_text())
+
+
 class SyncTest(unittest.TestCase):
     def test_two_machines_converge(self):
         from agent_memory import gitsync
@@ -554,7 +568,12 @@ class InstallTest(unittest.TestCase):
             self.assertIn(str(DATA), toml["sandbox_workspace_write"]["writable_roots"])
             self.assertEqual(toml["skills"]["config"][0]["path"], "/x/SKILL.md")
             self.assertIn("Shared memory", mid[str(install.CODEX_DIR / "AGENTS.md")])
-            self.assertIn("@", mid[str(install.CLAUDE_DIR / "CLAUDE.md")])
+            from agent_memory import config
+            self.assertIn(f"@{config.PROTOCOL_COPY}", mid[str(install.CLAUDE_DIR / "CLAUDE.md")])
+            self.assertEqual(config.PROTOCOL_COPY.read_text(), config.PROTOCOL.read_text())
+            hook = settings["hooks"]["SessionStart"][-1]["hooks"][0]["command"]
+            self.assertTrue(hook.endswith("hook session-start --tool claude-code"), hook)
+            self.assertIn("bin/mem", hook)  # run from this checkout, hooks call its bin/mem
             self.assertIn(install.PATH_LINE, rc.read_text())
 
             install.install()  # idempotent
@@ -566,6 +585,7 @@ class InstallTest(unittest.TestCase):
 
             install.uninstall()
         after = self.snapshot()
+        self.assertFalse(config.PROTOCOL_COPY.exists())
         self.assertEqual(rc.read_text(), rc_before)
         for path, text in before.items():
             if path.endswith("config.toml"):
