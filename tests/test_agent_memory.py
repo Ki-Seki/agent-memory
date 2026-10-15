@@ -237,6 +237,189 @@ class WorkdirTest(unittest.TestCase):
                                              home=self.home))
 
 
+class UiTest(unittest.TestCase):
+    def setUp(self):
+        from agent_memory import ui
+        self.ui = ui
+
+    def test_tokens_drop_noise_and_keep_words(self):
+        words = self.ui.chinese_words(["汇报时给北京时间", "按北京时间说", "北京时间晚上"])
+        self.assertIn("北京时间", words)
+        self.assertNotIn("京时", words)  # a fragment of 北京时间, not a word
+        toks = self.ui.tokens("Fix UTP in /Users/a/b/c.py at 3f2a9c1d, see S3 and the 北京时间 report", words)
+        self.assertIn("utp", toks)
+        self.assertIn("s3", toks)
+        self.assertIn("北京时间", toks)
+        self.assertNotIn("3f2a9c1d", toks)
+        self.assertFalse(any("users" in t or t.endswith("py") for t in toks))
+
+    def test_similar_memories_are_closer(self):
+        docs = [("Highway access policy", "Glimpse route keeps warp access on Highway."),
+                ("Highway route ACL", "Match Tuna route on Highway uses warp access only."),
+                ("Reply language", "Write replies in Chinese for this user."),
+                ("Commit rules", "Each commit does one thing; ask before push.")]
+        x, vocab = self.ui.vectorize(docs)
+        sim = x @ x.T
+        self.assertGreater(sim[0, 1], sim[0, 2])
+        self.assertGreater(sim[0, 1], sim[0, 3])
+
+    def test_build_state(self):
+        data_dir = ROOT / "ui-data"
+        shutil.rmtree(data_dir, ignore_errors=True)
+        for i, (desc, body) in enumerate([
+                ("Highway access policy", "Glimpse route keeps warp access."),
+                ("Highway route ACL", "Match Tuna route uses warp access only."),
+                ("Reply language", "Write replies in Chinese."),
+                ("Commit rules", "Each commit does one thing."),
+                ("Push rules", "Ask before every push and commit.")]):
+            mdir = data_dir / "memories" / "2026" / "10"
+            mdir.mkdir(parents=True, exist_ok=True)
+            meta = {"id": f"m{i}", "name": f"m{i}", "type": "feedback", "scope": "global",
+                    "description": desc, "created": "2026-10-01T10:00:00+08:00", "source": {"tool": "cli"}}
+            (mdir / f"m{i}.md").write_text(frontmatter.join(meta, body))
+        with mock.patch.object(self.ui, "model_ready", return_value=False):  # no model in tests
+            data = self.ui.build(data_dir)
+        self.assertFalse(data["semantic"])
+        self.assertEqual(len(data["memories"]), 5)
+        m = data["memories"][0]
+        self.assertTrue(m["raw"].startswith("---\nid: m"))  # the full file, for the File tab
+        self.assertEqual(m["meta"]["source"], {"tool": "cli"})
+        self.assertEqual(m["tool"], "cli")
+        by_desc = {mm["description"]: mm for mm in data["memories"]}
+        first = by_desc["Highway access policy"]["similar"][0]["i"]
+        self.assertEqual(data["memories"][first]["description"], "Highway route ACL")
+
+    def test_closeness_spreads_bunched_cosines(self):
+        import numpy as np
+        rng = np.random.default_rng(1)
+        base = rng.normal(size=16)
+        v = base + 0.6 * rng.normal(size=(12, 16))  # every pair similar, like raw embeddings
+        v /= np.linalg.norm(v, axis=1, keepdims=True)
+        c = self.ui.closeness(v)
+        off = c[~np.eye(12, dtype=bool)]
+        self.assertAlmostEqual(float(off.max()), 1.0)
+        self.assertLess(float(np.median(off)), 0.01)  # a typical pair reads as about 0
+        self.assertTrue((np.diag(c) == 1).all())
+
+    def test_prose_drops_bookkeeping(self):
+        body = ("# Task Group: Highway\n### rollout_summary_files\n- rollout_summaries/2026-x.md (cwd=/Users/a/b)\n"
+                "Keep warp access on `glimpse` at /Users/a/repo/file.py, commit 3f2a9c1d.")
+        text = self.ui.prose("Highway policy", body)
+        self.assertIn("warp access", text)
+        self.assertNotIn("rollout_summaries", text)
+        self.assertNotIn("/Users", text)
+        self.assertNotIn("3f2a9c1d", text)
+
+
+class UiServerTest(unittest.TestCase):
+    """Drive the `mem ui` API the way the page does, without the embedding model."""
+
+    @classmethod
+    def setUpClass(cls):
+        import threading
+        from agent_memory import ui, ui_server
+        cls.data = ROOT / "ui-server-data"
+        shutil.rmtree(cls.data, ignore_errors=True)
+        mdir = cls.data / "memories" / "2026" / "10"
+        mdir.mkdir(parents=True)
+        subprocess.run(["git", "init", "-q", "-b", "main", str(cls.data)], check=True)
+        for name, desc in (("alpha", "alpha pref"), ("beta", "beta pref"), ("gamma", "gamma fact")):
+            meta = {"id": name, "name": name, "type": "feedback", "scope": "global", "description": desc,
+                    "created": "2026-10-01T10:00:00+08:00", "source": {"tool": "cli"}}
+            (mdir / f"{name}.md").write_text(frontmatter.join(meta, desc.upper()))
+        subprocess.run(["git", "-C", str(cls.data), "add", "-A"], check=True)
+        subprocess.run(["git", "-C", str(cls.data), "-c", "commit.gpgsign=false", "commit", "-qm", "seed"], check=True)
+        cls.patch = mock.patch.object(ui, "model_ready", return_value=False)
+        cls.patch.start()
+        cls.server = ui_server.make_server(cls.data, port=0, semantic=False)
+        cls.port = cls.server.server_address[1]
+        threading.Thread(target=cls.server.serve_forever, daemon=True).start()
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.server.shutdown()
+        cls.server.server_close()
+        cls.patch.stop()
+
+    def call(self, path, body=None, token=None, host=None, origin=None):
+        import urllib.error
+        import urllib.request
+        req = urllib.request.Request(f"http://127.0.0.1:{self.port}{path}",
+                                     data=None if body is None else json.dumps(body).encode(),
+                                     method="GET" if body is None else "POST")
+        req.add_header("X-Mem-Token", self.server.token if token is None else token)
+        for k, v in (("Host", host), ("Origin", origin)):
+            if v:
+                req.add_header(k, v)
+        if body is not None:
+            req.add_header("Content-Type", "application/json")
+        try:
+            with urllib.request.urlopen(req) as r:
+                return r.status, json.loads(r.read())
+        except urllib.error.HTTPError as e:
+            return e.code, json.loads(e.read() or b"{}")
+
+    def mem(self, mid):
+        status, state = self.call("/api/state")
+        self.assertEqual(status, 200)
+        return next((m for m in state["memories"] if m["id"] == mid), None)
+
+    def test_guards(self):
+        self.assertEqual(self.call("/api/state", token="nope")[0], 401)
+        self.assertEqual(self.call("/api/state", host="evil.example")[0], 421)
+        self.assertEqual(self.call("/api/edit", {"id": "alpha"}, origin="http://evil.example")[0], 403)
+        self.assertEqual(self.call("/api/search?q=x")[1]["semantic"], False)
+
+    def test_edit_conflict_undo(self):
+        m = self.mem("alpha")
+        status, res = self.call("/api/edit", {"id": "alpha", "base": m["hash"],
+                                              "change": {"description": "alpha pref, edited", "body": "New text."}})
+        self.assertEqual(status, 200, res)
+        edited = self.mem("alpha")
+        self.assertEqual(edited["description"], "alpha pref, edited")
+        self.assertIn("updated", edited["meta"])
+        self.assertEqual(list(edited["meta"])[-1], "source")  # provenance stays last
+        self.assertEqual(self.call("/api/edit", {"id": "alpha", "base": m["hash"], "change": {"body": "x"}})[0], 409)
+        self.assertEqual(self.call("/api/undo", {"commit": res["commit"]})[0], 200)
+        self.assertEqual(self.mem("alpha")["description"], "alpha pref")
+
+    def test_create_delete_undo(self):
+        status, res = self.call("/api/create", {"type": "project", "scope": "here", "description": "new fact",
+                                                "body": "N.", "place": {"path": str(ROOT)}})
+        self.assertEqual(status, 200, res)
+        new = self.mem(res["id"])
+        self.assertEqual(new["meta"]["source"]["cwd"], os.path.realpath(ROOT))
+        self.assertEqual(self.call("/api/create", {"type": "project", "scope": "here", "description": "x"})[0], 400)
+        status, gone = self.call("/api/delete", {"id": res["id"], "base": new["hash"]})
+        self.assertEqual(status, 200)
+        self.assertIsNone(self.mem(res["id"]))
+        self.call("/api/undo", {"commit": gone["commit"]})
+        self.assertIsNotNone(self.mem(res["id"]))
+        log = subprocess.run(["git", "-C", str(self.data), "log", "--format=%s", "-3"], capture_output=True,
+                             text=True).stdout
+        self.assertIn("memory: undo", log)
+
+
+    def test_bulk_delete_is_one_commit(self):
+        ids = []
+        for desc in ("bulk one", "bulk two"):
+            status, res = self.call("/api/create", {"type": "project", "scope": "global", "description": desc, "body": "B."})
+            self.assertEqual(status, 200, res)
+            ids.append(res["id"])
+        items = [{"id": i, "base": self.mem(i)["hash"]} for i in ids]
+        before = subprocess.run(["git", "-C", str(self.data), "rev-list", "--count", "HEAD"], capture_output=True, text=True).stdout
+        status, res = self.call("/api/delete", {"items": items + [{"id": "missing-id"}]})
+        self.assertEqual(status, 404)  # all or nothing
+        self.assertIsNotNone(self.mem(ids[0]))
+        status, res = self.call("/api/delete", {"items": items})
+        self.assertEqual(status, 200, res)
+        self.assertTrue(all(self.mem(i) is None for i in ids))
+        after = subprocess.run(["git", "-C", str(self.data), "rev-list", "--count", "HEAD"], capture_output=True, text=True).stdout
+        self.assertEqual(int(after) - int(before), 1)
+        self.assertEqual(self.call("/api/undo", {"commit": res["commit"]})[0], 200)
+        self.assertTrue(all(self.mem(i) is not None for i in ids))
+
+
 class SyncTest(unittest.TestCase):
     def test_two_machines_converge(self):
         from agent_memory import gitsync
