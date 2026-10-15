@@ -27,6 +27,8 @@ embedding model; leave it out after `mem ui --fetch-model` to also search by mea
 
 ## How it works
 
+![mem install wires hooks into Claude Code and Codex; at session start they load an index from the private data repository, and at the end of each turn they commit and push new memories back](https://raw.githubusercontent.com/Ki-Seki/agent-memory/main/docs/how-it-works.svg)
+
 - **One file per memory.** Frontmatter carries `type` (user / feedback / project / reference),
   `scope` (global / here), a one-line `description`, and provenance under `source`: tool, session
   id and name, model, host, folder, git root, remote, branch and commit. Files live in
