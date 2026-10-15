@@ -10,7 +10,7 @@ you gave Codex is there the next time Claude Code starts, on any machine that pu
 repository. This repository holds only the code; the memories live in a separate data
 repository.
 
-![mem ui listing memories, with one open on the right](docs/mem-ui.png)
+![mem ui listing memories, with one open on the right](https://raw.githubusercontent.com/Ki-Seki/agent-memory/main/docs/mem-ui.png)
 
 <sub>`mem ui` on the [demo data repository](https://github.com/Ki-Seki/agent-memory-data-demo).</sub>
 
