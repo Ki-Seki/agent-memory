@@ -161,6 +161,8 @@ following follow follows needed need needs means mean simple simply clear clearl
 whole entire full fully main mainly certain directly direct proper properly various several general
 correct correctly wrong instead later earlier often usually rather quite really already able unable
 item items part parts kind way ways case cases point points detail details thing result results
+come comes edit edits edited anything something everything separate change changes changed
+fail fails failed code example examples
 """.split())
 
 
