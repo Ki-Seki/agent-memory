@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
-"""Entry point for the `mem` command and the agent hooks."""
+"""Run `mem` straight from a checkout, without installing the package."""
 
 import os
 import sys
 
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.dirname(os.path.realpath(__file__))), "src"))
 
 from agent_memory.cli import main  # noqa: E402
 

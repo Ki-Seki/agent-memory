@@ -42,11 +42,12 @@ HOOK_EVENTS = [("SessionStart", "session-start", 15),
 # ---------------------------------------------------------------- helpers
 
 def hook_command(event, tool):
-    return f"{shlex.quote(sys.executable)} {shlex.quote(str(config.BIN))} hook {event} --tool {tool}"
+    return " ".join(shlex.quote(a) for a in config.mem_command()) + f" hook {event} --tool {tool}"
 
 
 def _is_ours(group):
-    return any("agent-memory" in h.get("command", "") and " hook " in h.get("command", "")
+    return any(("agent-memory" in h.get("command", "") or "agent_memory" in h.get("command", ""))
+               and " hook " in h.get("command", "")
                for h in group.get("hooks", []))
 
 
@@ -237,8 +238,11 @@ def _claude_plan(plan, data_dir, state):
     state["claude.permissions"] = sorted(set(state.get("claude.permissions", [])) | set(added))
     plan.edit(settings_path, json.dumps(new, indent=2, ensure_ascii=False) + "\n")
 
+    # Import a copy in the config folder: its path stays the same whichever way the package is
+    # installed or upgraded, and `mem install` refreshes it.
+    plan.edit(config.PROTOCOL_COPY, config.PROTOCOL.read_text("utf-8"))
     claude_md = CLAUDE_DIR / "CLAUDE.md"
-    plan.edit(claude_md, _block(_read(claude_md), f"@{config.PROTOCOL}"))
+    plan.edit(claude_md, _block(_read(claude_md), f"@{config.PROTOCOL_COPY}"))
 
 
 def _codex_plan(plan, data_dir, state):
@@ -381,6 +385,8 @@ def uninstall(dry_run=False):
         if text is not None:
             out = _unblock(text)
             plan.edit(md, out if out else None)
+        if config.PROTOCOL_COPY.exists():
+            plan.edit(config.PROTOCOL_COPY, None)
 
     if state.get("codex"):
         path = CODEX_DIR / "hooks.json"
@@ -453,14 +459,17 @@ def doctor():
         check(s.get("autoMemoryEnabled") is False, "Claude auto memory disabled")
         for event, _, _ in HOOK_EVENTS:
             check(any(_is_ours(g) for g in s.get("hooks", {}).get(event, [])), f"Claude {event} hook")
-        check(BEGIN in (_read(CLAUDE_DIR / "CLAUDE.md") or ""), "Claude CLAUDE.md imports PROTOCOL.md")
+        check(f"@{config.PROTOCOL_COPY}" in (_read(CLAUDE_DIR / "CLAUDE.md") or ""), "Claude CLAUDE.md imports PROTOCOL.md")
+        check(_read(config.PROTOCOL_COPY) == config.PROTOCOL.read_text("utf-8"),
+              "Claude's PROTOCOL.md copy is current (else run `mem install`)")
     if state.get("codex"):
         doc = json.loads(_read(CODEX_DIR / "hooks.json") or "{}")
         for event, _, _ in HOOK_EVENTS:
             check(any(_is_ours(g) for g in doc.get("hooks", {}).get(event, [])), f"Codex {event} hook")
         toml = _read(CODEX_DIR / "config.toml") or ""
         check(toml_get(toml, "memories", "use_memories") is False, "Codex native memories disabled")
-        check(BEGIN in (_read(CODEX_DIR / "AGENTS.md") or ""), "Codex AGENTS.md has the protocol")
+        check(config.PROTOCOL.read_text("utf-8").rstrip() in (_read(CODEX_DIR / "AGENTS.md") or ""),
+              "Codex AGENTS.md has the current protocol (else run `mem install`)")
     path = _login_path()
     if path is not None:
         check(str(LOCAL_BIN.parent) in path or SH_BEGIN in (_read(_rc_file()) or ""),

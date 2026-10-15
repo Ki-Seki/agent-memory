@@ -7,7 +7,7 @@ import sys
 import time
 from pathlib import Path
 
-from .config import BIN
+from .config import mem_command
 from .util import log
 
 _ENV = {**os.environ, "GIT_TERMINAL_PROMPT": "0"}
@@ -107,7 +107,7 @@ def sync(data_dir, push=True):
 
 def spawn_sync(data_dir, push):
     """Run `mem sync` detached so hooks return immediately."""
-    args = [sys.executable, str(BIN), "sync", "--quiet"]
+    args = mem_command() + ["sync", "--quiet"]
     if not push:
         args.append("--pull-only")
     log_path = Path(data_dir) / ".cache" / "sync.out"
