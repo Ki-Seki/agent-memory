@@ -11,14 +11,26 @@ You have a persistent memory that Claude Code and Codex share. Every memory is o
 
 ## What to save
 
-Save what a future session would want and could not cheaply work out again:
+Most turns save nothing; that is the expected outcome, not a gap. Before writing or editing a memory, ask: will a future session, on a different task, act differently because of this? If not, do not write it.
+
+The evidence that counts is what the user said: their requests, corrections, confirmations, interruptions, and what they repeat or keep narrowing. Your own proposals, analyses and discussion count only once the user adopted them or they were carried out.
+
+What passes usually falls into one of four types:
 
 - `user`: who the user is, their role, expertise and general preferences
 - `feedback`: corrections the user gave and approaches they confirmed, with the reason
 - `project`: decisions, constraints, deadlines and context that the code and git history do not record
 - `reference`: where to find things outside the repository, such as dashboards, documents, tickets or hosts
 
-Do not save code structure, paths you can rediscover, debugging recipes, git history, anything already in CLAUDE.md or AGENTS.md, or anything that only matters to the current conversation. Never save secrets. When the user asks you to remember something, save it; when they ask you to forget something, delete it.
+Do not save:
+
+- progress or status updates, what you did this turn, or a recap of the conversation
+- the result of one run, live metrics, or anything else that should be looked up again rather than remembered
+- code structure, paths you can rediscover, debugging recipes, git history, or anything already in the repository, its docs, CLAUDE.md or AGENTS.md
+- generic advice, or anything that matters only to the current conversation
+- secrets
+
+When the user asks you to remember something, save it; when they ask you to forget something, delete it.
 
 ## Writing a new memory
 
@@ -63,5 +75,6 @@ Leave out ids, dates and provenance (session, host, folder, git remote). When yo
 
 - Check the index and `mem search` first, and update an existing memory rather than adding a near-duplicate.
 - To update a memory, edit its file in place so it states what is true now; do not append dated notes, since git keeps the history. Keep its frontmatter and adjust `description` if the summary changes.
+- Edit a memory only when one of its facts changed or the user added to it; a memory becoming relevant again is no reason to touch it.
 - To retire a memory, delete its file.
 - If a new memory replaces older ones, add `supersedes: [id, ...]` to its frontmatter and the hook deletes them.
