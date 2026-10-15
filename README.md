@@ -137,6 +137,7 @@ prints, so other web pages cannot read or change memories.
 uv sync --all-extras          # dev tools and numpy
 uv run pytest
 uv run ruff check .
+uv run ruff format .
 ```
 
 `uv run mem ...` runs the working copy without touching the installed one. To have every
