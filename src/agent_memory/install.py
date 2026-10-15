@@ -18,7 +18,7 @@ import tomllib
 from pathlib import Path
 
 from . import config, gitsync
-from .util import HOME
+from .util import HOME, parse_time
 
 STATE_FILE = config.CONFIG_DIR / "install-state.json"
 BEGIN = "<!-- agent-memory:begin -->"
@@ -441,6 +441,24 @@ def uninstall(dry_run=False):
     print("uninstalled. Native memory settings restored; the data repository is untouched.")
 
 
+ERROR_DAYS = 7
+_ERROR_LINE = re.compile(r"^(\S+) ERROR in (hook [^:]*):", re.M)
+
+
+def recent_hook_errors(log_text, now=None, days=ERROR_DAYS):
+    """'<time> <where>' for each hook failure logged in the last `days` days, oldest first.
+
+    Other entries, such as errors from the `mem ui` server, are not hook failures.
+    """
+    now = now or _dt.datetime.now().astimezone()
+    out = []
+    for stamp, where in _ERROR_LINE.findall(log_text):
+        t = parse_time(stamp)
+        if t and (now - t).days < days:
+            out.append(f"{stamp} {where}")
+    return out
+
+
 def doctor():
     ok = True
 
@@ -478,6 +496,7 @@ def doctor():
         staged = list((data / "staging").glob("*/*.md")) if (data / "staging").exists() else []
         check(not staged, f"no stuck staged files ({len(staged)})")
         logf = data / ".cache" / "agent-memory.log"
-        errors = (_read(logf) or "").count("ERROR")
-        check(errors == 0, f"hook errors in {logf}: {errors}")
+        errors = recent_hook_errors(_read(logf) or "")
+        latest = f"; latest: {errors[-1]} (details in {logf})" if errors else ""
+        check(not errors, f"no hook errors in the last {ERROR_DAYS} days ({len(errors)}{latest})")
     return 0 if ok else 1
