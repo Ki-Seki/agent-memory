@@ -469,11 +469,9 @@ class UiServerTest(unittest.TestCase):
 
 
 class PackagingTest(unittest.TestCase):
-    def test_installed_package_runs_itself_with_python_m(self):
+    def test_hooks_run_the_package_with_python_m(self):
         from agent_memory import config
-        with mock.patch.object(config, "CHECKOUT", None):
-            self.assertEqual(config.mem_command(), [sys.executable, "-m", "agent_memory"])
-        self.assertEqual(config.mem_command()[1:], [str(config.CHECKOUT / "bin" / "mem")])
+        self.assertEqual(config.mem_command(), [sys.executable, "-m", "agent_memory"])
 
     def test_protocol_ships_inside_the_package(self):
         from agent_memory import config
@@ -573,7 +571,7 @@ class InstallTest(unittest.TestCase):
             self.assertEqual(config.PROTOCOL_COPY.read_text(), config.PROTOCOL.read_text())
             hook = settings["hooks"]["SessionStart"][-1]["hooks"][0]["command"]
             self.assertTrue(hook.endswith("hook session-start --tool claude-code"), hook)
-            self.assertIn("bin/mem", hook)  # run from this checkout, hooks call its bin/mem
+            self.assertIn(" -m agent_memory hook ", hook)
             self.assertIn(install.PATH_LINE, rc.read_text())
 
             install.install()  # idempotent
@@ -583,7 +581,17 @@ class InstallTest(unittest.TestCase):
             cfg = install.CODEX_DIR / "config.toml"
             cfg.write_text(cfg.read_text() + '\n[projects."/new"]\ntrust_level = "trusted"\n')
 
+            # an older install recorded ~/.local/bin/mem; now that uv owns it, it must survive
+            live = ROOT / "bin" / "mem"
+            live.parent.mkdir(parents=True, exist_ok=True)
+            (ROOT / "uv-mem").write_text("#!/bin/sh\n")
+            live.unlink(missing_ok=True)
+            live.symlink_to(ROOT / "uv-mem")
+            st = json.loads(install.STATE_FILE.read_text())
+            install.STATE_FILE.write_text(json.dumps({**st, "local_bin": str(live)}))
+
             install.uninstall()
+            self.assertTrue(live.is_symlink())
         after = self.snapshot()
         self.assertFalse(config.PROTOCOL_COPY.exists())
         self.assertEqual(rc.read_text(), rc_before)

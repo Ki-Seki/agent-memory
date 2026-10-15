@@ -17,15 +17,13 @@ repository.
 ## Try it without installing
 
 ```bash
-git clone https://github.com/Ki-Seki/agent-memory
 git clone https://github.com/Ki-Seki/agent-memory-data-demo
-cd agent-memory
-AGENT_MEMORY_DATA=../agent-memory-data-demo bin/mem ui --keywords-only
+AGENT_MEMORY_DATA=agent-memory-data-demo uvx --from "agent-memory-git[ui]" mem ui --keywords-only
 ```
 
-`AGENT_MEMORY_DATA` points `mem` at the demo repository, so nothing is installed and no hooks
-change. The page needs `numpy`. `--keywords-only` skips the optional embedding model; leave it
-out after `mem ui --fetch-model` to also search by meaning.
+`uvx` runs `mem` from a throwaway environment and `AGENT_MEMORY_DATA` points it at the demo
+repository, so nothing is installed and no hooks change. `--keywords-only` skips the optional
+embedding model; leave it out after `mem ui --fetch-model` to also search by meaning.
 
 ## How it works
 
@@ -79,7 +77,7 @@ protocol copies; `mem doctor` says when they are out of date.
 | `~/.codex/hooks.json` | the same three hooks |
 | `~/.codex/config.toml` | `memories.generate_memories = false`, `memories.use_memories = false`, data repository added to `sandbox_workspace_write.writable_roots` |
 | `~/.codex/AGENTS.md` | a marked block with the protocol |
-| `~/.local/bin/mem` | symlink to `mem`, only if that file does not exist yet (`uv tool install` already puts one there) |
+| `~/.zshrc` or `~/.bashrc` | a marked block putting `~/.local/bin`, where uv installs `mem`, on PATH, only if a new login shell lacks it |
 
 Codex asks you to trust new hooks once: open `/hooks` in Codex and enable the three
 agent-memory hooks.
@@ -141,9 +139,14 @@ uv run pytest
 uv run ruff check .
 ```
 
-From a checkout, `bin/mem` (or `uv run mem`) runs the code in place; `mem install` from there
-points the hooks at that checkout, so edits take effect in the next session.
-`uv tool install --editable .` does the same with `mem` on PATH.
+`uv run mem ...` runs the working copy without touching the installed one. To have every
+session use the working copy, install it in place of the release and rewire the hooks; go back
+the same way:
+
+```bash
+uv tool install --force --editable ".[ui]" && mem install    # the checkout, live
+uv tool install --force "agent-memory-git[ui]" && mem install  # the release again
+```
 
 To release, run `uv run scripts/release.py prepare patch` (or `minor`, `major`) to open a
 version PR. After it is merged, `uv run scripts/release.py publish <PR_NUMBER>` creates the GitHub

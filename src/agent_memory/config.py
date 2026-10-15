@@ -7,11 +7,7 @@ from pathlib import Path
 PACKAGE_DIR = Path(__file__).resolve().parent
 PROTOCOL = PACKAGE_DIR / "PROTOCOL.md"
 
-# Running from a source checkout (bin/mem, `uv run`, or an editable install) rather than an
-# installed package: hooks then call the checkout's bin/mem, so edits take effect at once.
-_ROOT = PACKAGE_DIR.parent.parent
-CHECKOUT = _ROOT if (_ROOT / "pyproject.toml").is_file() and (_ROOT / "bin" / "mem").is_file() else None
-CODE_DIR = CHECKOUT or PACKAGE_DIR
+CODE_DIR = PACKAGE_DIR
 
 CONFIG_DIR = Path(os.environ.get("AGENT_MEMORY_CONFIG_DIR", "~/.config/agent-memory")).expanduser()
 CONFIG_FILE = CONFIG_DIR / "config.json"
@@ -20,14 +16,10 @@ PROTOCOL_COPY = CONFIG_DIR / "PROTOCOL.md"  # what Claude Code imports; `mem ins
 
 def mem_command():
     """The argv that runs `mem` with this interpreter, for hooks and background sync."""
-    if CHECKOUT:
-        return [sys.executable, str(CHECKOUT / "bin" / "mem")]
     return [sys.executable, "-m", "agent_memory"]
 
 
 def _mem_path():
-    if CHECKOUT:
-        return CHECKOUT / "bin" / "mem"
     found = shutil.which("mem")
     return Path(found) if found else Path(sys.executable).with_name("mem")
 

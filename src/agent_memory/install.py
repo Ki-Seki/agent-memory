@@ -327,19 +327,13 @@ def install(dry_run=False, claude=True, codex=True):
     _path_plan(plan, state)
 
     plan.show()
-    link_ok = LOCAL_BIN.is_symlink() and LOCAL_BIN.resolve() == config.BIN.resolve()
-    if not link_ok:
-        print(f"=== {LOCAL_BIN} -> {config.BIN} (symlink)\n")
     if dry_run:
         print("dry run: nothing changed")
         return
 
     stamp = _dt.datetime.now().strftime("%Y%m%d-%H%M%S")
     plan.apply(config.CONFIG_DIR / "backups" / stamp)
-    if not link_ok and not LOCAL_BIN.exists():
-        LOCAL_BIN.parent.mkdir(parents=True, exist_ok=True)
-        LOCAL_BIN.symlink_to(config.BIN)
-        state["local_bin"] = str(LOCAL_BIN)
+    state.pop("local_bin", None)  # `uv tool install` owns ~/.local/bin/mem now
     state["installed_at"] = stamp
     state["claude"] = state.get("claude") or (claude and CLAUDE_DIR.is_dir())
     state["codex"] = state.get("codex") or (codex and CODEX_DIR.is_dir())
@@ -427,15 +421,18 @@ def uninstall(dry_run=False):
             plan.edit(Path(rc), _unblock(text, SH_BEGIN, SH_END))
 
     plan.show()
+    # Older installs linked ~/.local/bin/mem to a checkout's bin/mem. Remove that link only once
+    # it points nowhere; a live one now belongs to `uv tool install`.
     local = state.get("local_bin")
+    local = local if local and Path(local).is_symlink() and not Path(local).exists() else None
     if local:
-        print(f"=== remove symlink {local}\n")
+        print(f"=== remove dangling symlink {local}\n")
     if dry_run:
         print("dry run: nothing changed")
         return
     stamp = _dt.datetime.now().strftime("%Y%m%d-%H%M%S")
     plan.apply(config.CONFIG_DIR / "backups" / f"uninstall-{stamp}")
-    if local and Path(local).is_symlink():
+    if local:
         Path(local).unlink()
     STATE_FILE.rename(STATE_FILE.with_name(f"install-state.uninstalled-{stamp}.json"))
     print("uninstalled. Native memory settings restored; the data repository is untouched.")
