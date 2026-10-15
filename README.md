@@ -133,6 +133,18 @@ never be keywords, such as your own name, go in `keyword_stopwords` in
 The server only listens on loopback, and every request needs the one-time token from the link it
 prints, so other web pages cannot read or change memories.
 
+## Development
+
+```bash
+uv sync --all-extras          # dev tools and numpy
+uv run pytest
+uv run ruff check .
+```
+
+From a checkout, `bin/mem` (or `uv run mem`) runs the code in place; `mem install` from there
+points the hooks at that checkout, so edits take effect in the next session.
+`uv tool install --editable .` does the same with `mem` on PATH.
+
 ## Notes
 
 - Hooks never fail the host session; errors go to `<data>/.cache/agent-memory.log`.
