@@ -44,6 +44,7 @@ WORKER_DEPS = ["onnxruntime==1.31.0", "tokenizers==0.23.3", "numpy"]
 EMBED_CHARS = 2000        # characters of each memory given to the model
 TITLE_WEIGHT = 3          # description and name count this many times in keyword vectors
 NEIGHBORS = 6             # similar memories listed for each memory
+KEYWORDS = 4              # keywords shown for each memory
 SEARCH_INSTRUCTION = "Instruct: Given a search query, retrieve memory notes about it\nQuery: "
 
 _ASCII = re.compile(r"[A-Za-z][A-Za-z0-9_+#-]*[A-Za-z0-9+#]|[A-Za-z]")
@@ -80,7 +81,10 @@ _STOP_CJK = set("""
 相关 进行 这种 时候 需要 不能 不会 只有 直接 所有 其他 自己 一样 部分 以上 以下 下来 起来 出来 每个 各个 任何 一定 先给
 """.split())
 # Function characters that start no word: 的了和与… A string beginning with one is a fragment.
-_CJK_BAD_START = set("的了和与及或就都也把被让给并而时在是对向从")
+_CJK_BAD_START = set("的了和与及或就都也把被让给并而时在是对向从个件等上不每一这那该各再又还才只很最更已将会能要可使于以之其此")
+_CJK_KEEP = {"完成", "生成", "集成", "构成", "组成", "前后", "最后", "然后", "之后", "背后", "上一", "中文"}
+# ...and characters that end no word: a string ending in one runs into the next word.
+_CJK_BAD_END = set("的了着过是在和与及等上中里成到给把被让后不也都就又再才很一个这那各每将会能要可于以之其此任")
 
 
 # ------------------------------------------------------------ keyword vectors
@@ -109,7 +113,8 @@ def chinese_words(texts):
         longer = [h for h in frequent if len(h) == len(g) + 1 and g in h]
         if not any(df[h] >= 0.8 * df[g] for h in longer):
             words.add(g)
-    return {w for w in words - _STOP_CJK if w[0] not in _CJK_BAD_START or w == "时间"}
+    return {w for w in words - _STOP_CJK
+            if (w[0] not in _CJK_BAD_START or w == "时间") and (w[-1] not in _CJK_BAD_END or w in _CJK_KEEP)}
 
 
 def tokens(text, words=frozenset()):
@@ -138,6 +143,41 @@ def tokens(text, words=frozenset()):
             else:
                 i += 1
     return out
+
+
+def _display_forms(texts):
+    """Most common original spelling of each token (UTP, not utp), for showing keywords."""
+    seen = {}
+    for text in texts:
+        for w in _ASCII.findall(text):
+            seen.setdefault(w.lower().strip("-_"), Counter())[w] += 1
+    return {k: c.most_common(1)[0][0] for k, c in seen.items()}
+
+
+# Plain English words that score high in TF-IDF but say little about what a memory is about.
+_GENERIC = set("""
+actually specified large small nontrivial declaring declared truth human builds build built pin pinned
+following follow follows needed need needs means mean simple simply clear clearly important exact exactly
+whole entire full fully main mainly certain directly direct proper properly various several general
+correct correctly wrong instead later earlier often usually rather quite really already able unable
+item items part parts kind way ways case cases point points detail details thing result results
+""".split())
+
+
+def _term_like(display):
+    """Acronyms, identifiers and Chinese words make better keywords than plain English.
+
+    A capital only at the start (Choose, Pack) is usually the start of a sentence, so it
+    does not count; one further in (SigLIP, UTP, OpenReview) does.
+    """
+    return bool(re.search(r".[A-Z]|[0-9_.+#-]|[\u3400-\u9fff]", display))
+
+
+def keyword_picks(x, vocab, forms, k=KEYWORDS):
+    """Column indices of each memory's keywords, best first."""
+    weight = np.array([0 if t in _GENERIC else (1.6 if _term_like(forms.get(t, t)) else 1.0) for t in vocab])
+    scored = x * weight
+    return [[int(j) for j in np.argsort(-row)[:k] if row[j] > 0] for row in scored]
 
 
 def vectorize(docs):
@@ -292,18 +332,21 @@ def build(data_dir, semantic=True, vectors_out=None):
     if not items:
         return {**base, "memories": [], "places": [], "method": "", "semantic": False}
 
+    # keywords: the words that most set each memory apart (TF-IDF), shared with at least one other
+    x, vocab = vectorize(docs)
+    forms = _display_forms(clean(t + " " + b) for t, b in docs)
     vectors = embed(data_dir, [prose(t, b) for t, b in docs]) if semantic else None
     if vectors is not None:
         sim, space = closeness(vectors), vectors
         method = f"{MODEL['name']}, local"
     else:
-        x, _ = vectorize(docs)
         sim, space = np.clip(x @ x.T, 0, 1), x
         np.fill_diagonal(sim, 1)
         method = "keywords only (no local model)"
     if vectors_out is not None:
         vectors_out[:] = [space]
 
+    picks = keyword_picks(x, vocab, forms)
     rows, places = [], {}
     for i, (m, raw, meta, body) in enumerate(items):
         order = [int(j) for j in np.argsort(-sim[i]) if j != i][:NEIGHBORS]
@@ -317,6 +360,8 @@ def build(data_dir, semantic=True, vectors_out=None):
             "tool": src.get("tool") or "", "host": src.get("host") or "",
             "created": m["created"], "updated": m["updated"],
             "similar": [{"i": j, "s": round(float(sim[i, j]), 3)} for j in order if sim[i, j] > 0],
+            "keywords": [{"k": vocab[j], "t": forms.get(vocab[j], vocab[j])} for j in picks[i]],
+            "terms": [vocab[j] for j in np.flatnonzero(x[i])],
         })
         if m["scope"] == "here" and (src.get("git_remote") or src.get("cwd")):
             key = _place(src)

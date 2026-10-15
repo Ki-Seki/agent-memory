@@ -237,6 +237,10 @@ class WorkdirTest(unittest.TestCase):
                                              home=self.home))
 
 
+def by_desc_kw(data, desc):
+    return next(m for m in data["memories"] if m["description"] == desc)["keywords"]
+
+
 class UiTest(unittest.TestCase):
     def setUp(self):
         from agent_memory import ui
@@ -285,9 +289,18 @@ class UiTest(unittest.TestCase):
         self.assertTrue(m["raw"].startswith("---\nid: m"))  # the full file, for the File tab
         self.assertEqual(m["meta"]["source"], {"tool": "cli"})
         self.assertEqual(m["tool"], "cli")
+        self.assertIn("warp", [k["k"] for k in by_desc_kw(data, "Highway access policy")])
         by_desc = {mm["description"]: mm for mm in data["memories"]}
         first = by_desc["Highway access policy"]["similar"][0]["i"]
         self.assertEqual(data["memories"][first]["description"], "Highway route ACL")
+
+    def test_keywords_prefer_names(self):
+        import numpy as np
+        vocab = ["actually", "choose", "routes", "utp", "检索"]
+        x = np.array([[0.9, 0.6, 0.5, 0.45, 0.4]])
+        forms = {"choose": "Choose", "utp": "UTP"}
+        picks = self.ui.keyword_picks(x, vocab, forms, k=3)[0]
+        self.assertEqual([vocab[j] for j in picks], ["utp", "检索", "choose"])  # "actually" is generic
 
     def test_closeness_spreads_bunched_cosines(self):
         import numpy as np

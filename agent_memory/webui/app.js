@@ -63,11 +63,11 @@
   }
 
   // ------------------------------------------------------------ data
-  let D = null, M = [], byId = new Map(), byName = new Map();
+  let D = null, M = [], byId = new Map(), byName = new Map(), kwName = new Map();
   const S = {
     open: null, mode: "view", tab: "rendered",
     q: "", lex: [], sem: [],
-    f: { type: "", loads: "", tool: "", age: "" }, sort: local.get("sort", "new"),
+    f: { type: "", loads: "", tool: "", age: "", kw: "" }, sort: local.get("sort", "new"),
     picked: new Set(), rows: [], cursor: -1,
   };
 
@@ -76,6 +76,9 @@
     D = d; M = d.memories;
     byId = new Map(M.map((m, i) => [m.id, i]));
     byName = new Map(M.map((m, i) => [m.meta && m.meta.name, i]));
+    M.forEach(m => { m.termSet = new Set(m.terms || []); });
+    kwName = new Map();
+    M.forEach(m => (m.keywords || []).forEach(k => kwName.set(k.k, k.t)));
     S.picked.forEach(id => { if (!byId.has(id)) S.picked.delete(id); });
     if (S.open && !byId.has(S.open)) closeDrawer(true);
     if (S.f.loads.startsWith("place:") && !(D.places || []).some(p => "place:" + p.key === S.f.loads)) S.f.loads = "";
@@ -98,6 +101,7 @@
     if (skip !== "loads" && f.loads === "global" && m.scope !== "global") return false;
     if (skip !== "loads" && f.loads.startsWith("place:") && (m.scope !== "here" || m.place !== f.loads.slice(6))) return false;
     if (skip !== "tool" && f.tool && m.tool !== f.tool) return false;
+    if (skip !== "kw" && f.kw && !m.termSet.has(f.kw)) return false;
     if (skip !== "age" && f.age) {
       const t = Date.parse(f.age === "stale" ? touched(m) : m.created || "");
       if (!t) return false;
@@ -110,10 +114,29 @@
       options.map(([v, text]) => el("option", { value: v, text, selected: v === value })));
     return el("span", { class: "pill" + (value && key !== "sort" ? " on" : "") }, sel);
   }
+  // keywords that tag at least two memories, most common first; the chosen one always listed
+  function keywordOptions() {
+    const n = new Map();
+    M.forEach(m => { if (passes(m, "kw")) m.termSet.forEach(t => { if (kwName.has(t)) n.set(t, (n.get(t) || 0) + 1); }); });
+    const out = [...n].filter(([, c]) => c >= 2).sort((a, b) => b[1] - a[1] || kwName.get(a[0]).localeCompare(kwName.get(b[0]))).slice(0, 80);
+    if (S.f.kw && !out.some(([k]) => k === S.f.kw)) out.unshift([S.f.kw, n.get(S.f.kw) || 0]);
+    return out.map(([k, c]) => [k, `${kwName.get(k) || k} · ${c}`]);
+  }
+  function setKeyword(k) {
+    S.f.kw = S.f.kw === k ? "" : k; S.cursor = -1;
+    renderFilters(); renderList(); scrollTo(0, 0);
+    if (S.open && S.mode === "view") renderDrawer();
+  }
+  function keywordChips(m) {
+    if (!(m.keywords || []).length) return null;
+    return el("div", { class: "kws" }, m.keywords.map(k => el("button", { class: "kw" + (S.f.kw === k.k ? " on" : ""), text: k.t,
+      title: S.f.kw === k.k ? "Show all memories again" : `Only memories that mention ${k.t}`,
+      onclick: e => { e.stopPropagation(); setKeyword(k.k); } })));
+  }
   function renderFilters() {
     const box = $("filters");
     const count = (key, test) => M.filter(m => passes(m, key) && test(m)).length;
-    const set = key => v => { S.f[key] = v; S.cursor = -1; renderFilters(); renderList(); };
+    const set = key => v => { S.f[key] = v; S.cursor = -1; renderFilters(); renderList(); scrollTo(0, 0); };
     const tools = [...new Set(M.map(m => m.tool).filter(Boolean))].sort();
     const any = Object.values(S.f).some(Boolean);
     box.replaceChildren(...[
@@ -121,8 +144,9 @@
       pill("loads", "Where it loads", [["", "Loads anywhere"], ["global", `Everywhere · ${count("loads", m => m.scope === "global")}`],
         ...(D.places || []).map(p => ["place:" + p.key, `${p.key} · ${count("loads", m => m.scope === "here" && m.place === p.key)}`])], S.f.loads, set("loads")),
       tools.length > 1 ? pill("tool", "Written by", [["", "Any source"], ...tools.map(t => [t, `${t} · ${count("tool", m => m.tool === t)}`])], S.f.tool, set("tool")) : null,
+      pill("kw", "Keyword", [["", "Any keyword"], ...keywordOptions()], S.f.kw, set("kw")),
       pill("age", "When", [["", "Any time"], ...AGES], S.f.age, set("age")),
-      any ? el("button", { class: "clear", text: "Clear filters", onclick: () => { S.f = { type: "", loads: "", tool: "", age: "" }; renderFilters(); renderList(); } }) : null,
+      any ? el("button", { class: "clear", text: "Clear filters", onclick: () => { S.f = { type: "", loads: "", tool: "", age: "", kw: "" }; renderFilters(); renderList(); } }) : null,
       el("span", { class: "spacer" }),
       el("span", { class: "count", id: "count" }),
       S.q ? null : pill("sort", "Order", SORTS, S.sort, v => { S.sort = v; local.set("sort", v); renderFilters(); renderList(); }),
@@ -238,7 +262,7 @@
       const filtered = Object.values(S.f).some(Boolean);
       list.append(el("div", { class: "empty" },
         el("div", { text: S.q ? (S.semPending ? "No word matches; searching by meaning…" : "No matches.") : "No memories match these filters." }),
-        filtered ? el("button", { class: "btn", text: "Clear filters", onclick: () => { S.f = { type: "", loads: "", tool: "", age: "" }; renderFilters(); renderList(); } }) : null));
+        filtered ? el("button", { class: "btn", text: "Clear filters", onclick: () => { S.f = { type: "", loads: "", tool: "", age: "", kw: "" }; renderFilters(); renderList(); } }) : null));
     }
     renderSelbar();
   }
@@ -251,7 +275,7 @@
         onclick: e => { e.stopPropagation(); togglePick(m.id); } }),
       el("div", { class: "main" },
         el("div", { class: "desc" }, highlight(m.description, ts)),
-        snip ? el("div", { class: "snip" }, highlight(snip, ts)) : null),
+        snip ? el("div", { class: "snip" }, highlight(snip, ts)) : keywordChips(m)),
       el("div", { class: "meta" },
         el("span", { class: `t ${m.type}` }, el("i"), m.type),
         el("span", { class: "p", title: m.scope === "global" ? "Loads in every session" : m.place, text: m.scope === "global" ? "everywhere" : m.place }),
@@ -454,6 +478,7 @@
         iconBtn("trash", "Delete", () => deleteMany([m.id])),
         iconBtn("close", "Close (Esc)", () => closeDrawer())),
       el("h1", { text: m.description }),
+      keywordChips(m),
       el("div", { class: "chips" },
         el("span", { class: "chip", text: m.type }),
         el("span", { class: "chip", text: m.scope === "global" ? "loads everywhere" : `loads in ${m.place || "one place"}` }),
