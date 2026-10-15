@@ -22,7 +22,7 @@ from pathlib import Path
 
 import numpy as np
 
-from . import config, store
+from . import config, lint, store
 from .util import HOME
 
 WORKER = Path(__file__).with_name("embed_worker.py")
@@ -350,6 +350,7 @@ def build(data_dir, semantic=True, vectors_out=None):
         vectors_out[:] = [space]
 
     picks = keyword_picks(x, vocab, forms)
+    names = {m["name"] for m, _, _, _ in items if m["name"]}
     rows, places = [], {}
     for i, (m, raw, meta, body) in enumerate(items):
         order = [int(j) for j in np.argsort(-sim[i]) if j != i][:NEIGHBORS]
@@ -365,6 +366,7 @@ def build(data_dir, semantic=True, vectors_out=None):
             "similar": [{"i": j, "s": round(float(sim[i, j]), 3)} for j in order if sim[i, j] > 0],
             "keywords": [{"k": vocab[j], "t": forms.get(vocab[j], vocab[j])} for j in picks[i]],
             "terms": [vocab[j] for j in np.flatnonzero(x[i])],
+            "issues": [message for _, message in lint.check(m, body, names)],
         })
         if m["scope"] == "here" and (src.get("git_remote") or src.get("cwd")):
             key = _place(src)

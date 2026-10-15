@@ -144,6 +144,40 @@ def cmd_relocate(args):
     print(f"{moved} to move" if args.dry_run else f"moved {moved}")
 
 
+def cmd_lint(args):
+    from . import lint
+    data = _data()
+    mdir = store.memories_dir(data)
+    memories = store.load_all(data)
+    names = {m["name"] for m in memories if m["name"]}
+    picked = [m for m in memories
+              if not args.only or any(k in (m["id"], m["name"]) or k in m["rel"] for k in args.only)]
+    flagged, kinds = 0, {}
+    for m in picked:
+        try:
+            _, body = store.read(mdir / m["rel"])
+        except OSError:
+            continue
+        issues = lint.check(m, body, names)
+        if not issues:
+            continue
+        flagged += 1
+        for kind, _ in issues:
+            kinds[kind] = kinds.get(kind, 0) + 1
+        if not args.summary:
+            print(select.line(m))
+            for _, message in issues:
+                print(f"    - {message}")
+    if not flagged:
+        print(f"all {len(picked)} memories follow the format")
+        return 0
+    detail = ", ".join(f"{n} {lint.KINDS[k]}" for k, n in sorted(kinds.items(), key=lambda kv: -kv[1]))
+    if not args.summary:
+        print()
+    print(f"{flagged} of {len(picked)} memories need tidying: {detail}")
+    return 1
+
+
 def cmd_ui(args):
     from . import ui, ui_server
     if args.fetch_model:
@@ -233,6 +267,11 @@ def main(argv=None):
     sp.add_argument("only", nargs="*", help="limit to memories whose path contains one of these")
     sp.add_argument("--dry-run", action="store_true")
     sp.set_defaults(fn=cmd_relocate)
+
+    sp = sub.add_parser("lint", help="list memories that do not follow the body format in PROTOCOL.md")
+    sp.add_argument("only", nargs="*", help="check only these ids, names or paths")
+    sp.add_argument("--summary", action="store_true", help="print only the counts")
+    sp.set_defaults(fn=cmd_lint)
 
     sp = sub.add_parser("ui", help="search, filter, read and edit memories in a local web page (needs numpy)")
     sp.add_argument("--port", type=int, default=8790)

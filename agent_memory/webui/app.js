@@ -67,7 +67,7 @@
   const S = {
     open: null, mode: "view", tab: "rendered",
     q: "", lex: [], sem: [],
-    f: { type: "", loads: "", tool: "", age: "", kw: "" }, sort: local.get("sort", "new"),
+    f: { type: "", loads: "", tool: "", age: "", kw: "", fmt: "" }, sort: local.get("sort", "new"),
     picked: new Set(), rows: [], cursor: -1,
   };
 
@@ -102,6 +102,7 @@
     if (skip !== "loads" && f.loads.startsWith("place:") && (m.scope !== "here" || m.place !== f.loads.slice(6))) return false;
     if (skip !== "tool" && f.tool && m.tool !== f.tool) return false;
     if (skip !== "kw" && f.kw && !m.termSet.has(f.kw)) return false;
+    if (skip !== "fmt" && f.fmt && !(m.issues || []).length) return false;
     if (skip !== "age" && f.age) {
       const t = Date.parse(f.age === "stale" ? touched(m) : m.created || "");
       if (!t) return false;
@@ -146,7 +147,8 @@
       tools.length > 1 ? pill("tool", "Written by", [["", "Any source"], ...tools.map(t => [t, `${t} · ${count("tool", m => m.tool === t)}`])], S.f.tool, set("tool")) : null,
       pill("kw", "Keyword", [["", "Any keyword"], ...keywordOptions()], S.f.kw, set("kw")),
       pill("age", "When", [["", "Any time"], ...AGES], S.f.age, set("age")),
-      any ? el("button", { class: "clear", text: "Clear filters", onclick: () => { S.f = { type: "", loads: "", tool: "", age: "", kw: "" }; renderFilters(); renderList(); } }) : null,
+      pill("fmt", "Format", [["", "Any format"], ["tidy", `Needs tidying · ${count("fmt", m => (m.issues || []).length)}`]], S.f.fmt, set("fmt")),
+      any ? el("button", { class: "clear", text: "Clear filters", onclick: () => { S.f = { type: "", loads: "", tool: "", age: "", kw: "", fmt: "" }; renderFilters(); renderList(); } }) : null,
       el("span", { class: "spacer" }),
       el("span", { class: "count", id: "count" }),
       S.q ? null : pill("sort", "Order", SORTS, S.sort, v => { S.sort = v; local.set("sort", v); renderFilters(); renderList(); }),
@@ -262,7 +264,7 @@
       const filtered = Object.values(S.f).some(Boolean);
       list.append(el("div", { class: "empty" },
         el("div", { text: S.q ? (S.semPending ? "No word matches; searching by meaning…" : "No matches.") : "No memories match these filters." }),
-        filtered ? el("button", { class: "btn", text: "Clear filters", onclick: () => { S.f = { type: "", loads: "", tool: "", age: "", kw: "" }; renderFilters(); renderList(); } }) : null));
+        filtered ? el("button", { class: "btn", text: "Clear filters", onclick: () => { S.f = { type: "", loads: "", tool: "", age: "", kw: "", fmt: "" }; renderFilters(); renderList(); } }) : null));
     }
     renderSelbar();
   }
@@ -483,6 +485,7 @@
         el("span", { class: "chip", text: m.type }),
         el("span", { class: "chip", text: m.scope === "global" ? "loads everywhere" : `loads in ${m.place || "one place"}` }),
         el("span", { class: "chip", text: m.updated ? `changed ${day(m.updated)}` : `added ${day(m.created)}` })),
+      (m.issues || []).length ? el("ul", { class: "issues", title: "Differs from the format in PROTOCOL.md" }, m.issues.map(t => el("li", { text: t.replace(/\*\*([^*]+?):?\*\*/g, "“$1”") }))) : null,
       el("div", { class: "tabs", role: "tablist" },
         ["rendered", "file"].map(t => el("button", { role: "tab", "aria-selected": String(S.tab === t), text: t === "rendered" ? "Memory" : "File",
           onclick: () => { S.tab = t; renderDrawer(); } }))));

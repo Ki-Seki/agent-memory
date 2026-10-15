@@ -95,6 +95,8 @@ button { cursor: pointer; }
 .kw.on { background: var(--ink); color: var(--surface); }
 .d-head .kws { margin-top: 10px; }
 .d-head .kws + .chips { margin-top: 8px; }
+.issues { margin: 10px 0 0; padding: 7px 12px 7px 26px; border-radius: 8px; background: color-mix(in srgb, #d9822b 10%, transparent); color: var(--ink-2); font-size: 12.5px; }
+.issues li { margin: 1px 0; }
 .row .meta { display: flex; gap: 14px; font-size: 12px; color: var(--ink-3); white-space: nowrap; padding-top: 2px; }
 .row .meta .t { display: inline-flex; align-items: center; gap: 6px; width: 78px; }
 .row .meta .t i { width: 7px; height: 7px; border-radius: 50%; background: var(--ink-3); }

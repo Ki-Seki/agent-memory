@@ -299,6 +299,7 @@ class UiTest(unittest.TestCase):
         self.assertTrue(m["raw"].startswith("---\nid: m"))  # the full file, for the File tab
         self.assertEqual(m["meta"]["source"], {"tool": "cli"})
         self.assertEqual(m["tool"], "cli")
+        self.assertIn("no **Why:** or **How to apply:**", m["issues"])  # feedback without a reason
         self.assertIn("vpn", [k["k"] for k in by_desc_kw(data, "VPN access policy")])
         by_desc = {mm["description"]: mm for mm in data["memories"]}
         first = by_desc["VPN access policy"]["similar"][0]["i"]
@@ -332,6 +333,29 @@ class UiTest(unittest.TestCase):
         self.assertNotIn("rollout_summaries", text)
         self.assertNotIn("/Users", text)
         self.assertNotIn("3f2a9c1d", text)
+
+
+class LintTest(unittest.TestCase):
+    def setUp(self):
+        from agent_memory import lint
+        self.lint = lint
+
+    def kinds(self, typ, body, desc="Short description", names=("other",)):
+        m = {"type": typ, "description": desc}
+        return [k for k, _ in self.lint.check(m, body, set(names))]
+
+    def test_good_memory_passes(self):
+        body = "Ask before every push.\n\n**Why:** a push once broke main.\n\n**How to apply:** ask first. See [[other]].\n"
+        self.assertEqual(self.kinds("feedback", body), [])
+        self.assertEqual(self.kinds("reference", "The dashboard is at example.com/d/x.\n"), [])  # Why is optional
+
+    def test_each_rule(self):
+        self.assertEqual(self.kinds("project", "# Log\n" + "x" * 1600), ["long", "heading", "reason"])
+        self.assertEqual(self.kinds("user", "Fact. [[gone]]"), ["links"])
+        self.assertEqual(self.kinds("user", "Fact.", desc="d" * 151), ["description"])
+        self.assertEqual(self.kinds("user", "   \n"), ["empty"])
+        self.assertIn("no **How to apply:**", [m for _, m in self.lint.check(
+            {"type": "feedback", "description": "d"}, "Fact.\n\n**Why:** because.", set())])
 
 
 class UiServerTest(unittest.TestCase):
