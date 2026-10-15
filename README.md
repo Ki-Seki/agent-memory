@@ -95,6 +95,10 @@ in `<data>/.cache/embeddings/`. Get the model once with `mem ui --fetch-model` (
 pinned revision, checked by SHA-256). Without it, or with `--keywords-only`, similar memories
 come from keyword vectors and search matches words only.
 
+Keywords are the words that most set a memory apart from the others (TF-IDF). Words that should
+never be keywords, such as your own name, go in `keyword_stopwords` in
+`~/.config/agent-memory/config.json`.
+
 The server only listens on loopback, and every request needs the one-time token from the link it
 prints, so other web pages cannot read or change memories.
 

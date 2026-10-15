@@ -260,16 +260,16 @@ class UiTest(unittest.TestCase):
         words = self.ui.chinese_words(["汇报时给北京时间", "按北京时间说", "北京时间晚上"])
         self.assertIn("北京时间", words)
         self.assertNotIn("京时", words)  # a fragment of 北京时间, not a word
-        toks = self.ui.tokens("Fix UTP in /Users/a/b/c.py at 3f2a9c1d, see S3 and the 北京时间 report", words)
-        self.assertIn("utp", toks)
+        toks = self.ui.tokens("Fix GPU in /Users/a/b/c.py at 3f2a9c1d, see S3 and the 北京时间 report", words)
+        self.assertIn("gpu", toks)
         self.assertIn("s3", toks)
         self.assertIn("北京时间", toks)
         self.assertNotIn("3f2a9c1d", toks)
         self.assertFalse(any("users" in t or t.endswith("py") for t in toks))
 
     def test_similar_memories_are_closer(self):
-        docs = [("Highway access policy", "Glimpse route keeps warp access on Highway."),
-                ("Highway route ACL", "Match Tuna route on Highway uses warp access only."),
+        docs = [("VPN access policy", "The staging route keeps VPN access on the gateway."),
+                ("Gateway route ACL", "The billing route on the gateway uses VPN access only."),
                 ("Reply language", "Write replies in Chinese for this user."),
                 ("Commit rules", "Each commit does one thing; ask before push.")]
         x, vocab = self.ui.vectorize(docs)
@@ -281,8 +281,8 @@ class UiTest(unittest.TestCase):
         data_dir = ROOT / "ui-data"
         shutil.rmtree(data_dir, ignore_errors=True)
         for i, (desc, body) in enumerate([
-                ("Highway access policy", "Glimpse route keeps warp access."),
-                ("Highway route ACL", "Match Tuna route uses warp access only."),
+                ("VPN access policy", "The staging route keeps VPN access."),
+                ("Gateway route ACL", "The billing route uses VPN access only."),
                 ("Reply language", "Write replies in Chinese."),
                 ("Commit rules", "Each commit does one thing."),
                 ("Push rules", "Ask before every push and commit.")]):
@@ -299,18 +299,18 @@ class UiTest(unittest.TestCase):
         self.assertTrue(m["raw"].startswith("---\nid: m"))  # the full file, for the File tab
         self.assertEqual(m["meta"]["source"], {"tool": "cli"})
         self.assertEqual(m["tool"], "cli")
-        self.assertIn("warp", [k["k"] for k in by_desc_kw(data, "Highway access policy")])
+        self.assertIn("vpn", [k["k"] for k in by_desc_kw(data, "VPN access policy")])
         by_desc = {mm["description"]: mm for mm in data["memories"]}
-        first = by_desc["Highway access policy"]["similar"][0]["i"]
-        self.assertEqual(data["memories"][first]["description"], "Highway route ACL")
+        first = by_desc["VPN access policy"]["similar"][0]["i"]
+        self.assertEqual(data["memories"][first]["description"], "Gateway route ACL")
 
     def test_keywords_prefer_names(self):
         import numpy as np
-        vocab = ["actually", "choose", "routes", "utp", "检索"]
+        vocab = ["actually", "choose", "routes", "gpu", "检索"]
         x = np.array([[0.9, 0.6, 0.5, 0.45, 0.4]])
-        forms = {"choose": "Choose", "utp": "UTP"}
+        forms = {"choose": "Choose", "gpu": "GPU"}
         picks = self.ui.keyword_picks(x, vocab, forms, k=3)[0]
-        self.assertEqual([vocab[j] for j in picks], ["utp", "检索", "choose"])  # "actually" is generic
+        self.assertEqual([vocab[j] for j in picks], ["gpu", "检索", "choose"])  # "actually" is generic
 
     def test_closeness_spreads_bunched_cosines(self):
         import numpy as np
@@ -325,10 +325,10 @@ class UiTest(unittest.TestCase):
         self.assertTrue((np.diag(c) == 1).all())
 
     def test_prose_drops_bookkeeping(self):
-        body = ("# Task Group: Highway\n### rollout_summary_files\n- rollout_summaries/2026-x.md (cwd=/Users/a/b)\n"
-                "Keep warp access on `glimpse` at /Users/a/repo/file.py, commit 3f2a9c1d.")
-        text = self.ui.prose("Highway policy", body)
-        self.assertIn("warp access", text)
+        body = ("# Task Group: Gateway\n### rollout_summary_files\n- rollout_summaries/2026-x.md (cwd=/Users/a/b)\n"
+                "Keep VPN access on `staging` at /Users/a/repo/file.py, commit 3f2a9c1d.")
+        text = self.ui.prose("Gateway policy", body)
+        self.assertIn("VPN access", text)
         self.assertNotIn("rollout_summaries", text)
         self.assertNotIn("/Users", text)
         self.assertNotIn("3f2a9c1d", text)

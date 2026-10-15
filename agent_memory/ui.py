@@ -62,7 +62,7 @@ yes yet you your also first new next last still back via vs eg ie non
 md json txt yaml yml py js ts html css sh com org www http https github io dev
 task tasks memory memories user users agent agents codex claude session sessions file files
 when what thing things work works working worked step steps run runs running ran note notes
-elliot elliotsong ki-seki group scope cwd thread_id updated_at rollout rollout_path rollout_summary
+group scope cwd thread_id updated_at rollout rollout_path rollout_summary
 rollout_summary_files rollout_summaries applies_to reuse_rule keywords reusable knowledge failures
 differently preferences apply how why outcome success partial history summary
 asked plus real never check checks verify verified evidence explicit said complete final current
@@ -146,7 +146,7 @@ def tokens(text, words=frozenset()):
 
 
 def _display_forms(texts):
-    """Most common original spelling of each token (UTP, not utp), for showing keywords."""
+    """Most common original spelling of each token (GPU, not gpu), for showing keywords."""
     seen = {}
     for text in texts:
         for w in _ASCII.findall(text):
@@ -168,14 +168,15 @@ def _term_like(display):
     """Acronyms, identifiers and Chinese words make better keywords than plain English.
 
     A capital only at the start (Choose, Pack) is usually the start of a sentence, so it
-    does not count; one further in (SigLIP, UTP, OpenReview) does.
+    does not count; one further in (SigLIP, GPU, OpenReview) does.
     """
     return bool(re.search(r".[A-Z]|[0-9_.+#-]|[\u3400-\u9fff]", display))
 
 
 def keyword_picks(x, vocab, forms, k=KEYWORDS):
     """Column indices of each memory's keywords, best first."""
-    weight = np.array([0 if t in _GENERIC else (1.6 if _term_like(forms.get(t, t)) else 1.0) for t in vocab])
+    skip = _GENERIC | {w.lower() for w in config.load().get("keyword_stopwords", [])}
+    weight = np.array([0 if t in skip else (1.6 if _term_like(forms.get(t, t)) else 1.0) for t in vocab])
     scored = x * weight
     return [[int(j) for j in np.argsort(-row)[:k] if row[j] > 0] for row in scored]
 
