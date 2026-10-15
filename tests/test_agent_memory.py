@@ -181,7 +181,7 @@ class WorkdirTest(unittest.TestCase):
 
     def write(self, lines):
         path = ROOT / "transcript.jsonl"
-        path.write_text("\n".join(json.dumps(l) for l in lines) + "\n")
+        path.write_text("\n".join(json.dumps(line) for line in lines) + "\n")
         return str(path)
 
     def codex_call(self, text):
@@ -364,6 +364,7 @@ class UiServerTest(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         import threading
+
         from agent_memory import ui, ui_server
         cls.data = ROOT / "ui-server-data"
         shutil.rmtree(cls.data, ignore_errors=True)

@@ -28,8 +28,8 @@ def join(meta, body):
 
 
 def parse(block):
-    lines = [l.rstrip() for l in block.split("\n")
-             if l.strip() and not l.lstrip().startswith("#")]
+    lines = [line.rstrip() for line in block.split("\n")
+             if line.strip() and not line.lstrip().startswith("#")]
     if not lines:
         return {}
     value, _ = _parse_map(lines, 0, _indent(lines[0]))

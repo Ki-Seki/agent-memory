@@ -213,7 +213,7 @@ _TEMPLATE_LINE = re.compile(r"^\s*(?:-\s*)?rollout_summaries/|^\s*#+\s*(?:rollou
 
 def prose(title, body):
     """What the model reads: the description and body without bookkeeping lines."""
-    lines = [l for l in body.splitlines() if not _TEMPLATE_LINE.search(l)]
+    lines = [line for line in body.splitlines() if not _TEMPLATE_LINE.search(line)]
     text = clean(f"{title}\n" + "\n".join(lines))
     text = re.sub(r"[#*`>|]+", " ", text)
     return re.sub(r"[ \t]+", " ", text).strip()[:EMBED_CHARS]

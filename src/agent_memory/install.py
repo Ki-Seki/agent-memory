@@ -12,7 +12,6 @@ import json
 import os
 import re
 import shlex
-import shutil
 import subprocess
 import sys
 import tomllib
@@ -90,8 +89,8 @@ def _toml_section(text, section):
     """(start, end) line indexes of a [section] body, or None."""
     lines = text.split("\n")
     header = re.compile(r"^\s*\[" + re.escape(section) + r"\]\s*(#.*)?$")
-    for i, l in enumerate(lines):
-        if header.match(l):
+    for i, line in enumerate(lines):
+        if header.match(line):
             j = i + 1
             while j < len(lines) and not re.match(r"^\s*\[", lines[j]):
                 j += 1
@@ -132,11 +131,11 @@ def toml_unset(text, section, key):
     lines = text.split("\n")
     i, j = span
     pattern = re.compile(r"^\s*" + re.escape(key) + r"\s*=")
-    lines = [l for n, l in enumerate(lines) if not (i < n < j and pattern.match(l))]
+    lines = [line for n, line in enumerate(lines) if not (i < n < j and pattern.match(line))]
     span = _toml_section("\n".join(lines), section)
     if span:  # drop the section if we emptied it
         i, j = span
-        if all(not l.strip() for l in lines[i + 1:j]):
+        if all(not line.strip() for line in lines[i + 1:j]):
             del lines[i:j]
     return "\n".join(lines)
 
