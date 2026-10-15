@@ -1,7 +1,31 @@
 # agent-memory
 
-One memory system for Claude Code and Codex. Every memory is a Markdown file in a separate git
-repository (the data repository); this repository holds only the code that reads and writes it.
+One memory for Claude Code and Codex, kept as plain Markdown files in a git repository you own.
+
+When a session starts, a hook gives the agent an index of the memories that matter where it is
+running: everything marked global, plus what was learned in the same folder or repository. When
+a turn ends, a hook commits what the agent wrote, with full provenance (tool, session, host,
+folder, git remote), and pushes it. Both tools read and write the same files, so a preference
+you gave Codex is there the next time Claude Code starts, on any machine that pulls the data
+repository. This repository holds only the code; the memories live in a separate data
+repository.
+
+![mem ui listing memories, with one open on the right](docs/mem-ui.png)
+
+<sub>`mem ui` on the [demo data repository](https://github.com/Ki-Seki/agent-memory-data-demo).</sub>
+
+## Try it without installing
+
+```bash
+git clone https://github.com/Ki-Seki/agent-memory
+git clone https://github.com/Ki-Seki/agent-memory-data-demo
+cd agent-memory
+AGENT_MEMORY_DATA=../agent-memory-data-demo bin/mem ui --keywords-only
+```
+
+`AGENT_MEMORY_DATA` points `mem` at the demo repository, so nothing is installed and no hooks
+change. The page needs `numpy`. `--keywords-only` skips the optional embedding model; leave it
+out after `mem ui --fetch-model` to also search by meaning.
 
 ## How it works
 
