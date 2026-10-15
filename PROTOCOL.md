@@ -29,14 +29,28 @@ Write one file per memory into this session's staging directory, with a short ke
 name: kebab-case-slug
 type: feedback
 scope: global
-description: One line saying what this memory is; it becomes the index entry
+description: One line (under 150 characters) saying what this memory is; it becomes the index entry
 ---
-The fact itself.
+The fact itself, in one or two sentences.
 
 **Why:** the reason the user gave, or the incident behind it.
 
 **How to apply:** when and how this should change what you do.
 ```
+
+Every body follows that skeleton, whatever the type:
+
+1. The fact first, in one or two sentences, so that reading only the opening gets it right.
+2. `**Why:**` the reason or the incident behind it. Required for `feedback` and `project`; add it to `user` and `reference` when there is one.
+3. `**How to apply:**` when and how it should change what you do. Required for `feedback` and `project`.
+4. Optionally, what someone acting on it needs: exact paths, commands, numbers, and `[[name]]` links to related memories.
+
+Keep the body under about 1,500 characters. A memory is a conclusion, not a log: leave out step-by-step history, command transcripts and lists of touched files, and split a body that covers several facts into several memories. Write in the language the user used; mixing languages is fine. Openings by type, for example:
+
+- `user`: Prefers replies in Chinese, with code, commands and commit messages in English.
+- `feedback`: Ask before every git push, even when an earlier push in the session was approved.
+- `project`: The billing service accepts no schema migrations from 2026-11-01 until the v3 release.
+- `reference`: Deploy history for the web app is on the dashboard at grafana.example.com/d/deploys.
 
 `scope` decides where the memory is loaded:
 
@@ -48,6 +62,6 @@ Leave out ids, dates and provenance (session, host, folder, git remote). When yo
 ## Changing existing memories
 
 - Check the index and `mem search` first, and update an existing memory rather than adding a near-duplicate.
-- To update a memory, edit its file in place. Keep its frontmatter and adjust `description` if the summary changes.
+- To update a memory, edit its file in place so it states what is true now; do not append dated notes, since git keeps the history. Keep its frontmatter and adjust `description` if the summary changes.
 - To retire a memory, delete its file.
 - If a new memory replaces older ones, add `supersedes: [id, ...]` to its frontmatter and the hook deletes them.
