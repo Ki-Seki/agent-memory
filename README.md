@@ -145,6 +145,10 @@ From a checkout, `bin/mem` (or `uv run mem`) runs the code in place; `mem instal
 points the hooks at that checkout, so edits take effect in the next session.
 `uv tool install --editable .` does the same with `mem` on PATH.
 
+To release, run `uv run scripts/release.py prepare patch` (or `minor`, `major`) to open a
+version PR. After it is merged, `uv run scripts/release.py publish <PR_NUMBER>` creates the GitHub
+Release, and GitHub Actions publishes it to PyPI.
+
 ## Notes
 
 - Hooks never fail the host session; errors go to `<data>/.cache/agent-memory.log`.
