@@ -111,11 +111,13 @@ terminal open while you use it. It needs `numpy`; the hooks do not.
 - **Find.** One search box (press `/`). Word matches appear as you type, with the matching words
   marked; a moment later the local model adds memories close in meaning, across Chinese and
   English. Filters narrow the list by type, where a memory loads (everywhere, or one project or
-  folder), which tool wrote it, keyword, age, and whether it needs tidying (what `mem lint`
-  reports, also listed on the open memory); the order is newest, oldest, recently changed or A to Z.
+  folder), which tool wrote it, keyword, when it was added (a recent period or a date range), and
+  status (needs tidying, as `mem lint` reports and the open memory lists, or unchanged for 60
+  days). Tick several values in one filter to see memories that match any of them. The date
+  column's header sets the order: newest, oldest, recently changed or A to Z.
 - **Read.** Click a row, or move with `j`/`k` and press Enter. The memory opens on the right with
-  every frontmatter field (including each `source` entry), the body rendered as Markdown with
-  `[[links]]` that open other memories, the file exactly as stored, and the most similar memories.
+  the body rendered as Markdown with `[[links]]` that open other memories, every frontmatter field
+  (including each `source` entry), the most similar memories, and the file exactly as stored.
 - **Change.** Edit (`e`) or delete from the open memory, add one with New (`n`), or tick several
   rows (`x`) and delete them together. Every change is one git commit, pushed in the background,
   with Undo. If an agent edits the same file meanwhile, saving is refused rather than overwriting.
