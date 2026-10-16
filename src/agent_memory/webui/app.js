@@ -67,7 +67,7 @@
   const S = {
     open: null, mode: "view", tab: "rendered",
     q: "", lex: [], sem: [],
-    f: { type: "", loads: "", tool: "", age: "", kw: "", fmt: "" }, sort: local.get("sort", "new"),
+    f: { type: [], loads: [], tool: [], kw: [], added: "", status: [] }, sort: local.get("sort", "new"), countText: "", menu: null, menuFind: "",
     picked: new Set(), rows: [], cursor: -1,
   };
 
@@ -76,13 +76,13 @@
     D = d; M = d.memories;
     byId = new Map(M.map((m, i) => [m.id, i]));
     byName = new Map(M.map((m, i) => [m.meta && m.meta.name, i]));
-    M.forEach(m => { m.termSet = new Set(m.terms || []); });
+    M.forEach(m => { m.termSet = new Set(m.terms || []); m.day = localDay(m.created); });
     kwName = new Map();
     M.forEach(m => (m.keywords || []).forEach(k => kwName.set(k.k, k.t)));
     S.picked.forEach(id => { if (!byId.has(id)) S.picked.delete(id); });
     if (S.open && !byId.has(S.open)) closeDrawer(true);
-    if (S.f.loads.startsWith("place:") && !(D.places || []).some(p => "place:" + p.key === S.f.loads)) S.f.loads = "";
-    renderSync();
+    S.f.loads = S.f.loads.filter(v => v === "global" || (D.places || []).some(p => "place:" + p.key === v));
+    renderStatus();
     if (S.q) runSearch(S.q, false);
     renderFilters();
     renderList();
@@ -92,68 +92,165 @@
   // ------------------------------------------------------------ filters
   const TYPES = ["user", "feedback", "project", "reference"];
   const SORTS = [["new", "Newest first"], ["old", "Oldest first"], ["edited", "Recently changed"], ["az", "A to Z"]];
-  const AGES = [["7", "Added in the past week"], ["30", "Added in the past month"], ["stale", "Unchanged for 60+ days"]];
+  const ADDED = [["today", "Today"], ["7", "Past 7 days"], ["30", "Past 30 days"], ["90", "Past 3 months"], ["365", "Past year"]];
+  const STATUS = [["tidy", "needs tidying"], ["stale", "unchanged 60+ days"]];
+  const DAY = 864e5;
   const touched = m => m.updated || m.created || "";
+  const ymd = d => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+  const localDay = iso => { const t = Date.parse(iso || ""); return t ? ymd(new Date(t)) : ""; };
+  const shortDay = s => new Date(`${s}T00:00`).toLocaleDateString(undefined,
+    { month: "short", day: "numeric", year: s.slice(0, 4) === String(new Date().getFullYear()) ? undefined : "numeric" });
 
+  // Added holds one choice: a preset ("today", or the number of days back) or "range:<from>:<to>" with either end open
+  function addedOk(m, added) {
+    if (!added) return true;
+    if (!m.day) return false;
+    if (added === "today") return m.day === ymd(new Date());
+    if (added.startsWith("range:")) { const [, from, to] = added.split(":"); return (!from || m.day >= from) && (!to || m.day <= to); }
+    return Date.now() - Date.parse(m.created) <= Number(added) * DAY;
+  }
+  // the other filters hold any number of values; a memory needs to match one of them
+  const TEST = {
+    type: (m, v) => m.type === v,
+    loads: (m, v) => v === "global" ? m.scope === "global" : m.scope === "here" && m.place === v.slice(6),
+    tool: (m, v) => m.tool === v,
+    kw: (m, v) => m.termSet.has(v),
+    status: (m, v) => v === "tidy" ? (m.issues || []).length > 0 : Date.now() - (Date.parse(touched(m)) || Date.now()) >= 60 * DAY,
+  };
+  const noFilters = () => ({ type: [], loads: [], tool: [], kw: [], added: "", status: [] });
+  const filtering = () => Object.values(S.f).filter(v => v.length).length;
+  // skip leaves one filter out, so its menu can count what each of its options would show
   function passes(m, skip) {
-    const f = S.f, now = Date.now();
-    if (skip !== "type" && f.type && m.type !== f.type) return false;
-    if (skip !== "loads" && f.loads === "global" && m.scope !== "global") return false;
-    if (skip !== "loads" && f.loads.startsWith("place:") && (m.scope !== "here" || m.place !== f.loads.slice(6))) return false;
-    if (skip !== "tool" && f.tool && m.tool !== f.tool) return false;
-    if (skip !== "kw" && f.kw && !m.termSet.has(f.kw)) return false;
-    if (skip !== "fmt" && f.fmt && !(m.issues || []).length) return false;
-    if (skip !== "age" && f.age) {
-      const t = Date.parse(f.age === "stale" ? touched(m) : m.created || "");
-      if (!t) return false;
-      if (f.age === "stale" ? now - t < 60 * 864e5 : now - t > Number(f.age) * 864e5) return false;
-    }
-    return true;
+    for (const [key, test] of Object.entries(TEST)) if (key !== skip && S.f[key].length && !S.f[key].some(v => test(m, v))) return false;
+    return skip === "added" || addedOk(m, S.f.added);
   }
-  function pill(key, label, options, value, onchange) {
-    const sel = el("select", { "aria-label": label, onchange: e => onchange(e.target.value) },
-      options.map(([v, text]) => el("option", { value: v, text, selected: v === value })));
-    return el("span", { class: "pill" + (value && key !== "sort" ? " on" : "") }, sel);
-  }
-  // keywords that tag at least two memories, most common first; the chosen one always listed
+  // keywords that tag at least two memories, most common first; chosen ones always listed
   function keywordOptions() {
     const n = new Map();
     M.forEach(m => { if (passes(m, "kw")) m.termSet.forEach(t => { if (kwName.has(t)) n.set(t, (n.get(t) || 0) + 1); }); });
     const out = [...n].filter(([, c]) => c >= 2).sort((a, b) => b[1] - a[1] || kwName.get(a[0]).localeCompare(kwName.get(b[0]))).slice(0, 80);
-    if (S.f.kw && !out.some(([k]) => k === S.f.kw)) out.unshift([S.f.kw, n.get(S.f.kw) || 0]);
-    return out.map(([k, c]) => [k, `${kwName.get(k) || k} · ${c}`]);
+    for (const k of S.f.kw) if (!out.some(([x]) => x === k)) out.unshift([k, n.get(k) || 0]);
+    return out.map(([k, c]) => [k, kwName.get(k) || k, c]);
   }
-  function setKeyword(k) {
-    S.f.kw = S.f.kw === k ? "" : k; S.cursor = -1;
+  // every filter as data, options as [value, label, count]
+  function filterDefs() {
+    const opts = (key, list) => list.map(([v, t]) => [v, t, M.filter(m => passes(m, key) && TEST[key](m, v)).length]);
+    const tools = [...new Set(M.map(m => m.tool).filter(Boolean))].sort();
+    return [
+      { key: "type", label: "Type", any: "All", options: opts("type", TYPES.map(t => [t, t])) },
+      { key: "loads", label: "Loads in", any: "Anywhere", options: opts("loads", [["global", "everywhere"], ...(D.places || []).map(p => ["place:" + p.key, p.key])]) },
+      tools.length > 1 ? { key: "tool", label: "Source", any: "Any", options: opts("tool", tools.map(t => [t, t])) } : null,
+      { key: "kw", label: "Keyword", any: "Any", options: keywordOptions(), find: true },
+      { key: "added", label: "Added", any: "Any time", single: true, options: ADDED.map(([v, t]) => [v, t, M.filter(m => passes(m, "added") && addedOk(m, v)).length]) },
+      { key: "status", label: "Status", any: "Any", options: opts("status", STATUS) },
+    ].filter(Boolean);
+  }
+  // the button keeps short: a place shows as its last folder (the menu and the tooltip show it whole)
+  function shownAs(d, whole) {
+    const v = S.f[d.key], full = x => (d.options.find(([o]) => o === x) || [x, x])[1];
+    const name = x => !whole && x.startsWith("place:") ? x.split("/").filter(Boolean).pop() : full(x);
+    if (!v.length) return d.any;
+    if (d.single) {
+      if (!v.startsWith("range:")) return name(v);
+      const [, from, to] = v.split(":");
+      return from && to ? `${shortDay(from)} – ${shortDay(to)}` : from ? `since ${shortDay(from)}` : `until ${shortDay(to)}`;
+    }
+    return whole ? v.map(full).join(", ") : v.length === 1 ? name(v[0]) : `${name(v[0])} +${v.length - 1}`;
+  }
+  function setFilter(key, v) {
+    S.f[key] = v; S.cursor = -1;
     renderFilters(); renderList(); scrollTo(0, 0);
-    if (S.open && S.mode === "view") renderDrawer();
+    if (key === "kw" && S.open && S.mode === "view") renderDrawer();
   }
+  const toggleValue = (key, v) => setFilter(key, S.f[key].includes(v) ? S.f[key].filter(x => x !== v) : [...S.f[key], v]);
+  function clearFilters() { S.f = noFilters(); S.menu = null; S.cursor = -1; renderFilters(); renderList(); }
+  const setKeyword = k => toggleValue("kw", k);
   function keywordChips(m) {
     if (!(m.keywords || []).length) return null;
-    return el("div", { class: "kws" }, m.keywords.map(k => el("button", { class: "kw" + (S.f.kw === k.k ? " on" : ""), text: k.t,
-      title: S.f.kw === k.k ? "Show all memories again" : `Only memories that mention ${k.t}`,
-      onclick: e => { e.stopPropagation(); setKeyword(k.k); } })));
+    return el("div", { class: "kws" }, m.keywords.map(k => {
+      const on = S.f.kw.includes(k.k);
+      return el("button", { class: "kw" + (on ? " on" : ""), text: k.t, title: on ? `Stop filtering by ${k.t}` : `Only memories that mention ${k.t}`,
+        onclick: e => { e.stopPropagation(); setKeyword(k.k); } });
+    }));
+  }
+
+  // ------------------------------------------------------------ filter bar: one quiet menu per filter
+  function filterButton(d) {
+    const on = S.f[d.key].length > 0, open = S.menu === d.key, label = d.label.toLowerCase();
+    return el("span", { class: "fm" + (on ? " on" : "") + (open ? " open" : "") },
+      el("button", { class: "q", "aria-haspopup": "true", "aria-expanded": String(open), "data-focus": `q-${d.key}`, title: on ? `${d.label}: ${shownAs(d, true)}` : null,
+          onclick: e => { e.stopPropagation(); toggleMenu(d.key); } },
+        el("span", { class: "ql", text: d.label }), el("span", { class: "qv", text: shownAs(d) })),
+      on ? el("button", { class: "qx", title: `Clear ${label}`, "aria-label": `Clear ${label}`, text: "×",
+        onclick: e => { e.stopPropagation(); setFilter(d.key, d.single ? "" : []); } }) : null,
+      open ? filterMenu(d) : null);
+  }
+  function filterMenu(d) {
+    const menu = el("div", { class: "menu", role: "menu", "aria-label": d.label, onclick: e => e.stopPropagation() });
+    let items = d.options;
+    if (d.find) {
+      menu.append(el("input", { class: "mfind", type: "search", placeholder: "Find a keyword", value: S.menuFind, "data-focus": "mfind",
+        "aria-label": "Find a keyword", oninput: e => { S.menuFind = e.target.value; renderFilters(); } }));
+      const f = S.menuFind.trim().toLowerCase();
+      if (f) items = items.filter(([, t]) => t.toLowerCase().includes(f));
+    }
+    const list = el("div", { class: "mlist" }, items.map(([v, t, c]) => {
+      const checked = d.single ? S.f[d.key] === v : S.f[d.key].includes(v);
+      return el("button", { class: "mi" + (checked ? " on" : "") + (!c && !checked ? " zero" : ""), role: d.single ? "menuitemradio" : "menuitemcheckbox",
+          "aria-checked": String(checked), "data-focus": `mi-${d.key}-${v}`,
+          onclick: () => d.single ? setFilter(d.key, checked ? "" : v) : toggleValue(d.key, v) },
+        el("span", { class: "box" + (d.single ? " radio" : "") }), el("span", { class: "mt", text: t }), el("span", { class: "n", text: c }));
+    }));
+    if (!items.length) list.append(el("div", { class: "mnone", text: "No keyword matches" }));
+    menu.append(list);
+    if (d.key === "added") menu.append(dateRange());
+    if (S.f[d.key].length) menu.append(el("div", { class: "mfoot" },
+      el("button", { class: "clear", text: "Clear", onclick: () => setFilter(d.key, d.single ? "" : []) })));
+    return menu;
+  }
+  function dateRange() {
+    const [, from = "", to = ""] = S.f.added.startsWith("range:") ? S.f.added.split(":") : [];
+    const set = (a, b) => setFilter("added", a || b ? `range:${a}:${b}` : "");
+    return el("div", { class: "mrange" }, el("div", { class: "mh", text: "Or between" }),
+      el("div", { class: "dates" },
+        el("input", { type: "date", value: from, max: to || null, "aria-label": "Added on or after", "data-focus": "from", onchange: e => set(e.target.value, to) }),
+        el("span", { text: "–" }),
+        el("input", { type: "date", value: to, min: from || null, "aria-label": "Added on or before", "data-focus": "to", onchange: e => set(from, e.target.value) })));
+  }
+  function toggleMenu(key) {
+    S.menu = S.menu === key ? null : key; S.menuFind = "";
+    renderFilters();
+    const first = document.querySelector(".menu .mfind, .menu .mi");
+    if (first) first.focus();
+  }
+  function closeMenu() {
+    const key = S.menu;
+    S.menu = null; renderFilters();
+    const btn = document.querySelector(`[data-focus="q-${key}"]`);
+    if (btn) btn.focus();
+  }
+  // the order is chosen in the date column's header, whose label says which dates the column shows and which way they run
+  const SORT_LABEL = { new: "Added ↓", old: "Added ↑", edited: "Changed ↓", az: "A to Z" };
+  function renderSort() {
+    const col = $("date-col");
+    if (S.q) { col.replaceChildren("Added"); return; }  // matches come in order of relevance
+    col.replaceChildren(el("span", { class: "fm sort", title: "Change the order" }, el("span", { class: "q" },
+      el("span", { class: "qv", text: SORT_LABEL[S.sort] || SORT_LABEL.new }),
+      el("select", { "aria-label": "Order", onchange: e => { S.sort = e.target.value; local.set("sort", S.sort); renderList(); } },
+        SORTS.map(([v, t]) => el("option", { value: v, text: t, selected: v === S.sort }))))));
   }
   function renderFilters() {
+    const was = document.activeElement && document.activeElement.dataset && document.activeElement.dataset.focus;
     const box = $("filters");
-    const count = (key, test) => M.filter(m => passes(m, key) && test(m)).length;
-    const set = key => v => { S.f[key] = v; S.cursor = -1; renderFilters(); renderList(); scrollTo(0, 0); };
-    const tools = [...new Set(M.map(m => m.tool).filter(Boolean))].sort();
-    const any = Object.values(S.f).some(Boolean);
-    box.replaceChildren(...[
-      pill("type", "Type", [["", "All types"], ...TYPES.map(t => [t, `${t} · ${count("type", m => m.type === t)}`])], S.f.type, set("type")),
-      pill("loads", "Where it loads", [["", "Loads anywhere"], ["global", `Everywhere · ${count("loads", m => m.scope === "global")}`],
-        ...(D.places || []).map(p => ["place:" + p.key, `${p.key} · ${count("loads", m => m.scope === "here" && m.place === p.key)}`])], S.f.loads, set("loads")),
-      tools.length > 1 ? pill("tool", "Written by", [["", "Any source"], ...tools.map(t => [t, `${t} · ${count("tool", m => m.tool === t)}`])], S.f.tool, set("tool")) : null,
-      pill("kw", "Keyword", [["", "Any keyword"], ...keywordOptions()], S.f.kw, set("kw")),
-      pill("age", "When", [["", "Any time"], ...AGES], S.f.age, set("age")),
-      pill("fmt", "Format", [["", "Any format"], ["tidy", `Needs tidying · ${count("fmt", m => (m.issues || []).length)}`]], S.f.fmt, set("fmt")),
-      any ? el("button", { class: "clear", text: "Clear filters", onclick: () => { S.f = { type: "", loads: "", tool: "", age: "", kw: "", fmt: "" }; renderFilters(); renderList(); } }) : null,
-      el("span", { class: "spacer" }),
-      el("span", { class: "count", id: "count" }),
-      S.q ? null : pill("sort", "Order", SORTS, S.sort, v => { S.sort = v; local.set("sort", v); renderFilters(); renderList(); }),
-    ].filter(Boolean));
+    box.replaceChildren(el("div", { class: "frow" }, filterDefs().map(filterButton),
+      filtering() > 1 ? el("button", { class: "clear", text: "Clear all", onclick: clearFilters }) : null));
+    // the bar is rebuilt on every change: put focus back where it was, and keep an open menu inside the window
+    const again = was && box.querySelector(`[data-focus="${CSS.escape(was)}"]`);
+    if (again) { again.focus(); if (again.type === "search") again.setSelectionRange(again.value.length, again.value.length); }
+    const menu = box.querySelector(".menu");
+    if (menu && menu.getBoundingClientRect().right > innerWidth - 8) menu.classList.add("right");
   }
+  document.addEventListener("click", e => { if (S.menu && !e.target.closest(".fm")) { S.menu = null; renderFilters(); } });
 
   // ------------------------------------------------------------ search
   const q = $("q");
@@ -174,13 +271,12 @@
     return scored.sort((a, b) => b[0] - a[0] || touched(M[b[1]]).localeCompare(touched(M[a[1]]))).map(([, i]) => i);
   }
   function runSearch(text, semantic = true) {
-    const was = S.q;
     S.q = text.trim();
     S.lex = S.q ? lexical(S.q) : [];
     if (!S.q) S.sem = [];
     S.cursor = S.q ? 0 : -1;
     S.semPending = !!(semantic && S.q && D.semantic);
-    if (!!was !== !!S.q) renderFilters();  // the order menu only shows without a query
+
     renderList();
     clearTimeout(semTimer);
     if (!S.semPending) return;
@@ -250,21 +346,24 @@
     if (S.cursor >= S.rows.length) S.cursor = S.rows.length - 1;
     const shown = S.rows.length, total = M.length;
     const countEl = $("count");
-    if (countEl) countEl.textContent = S.q ? `${plural(groups[0][1].length, "match", "matches")}${groups[1] ? ` + ${groups[1][1].length} close in meaning` : ""}${S.semPending ? " · searching by meaning…" : ""}`
+    S.countText = S.q ? `${plural(groups[0][1].length, "match", "matches")}${groups[1] ? ` + ${groups[1][1].length} close in meaning` : ""}${S.semPending ? " · searching by meaning…" : ""}`
       : shown === total ? plural(total, "memory", "memories") : `${shown} of ${total}`;
+    if (countEl) countEl.textContent = S.countText;
+    renderSort();
 
     list.classList.toggle("selecting", S.picked.size > 0);
-    list.replaceChildren();
+    const box = $("rows");
+    box.replaceChildren();
     let k = 0;
     for (const [title, idx] of groups) {
-      if (title && idx.length) list.append(el("div", { class: "group", text: title }));
-      for (const i of idx) list.append(row(i, k++, title ? [] : ts));
+      if (title && idx.length) box.append(el("div", { class: "group", text: title }));
+      for (const i of idx) box.append(row(i, k++, title ? [] : ts));
     }
     if (!shown) {
-      const filtered = Object.values(S.f).some(Boolean);
-      list.append(el("div", { class: "empty" },
+      const filtered = filtering() > 0;
+      box.append(el("div", { class: "empty" },
         el("div", { text: S.q ? (S.semPending ? "No word matches; searching by meaning…" : "No matches.") : "No memories match these filters." }),
-        filtered ? el("button", { class: "btn", text: "Clear filters", onclick: () => { S.f = { type: "", loads: "", tool: "", age: "", kw: "", fmt: "" }; renderFilters(); renderList(); } }) : null));
+        filtered ? el("button", { class: "btn", text: "Clear filters", onclick: clearFilters }) : null));
     }
     renderSelbar();
   }
@@ -278,10 +377,9 @@
       el("div", { class: "main" },
         el("div", { class: "desc" }, highlight(m.description, ts)),
         snip ? el("div", { class: "snip" }, highlight(snip, ts)) : keywordChips(m)),
-      el("div", { class: "meta" },
-        el("span", { class: `t ${m.type}` }, el("i"), m.type),
-        el("span", { class: "p", title: m.scope === "global" ? "Loads in every session" : m.place, text: m.scope === "global" ? "everywhere" : m.place }),
-        el("span", { class: "d", title: m.updated ? `added ${day(m.created)}, changed ${day(m.updated)}` : `added ${day(m.created)}`, text: day(S.sort === "edited" ? touched(m) : m.created) })));
+      el("span", { class: "c-type" }, el("i", { class: `dot ${m.type}` }), m.type),
+      el("span", { class: "c-place", title: m.scope === "global" ? "Loads in every session" : m.place, text: m.scope === "global" ? "everywhere" : m.place }),
+      el("span", { class: "c-date", title: m.updated ? `added ${day(m.created)}, changed ${day(m.updated)}` : `added ${day(m.created)}`, text: day(S.sort === "edited" ? touched(m) : m.created) }));
   }
   function moveCursor(step) {
     if (!S.rows.length) return;
@@ -462,8 +560,8 @@
     const show = v => Array.isArray(v) ? (v.length ? v.join(", ") : "[]") : v === null ? "null" : String(v);
     for (const [k, v] of Object.entries(meta)) {
       if (v && typeof v === "object" && !Array.isArray(v)) {
-        dl.append(el("div", { class: "group", text: k }));
-        for (const [k2, v2] of Object.entries(v)) dl.append(el("dt", { class: "sub", text: k2 }), el("dd", { text: show(v2) }));
+        dl.append(el("div", { class: "sect", text: k }));
+        for (const [k2, v2] of Object.entries(v)) dl.append(el("dt", { text: k2 }), el("dd", { text: show(v2) }));
       } else dl.append(el("dt", { text: k }), el("dd", { text: show(v) }));
     }
     return dl;
@@ -480,11 +578,13 @@
         iconBtn("trash", "Delete", () => deleteMany([m.id])),
         iconBtn("close", "Close (Esc)", () => closeDrawer())),
       el("h1", { text: m.description }),
+      el("div", { class: "d-meta" },
+        el("span", { title: TYPE_HELP[m.type] }, el("i", { class: `dot ${m.type}` }), m.type),
+        el("span", { class: "sep", text: "·" }),
+        el("span", { text: m.scope === "global" ? "loads everywhere" : `loads in ${m.place || "one place"}` }),
+        el("span", { class: "sep", text: "·" }),
+        el("span", { text: m.updated ? `changed ${day(m.updated)}` : `added ${day(m.created)}` })),
       keywordChips(m),
-      el("div", { class: "chips" },
-        el("span", { class: "chip", text: m.type }),
-        el("span", { class: "chip", text: m.scope === "global" ? "loads everywhere" : `loads in ${m.place || "one place"}` }),
-        el("span", { class: "chip", text: m.updated ? `changed ${day(m.updated)}` : `added ${day(m.created)}` })),
       (m.issues || []).length ? el("ul", { class: "issues", title: "Differs from the format in PROTOCOL.md" }, m.issues.map(t => el("li", { text: t.replace(/\*\*([^*]+?):?\*\*/g, "“$1”") }))) : null,
       el("div", { class: "tabs", role: "tablist" },
         ["rendered", "file"].map(t => el("button", { role: "tab", "aria-selected": String(S.tab === t), text: t === "rendered" ? "Memory" : "File",
@@ -492,9 +592,9 @@
     const body = el("div", { class: "d-body" });
     if (S.tab === "file") body.append(el("pre", { class: "raw", text: m.raw }));
     else {
-      body.append(propsList(m.meta), markdown(m.body));
+      body.append(markdown(m.body), el("div", { class: "section" }, el("h2", { text: "Details" }), propsList(m.meta)));
       const sim = m.similar.filter(s => s.s > 0.05).slice(0, 5);
-      if (sim.length) body.append(el("div", { class: "similar" }, el("h2", { text: "Similar memories" }),
+      if (sim.length) body.append(el("div", { class: "section similar" }, el("h2", { text: "Similar memories" }),
         sim.map(s => el("button", { onclick: () => pick(M[s.i].id) }, el("span", { class: "t", text: M[s.i].description }),
           el("span", { class: "p", text: `${Math.round(s.s * 100)}%` })))));
     }
@@ -543,7 +643,7 @@
         iconBtn("close", "Cancel (Esc)", () => isNew ? closeDrawer() : cancelEdit()))),
       el("div", { class: "d-body" }, el("div", { class: "form" },
         el("label", {}, el("span", { style: "display:flex;justify-content:space-between" }, "Description", counter), desc),
-        el("div", { class: "row" }, el("label", {}, el("span", { style: "display:flex;justify-content:space-between" }, "Type", typeHint), typeSel),
+        el("div", { class: "pair" }, el("label", {}, el("span", { style: "display:flex;justify-content:space-between" }, "Type", typeHint), typeSel),
           el("label", {}, "Loads", seg)),
         placeRow,
         el("label", {}, "Memory (Markdown)", bodyArea))),
@@ -590,10 +690,13 @@
   }
 
   // ------------------------------------------------------------ chrome
-  function renderSync() {
-    const s = $("sync"), g = D.sync || {};
-    s.hidden = !(g.remote && g.ahead);
-    if (!s.hidden) s.textContent = `${plural(g.ahead, "change")} not pushed yet`;
+  function renderStatus() {
+    $("repo").textContent = D.dataDir || "";
+    $("repo").title = "Data repository";
+    const g = D.sync || {};
+    $("status").replaceChildren(g.remote && g.ahead
+      ? el("span", { class: "warn", title: "Commits that a hook or this page made but has not pushed yet" }, el("i", { class: "dot" }), `${plural(g.ahead, "change")} not pushed`)
+      : "");
   }
   $("new").addEventListener("click", startNew);
   document.addEventListener("keydown", e => {
@@ -602,6 +705,7 @@
       e.preventDefault(); const btn = drawer.querySelector(".d-foot .btn.primary"); if (btn) btn.click(); return;
     }
     if (e.key === "Escape") {
+      if (S.menu) { closeMenu(); return; }
       if (typing) { document.activeElement.blur(); return; }
       if (S.mode === "edit") return cancelEdit();
       if (S.open || S.mode === "new") return closeDrawer();
