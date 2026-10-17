@@ -53,6 +53,9 @@ class App {
   insights = { commits: [], place: "", preview: null, hover: {} };
   settings = { s: null, checks: null, word: "", syncing: false, checking: false, lookingUp: false, failed: null,
     remoteEdit: false, remoteDraft: "", remoteBusy: false, remoteNote: null, healthOpen: false };
+  profiles = null;  // { active, locked, next, profiles }, from /api/profiles
+  pform = null;  // the profile being added: its name to be, folder and remote
+  switching = "";
   wide = matchMedia("(min-width: 1024px)");
   demo = null;  // the online demo sets { queries } to suggest searches
   #base = "";
@@ -128,6 +131,7 @@ class App {
       return this.changed();
     }
     this.refreshUpdate();  // checks PyPI at most once a day, unless turned off
+    this.loadProfiles();
     // memories that agents write while the page is open
     setInterval(async () => {
       if (document.hidden || !this.data || this.mode !== "view") return;
@@ -138,7 +142,7 @@ class App {
     this.data = await api("/api/state");
     const ids = new Set(this.data.memories.map((m) => m.id));
     for (const id of this.picked) if (!ids.has(id)) this.picked.delete(id);
-    if (this.openId && !ids.has(this.openId) && this.mode !== "new") { this.openId = null; this.mode = "view"; }
+    if (this.openId && !ids.has(this.openId) && this.mode !== "new") { this.openId = null; this.mode = "view"; this.#writeRoute(); }
     const keys = new Set((this.data.places ?? []).map((p) => "place:" + p.key));
     this.filters.loads = this.filters.loads.filter((v) => v === "global" || keys.has(v));
     if (this.page === "insights") this.loadActivity();
@@ -157,7 +161,7 @@ class App {
   go(page) { this.page = page; this.#writeRoute(); this.#enterPage(); scrollTo(0, 0); this.changed(); }
   #enterPage() {
     if (this.page === "insights" && this.data) { this.loadActivity(); this.loadPreview(); }
-    if (this.page === "settings") { this.loadSettings(); this.runChecks(); }
+    if (this.page === "settings") { this.loadSettings(); this.runChecks(); if (this.data) this.loadProfiles(); }
   }
 
   // ------------------------------------------------------------ updates
@@ -369,6 +373,75 @@ class App {
     try { this.settings.checks = (await api("/api/doctor")).checks; } catch { /* keep the last result */ }
     this.settings.checking = false; this.changed();
   }
+
+  // ------------------------------------------------------------ profiles
+
+  async loadProfiles() {
+    try { this.profiles = await api("/api/profiles"); this.changed(); } catch { /* an older server or the demo: no profiles */ }
+  }
+  /** Show another profile, which new sessions then use too. */
+  async useProfile(id) {
+    if (this.switching) return;
+    if (this.profiles?.active === id) return this.pform && this.cancelProfile();
+    if (!(await this.#leaveEdit())) return;
+    const to = this.profiles?.profiles.find((p) => p.id === id);
+    this.switching = id; this.changed();
+    try {
+      this.#took(await api("/api/profiles/use", { id }));
+      this.toast(`Switched to ${to?.name ?? id}; new sessions use it too`);
+    } catch (e) { this.toast(e.message, { error: true }); }
+    finally { this.switching = ""; this.changed(); }
+  }
+  /** After the server answers a profile change: its list, and the memories of the profile it now shows. */
+  async #took(r) {
+    const before = this.profiles?.active;
+    this.profiles = r; this.pform = null;
+    if (r.active === before) return this.changed();
+    this.openId = this.autoId = null; this.mode = "view"; this.draft = null; this.picked.clear();
+    this.q = ""; this.sem = []; this.filters = noFilters(); this.cursor = -1;
+    this.data = { ...this.data, memories: [], places: [] };  // so nothing of the old profile is picked meanwhile
+    Object.assign(this.insights, { commits: [], place: "", preview: null, hover: {} });
+    Object.assign(this.settings, { s: null, checks: null, remoteEdit: false, remoteNote: null, healthOpen: false });
+    this.#writeRoute();
+    await this.reload();
+    this.#enterPage();
+  }
+  /** Start adding a profile; its name is the one the server will give it, its folder goes beside the active one. */
+  async newProfile() {
+    await this.loadProfiles();  // a fresh name to show
+    const name = this.profiles?.next ?? "";
+    const here = this.profiles?.profiles.find((p) => p.active)?.dataDir ?? "";
+    const near = here.includes("/") ? here.slice(0, here.lastIndexOf("/") + 1) : "~/";
+    const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+    this.pform = { name, folder: `${near}agent-memory-${slug}`, remote: "", busy: false, error: "" };
+    this.changed();
+  }
+  setProfileField(field, value) {
+    if (!this.pform) return;
+    this.pform[field] = value; this.pform.error = "";
+    this.changed();
+  }
+  async saveProfile() {
+    const f = this.pform;
+    if (!f || f.busy) return;
+    f.busy = true; f.error = ""; this.changed();
+    try {
+      const r = await api("/api/profiles/add", { name: f.name, folder: f.folder, remote: f.remote.trim() || null });
+      const made = r.profiles.find((p) => p.id === r.id)?.name ?? f.name;
+      await this.#took(r);
+      this.toast(r.active !== r.id ? `${made}: ${r.message}` : `${made}: ${r.message} New sessions use it.`);
+    } catch (e) { f.busy = false; f.error = e.message; this.changed(); }
+  }
+  /** Forget the profile the page shows, after asking; its folder and remote stay. */
+  async removeProfile() {
+    const p = this.profiles?.profiles.find((x) => x.active);
+    if (!p) return;
+    const ok = await this.ask({ title: `Remove the ${p.name} profile?`, body: `agent-memory stops using it. The folder ${p.dataDir} and its memories stay on disk, and any remote is not touched; add the folder again later to bring it back.`, action: "Remove", danger: true });
+    if (!ok) return;
+    try { await this.#took(await api("/api/profiles/remove", { id: p.id })); this.toast(`Removed ${p.name}`); }
+    catch (e) { this.toast(e.message, { error: true }); }
+  }
+  cancelProfile() { this.pform = null; this.changed(); }
 
   // ------------------------------------------------------------ toasts and confirmations
 

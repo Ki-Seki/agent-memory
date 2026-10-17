@@ -24,7 +24,7 @@ from urllib.parse import parse_qs, urlparse
 
 import numpy as np
 
-from . import config, frontmatter, gitsync, select, store, ui, update
+from . import config, frontmatter, gitsync, profiles, select, store, ui, update
 from .context import detect, hostname, normalize_remote
 from .util import SCOPES, TYPES, atomic_write, id_path, log_exc, new_id, now_iso, slugify
 
@@ -57,12 +57,12 @@ class ApiError(Exception):
 
 
 class UiApp:
-    def __init__(self, data_dir, semantic=True):
+    def __init__(self, data_dir, semantic=True, encoder=None):
         self.data = Path(data_dir)
         self.mdir = store.memories_dir(data_dir)
         self.semantic = semantic
         self.lock = threading.Lock()
-        self.encoder = ui.QueryEncoder() if semantic else None
+        self.encoder = encoder or (ui.QueryEncoder() if semantic else None)  # one model, whichever profile is open
         self.state, self.vectors, self.stamp_value = None, None, None
         self.refresh()
         if self.encoder and self.state.get("semantic"):  # load the model now, not on the first search
@@ -152,7 +152,7 @@ class UiApp:
             "staging": str(self.data / "staging" / "<session>"),
             "mem": str(config.BIN),
         }
-        text = select.render(memories, ctx, paths)
+        text = select.render(memories, ctx, paths, profile=profiles.active_name())
         globals_, here = select.visible(memories, ctx)
         return {"text": text, "chars": len(text), "limit": HOOK_LIMIT, "global": len(globals_), "here": len(here)}
 
@@ -444,6 +444,59 @@ class UiApp:
         return self._write(write)
 
 
+# ---------------------------------------------------------------- profiles
+# These change which repository the server shows, so they work on the server rather than on one UiApp.
+
+
+def _profile_change(server, fn):
+    if profiles.locked():
+        raise ApiError(409, "AGENT_MEMORY_DATA picks the data repository for this run, so profiles cannot change.")
+    before = profiles.listing()[1]
+    try:
+        out = fn() or {}
+    except (profiles.ProfileError, ValueError) as e:
+        raise ApiError(400, str(e)) from None
+    if profiles.listing()[1] != before:  # the page now shows the profile new sessions use
+        old = server.app
+        server.app = UiApp(config.data_dir(), semantic=old.semantic, encoder=old.encoder)
+    return {**profiles.summary(), **out}
+
+
+def _access():
+    from .install import refresh_access
+
+    tools = refresh_access()
+    return {"access": tools}
+
+
+def profile_use(server, p):
+    def use():
+        profiles.use(str(p.get("id") or ""))
+
+    return _profile_change(server, use)
+
+
+def profile_add(server, p):
+    def add():
+        pid, note = profiles.add(
+            str(p.get("folder") or "").strip(),
+            remote=p.get("remote"),
+            switch=p.get("switch", True) is not False,
+            name=p.get("name"),
+        )
+        return {"id": pid, "message": note, **_access()}
+
+    return _profile_change(server, add)
+
+
+def profile_remove(server, p):
+    def remove():
+        profiles.remove(str(p.get("id") or ""))
+        return _access()
+
+    return _profile_change(server, remove)
+
+
 class Handler(BaseHTTPRequestHandler):
     server_version = "agent-memory"
     POSTS = {
@@ -456,6 +509,11 @@ class Handler(BaseHTTPRequestHandler):
         "/api/remote": "set_remote",
         "/api/update/check": "check_update",
         "/api/update": "run_update",
+    }
+    PROFILE_POSTS = {
+        "/api/profiles/use": profile_use,
+        "/api/profiles/add": profile_add,
+        "/api/profiles/remove": profile_remove,
     }
 
     def log_message(self, *args):
@@ -518,6 +576,7 @@ class Handler(BaseHTTPRequestHandler):
             "/api/settings": app.settings,
             "/api/doctor": app.doctor,
             "/api/update": update.status,
+            "/api/profiles": profiles.summary,
         }
         if url.path not in routes:
             return self._send(404, {"error": "not found"})
@@ -542,14 +601,16 @@ class Handler(BaseHTTPRequestHandler):
             self._send(200, {"restarting": True})
             threading.Thread(target=self.server.shutdown, daemon=True).start()
             return
-        method = self.POSTS.get(url.path)
-        if not method:
+        method, change = self.POSTS.get(url.path), self.PROFILE_POSTS.get(url.path)
+        if not method and not change:
             return self._send(404, {"error": "not found"})
         try:
             length = int(self.headers.get("Content-Length") or 0)
             payload = json.loads(self.rfile.read(length) or b"{}") if length else {}
         except ValueError:
             return self._send(400, {"error": "bad JSON"})
+        if change:
+            return self._run(lambda: change(self.server, payload))
         self._run(lambda: getattr(self.server.app, method)(payload))
 
 

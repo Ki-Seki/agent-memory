@@ -711,6 +711,7 @@ class PageTest(unittest.TestCase):
             "change": re.search(r"const CHANGES = \{(.*?)\n\};", main, re.S).group(1),
         }
         handled = {kind: set(re.findall(r"^\s+(\w+):", body, re.M)) for kind, body in tables.items()}
+        handled["input"] |= set(re.findall(r'name\.startsWith\("(\w+):"\)', main))  # data-input="draft:type" and such
         views = "\n".join(self.scripts().values())
         # names given straight to an element, or to the helpers in views/ui.js that pass them on
         helpers = {
@@ -728,9 +729,7 @@ class PageTest(unittest.TestCase):
             for pattern in helpers[kind]:
                 used |= set(re.findall(pattern, views))
             self.assertTrue(used, kind)
-            missing = sorted(
-                name for name in used if name not in handled[kind] and not (kind == "input" and name == "draft")
-            )
+            missing = sorted(name for name in used if name not in handled[kind])
             self.assertFalse(missing, f"data-{kind} with no handler: {missing}")
 
 
@@ -1315,6 +1314,27 @@ class ProfilesTest(unittest.TestCase):
         self.assertEqual(settings.get("permissions", {}).get("allow", []), SETTINGS["permissions"]["allow"])
         codex = tomllib.loads((install.CODEX_DIR / "config.toml").read_text())
         self.assertNotIn("sandbox_workspace_write", codex)  # it had none before install
+
+    def test_page_switches_with_the_profile(self):
+        from agent_memory import profiles, ui_server
+
+        pid, _ = profiles.add(self.work, switch=False)
+        server = ui_server.make_server(self.personal, port=0, semantic=False)
+        try:
+            r = ui_server.profile_use(server, {"id": pid})
+            self.assertEqual(r["active"], pid)
+            self.assertEqual(server.app.data, self.work)
+            self.assertEqual([p["id"] for p in r["profiles"]], ["default", pid])
+            self.assertTrue(profiles.generated(r["next"]))
+            with self.assertRaises(ui_server.ApiError):
+                ui_server.profile_add(server, {"folder": "relative"})
+            os.environ["AGENT_MEMORY_DATA"] = str(self.personal)  # the demo: one folder, no profiles
+            self.assertEqual(profiles.summary()["profiles"], [])
+            with self.assertRaises(ui_server.ApiError) as e:
+                ui_server.profile_use(server, {"id": "default"})
+            self.assertEqual(e.exception.status, 409)
+        finally:
+            server.server_close()
 
 
 if __name__ == "__main__":

@@ -528,6 +528,52 @@ table.nums td:last-child { color: var(--ink); }
   .remote-form { flex-wrap: wrap; } .remote-form .input { flex-basis: 100%; }
 }
 
+/* settings: profiles. A profile's picture (avatar.js) is drawn from its name; CSS gives it a size. */
+.pavatar { display: block; width: 24px; height: 24px; flex-shrink: 0; }
+.svg-defs { position: absolute; width: 0; height: 0; overflow: hidden; }
+.pavatar.sm { width: 20px; height: 20px; }
+.pavatar.lg { width: 40px; height: 40px; }
+.repo-stack { display: grid; gap: 10px; min-width: 0; }
+.profiles { display: grid; gap: 8px; }
+.ptabs { display: flex; flex-wrap: wrap; gap: 6px; }
+.ptab { display: inline-flex; max-width: 100%; height: 36px; align-items: center; gap: 8px; padding: 0 12px 0 6px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); font-size: 13.5px; font-weight: 500; color: var(--ink-2); transition: border-color .15s, background-color .15s, color .15s, box-shadow .15s; }
+.ptab:hover { background: var(--hover); color: var(--ink); }
+.ptab:disabled { opacity: .6; }
+.ptab[aria-checked="true"] { border-color: color-mix(in srgb, var(--accent) 60%, var(--line)); background: var(--surface); color: var(--ink); box-shadow: 0 0 0 3px var(--accent-soft); }
+.ptab-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ptab-count { font-size: 12px; font-weight: 400; color: var(--ink-3); font-variant-numeric: tabular-nums; }
+.ptab.add { gap: 6px; padding: 0 12px; border-style: dashed; background: transparent; color: var(--ink-3); }
+.ptab.add .i { width: 15px; height: 15px; }
+.ptab.add:hover { color: var(--ink); }
+.ptab.add[aria-pressed="true"] { border-style: solid; border-color: color-mix(in srgb, var(--accent) 60%, var(--line)); background: var(--surface); color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+.profiles-help { font-size: 12.5px; color: var(--ink-3); }
+.profiles-help b { font-weight: 600; color: var(--ink-2); }
+.repo-title { display: flex; align-items: center; gap: 2px; }
+.repo-title .btn.icon { width: 26px; height: 26px; color: var(--ink-3); }
+.repo-title .btn.icon .i { width: 14px; height: 14px; }
+.pform { display: grid; gap: 16px; padding: 20px; }
+.pform-top { display: flex; align-items: center; gap: 14px; }
+.pform-top h2 { font-size: 16px; font-weight: 640; letter-spacing: -0.01em; }
+.pform-sub { margin-top: 2px; font-size: 13px; color: var(--ink-3); }
+.pfield { display: grid; }
+.pfield .field-label { justify-content: flex-start; gap: 4px; }
+.pfield .field-label .faint { font-weight: 400; }
+.pfield .input { height: 36px; }
+.field-help { margin-top: 6px; font-size: 12.5px; color: var(--ink-3); }
+.pform-error { font-size: 13px; color: var(--bad); }
+.pform-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.rail-profile { display: grid; width: 40px; height: 40px; place-items: center; border-radius: 9px; transition: background-color .15s; }
+.rail-profile:hover, .rail-profile:has(+ .menu:popover-open) { background: var(--hover); }
+.rail-profile:has(+ .menu:popover-open)::after { display: none; }  /* the menu says it already */
+.rail-profile .pavatar { width: 26px; height: 26px; }
+.menu-item.tall { height: 36px; }
+.menu-note.pad { margin: 0; padding: 6px 8px 4px; }
+.tick-space { width: 14px; flex-shrink: 0; }
+@media (max-width: 639px) {
+  .pform { padding: 16px; }
+  .rail-profile[data-tip]::after { display: none; }
+}
+
 /* ------------------------------------------------------------------ floating */
 
 .selection { position: fixed; bottom: 24px; left: 50%; z-index: 40; translate: -50% 0; display: flex; align-items: center; gap: 8px; padding: 8px 8px 8px 16px; border-radius: var(--r-card); background: var(--ink); color: var(--bg); box-shadow: var(--shadow-pop); animation: rise .16s ease-out; }

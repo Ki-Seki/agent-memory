@@ -8,6 +8,7 @@ import { insightsPage } from "./insights.js";
 import { listPane } from "./list.js";
 import { memoryPanel } from "./memory.js";
 import { selectionBar, toasts } from "./overlays.js";
+import { railProfile } from "./profiles.js";
 import { settingsPage } from "./settings.js";
 
 /** The mark: a lowercase m for mem, its last stroke ending in a stored point. */
@@ -34,6 +35,7 @@ function rail() {
     </button>
     ${railButton("insights", "Insights", "chart-column")}
     <div class="spacer"></div>
+    ${railProfile()}
     ${railButton("settings", settings, "settings-2")}
   </nav>`;
 }
