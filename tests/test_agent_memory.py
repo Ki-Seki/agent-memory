@@ -550,6 +550,31 @@ class UiServerTest(unittest.TestCase):
         self.assertEqual(self.call("/api/undo", {"commit": res["commit"]})[0], 200)
         self.assertTrue(all(self.mem(i) is not None for i in ids))
 
+    def test_insights_endpoints(self):
+        status, res = self.call("/api/activity")
+        self.assertEqual(status, 200)
+        self.assertTrue(all(c["subject"].startswith("memory: ") for c in res["commits"]))
+        globals_ = sum(m["scope"] == "global" for m in self.call("/api/state")[1]["memories"])
+        status, res = self.call("/api/index-preview")
+        self.assertEqual(status, 200, res)
+        self.assertEqual((res["global"], res["here"]), (globals_, 0))
+        self.assertIn(f"## Global ({globals_})", res["text"])
+        self.assertEqual(res["chars"], len(res["text"]))
+        self.assertEqual(self.call("/api/index-preview?place=nowhere")[0], 404)
+
+    def test_settings_and_health(self):
+        from agent_memory import config
+
+        status, res = self.call("/api/settings", {"keyword_stopwords": [" Alpha ", "alpha", "beta"]})
+        self.assertEqual(status, 200, res)
+        self.assertEqual(res["keywordStopwords"], ["alpha", "beta"])
+        self.assertEqual(config.load()["keyword_stopwords"], ["alpha", "beta"])
+        self.assertEqual(self.call("/api/settings", {"keyword_stopwords": "alpha"})[0], 400)
+        self.call("/api/settings", {"keyword_stopwords": []})
+        status, res = self.call("/api/doctor")
+        self.assertEqual(status, 200)
+        self.assertTrue(res["checks"] and all({"ok", "text"} <= set(c) for c in res["checks"]))
+
 
 class UiSyncStatusTest(unittest.TestCase):
     def test_finished_push_clears_not_pushed(self):
