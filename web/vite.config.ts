@@ -3,13 +3,13 @@ import tailwindcss from "@tailwindcss/vite";
 import { fileURLToPath } from "node:url";
 import { defineConfig } from "vite";
 
-// The page is served by `mem ui` under /next/ and shipped inside the Python package.
+// The page `mem ui` serves, shipped inside the Python package.
 // `npm run dev` proxies the API to a running `mem ui` (set MEM_UI to its address).
 export default defineConfig({
-  base: "/next/",
+  base: "/",
   plugins: [tailwindcss(), svelte()],
   resolve: { alias: { $lib: fileURLToPath(new URL("./src/lib", import.meta.url)) } },
-  build: { outDir: "../src/agent_memory/webui_next", emptyOutDir: true, assetsDir: "assets", sourcemap: false },
+  build: { outDir: "../src/agent_memory/webui", emptyOutDir: true, assetsDir: "assets", sourcemap: false },
   server: {
     proxy: {
       // mem ui only answers its own host and origin, so the proxy speaks as the page served by mem ui would

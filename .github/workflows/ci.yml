@@ -110,7 +110,7 @@ jobs:
       - name: Install each distribution and run mem from it
         run: |
           for release_dist in dist/*.whl dist/*.tar.gz; do
-            uv run --isolated --no-project --with "$release_dist" python -c "from agent_memory import config; assert config.PROTOCOL.is_file(); assert (config.PACKAGE_DIR / 'webui' / 'index.html').is_file(); assert (config.PACKAGE_DIR / 'webui_next' / 'index.html').is_file(); assert (config.PACKAGE_DIR / 'embed_worker.py').is_file()"
+            uv run --isolated --no-project --with "$release_dist" python -c "from agent_memory import config; assert config.PROTOCOL.is_file(); assert (config.PACKAGE_DIR / 'webui' / 'index.html').is_file(); assert (config.PACKAGE_DIR / 'embed_worker.py').is_file()"
             uv run --isolated --no-project --with "$release_dist" mem --help > /dev/null
           done
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1

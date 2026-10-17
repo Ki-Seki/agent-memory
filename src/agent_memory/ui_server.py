@@ -27,8 +27,7 @@ from . import config, frontmatter, gitsync, select, store, ui
 from .context import detect, hostname, normalize_remote
 from .util import SCOPES, TYPES, atomic_write, id_path, log_exc, new_id, now_iso, slugify
 
-STATIC = Path(__file__).with_name("webui")
-NEXT = Path(__file__).with_name("webui_next")  # the new page, built from web/ by `npm run build`
+STATIC = Path(__file__).with_name("webui")  # the page, built from web/ by `npm run build`
 MIME = {
     ".html": "text/html; charset=utf-8",
     ".css": "text/css; charset=utf-8",
@@ -40,6 +39,11 @@ MIME = {
 CSP = (
     "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; "
     "connect-src 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'none'"
+)
+NOT_BUILT = (
+    "<!doctype html><meta charset=utf-8><title>agent-memory</title>"
+    "<p style='font:15px/1.6 system-ui;margin:3rem auto;max-width:36rem'>This copy of agent-memory has no built page. "
+    "In a checkout, build it with <code>cd web &amp;&amp; npm ci &amp;&amp; npm run build</code>, then reload.</p>"
 )
 PLACE_FIELDS = ("cwd", "git_root", "git_remote", "git_branch")
 SEARCH_HITS = 8
@@ -470,14 +474,8 @@ class Handler(BaseHTTPRequestHandler):
         api = url.path.startswith("/api/")
         if not self._guard(api):
             return
-        if not api and (url.path == "/next" or url.path.startswith("/next/")):
-            return self._next(url.path[len("/next") :].lstrip("/"))
         if not api:
-            name = "index.html" if url.path in ("/", "/index.html") else url.path.lstrip("/")
-            path = STATIC / name
-            if "/" in name or not path.is_file() or path.suffix not in MIME:
-                return self._send(404, {"error": "not found"})
-            return self._send(200, path.read_bytes(), MIME[path.suffix])
+            return self._page(url.path.lstrip("/"))
         app, q = self.server.app, {k: v[0] for k, v in parse_qs(url.query).items()}
         routes = {
             "/api/state": app.current,
@@ -492,15 +490,17 @@ class Handler(BaseHTTPRequestHandler):
             return self._send(404, {"error": "not found"})
         self._run(routes[url.path])
 
-    def _next(self, rel):
-        """The new page: its files, and index.html for any other path so the page can route."""
-        root = NEXT.resolve()
+    def _page(self, rel):
+        """The page's files, and index.html for any other path so the page can route."""
+        root = STATIC.resolve()
         target = (root / rel).resolve() if rel else None
         if target and target.is_file() and root in target.parents and target.suffix in MIME:
             return self._send(200, target.read_bytes(), MIME[target.suffix])
         index = root / "index.html"
-        if rel.startswith("assets/") or not index.is_file():
-            return self._send(404, {"error": "not found (build the page with `npm run build` in web/)"})
+        if not index.is_file():  # a checkout where the page was never built
+            return self._send(503, NOT_BUILT.encode(), MIME[".html"])
+        if rel.startswith("assets/"):
+            return self._send(404, {"error": "not found"})
         return self._send(200, index.read_bytes(), MIME[".html"])
 
     def do_POST(self):
@@ -541,8 +541,6 @@ def run(data_dir, port=8790, open_browser=True, semantic=True):
         )
     server = make_server(data_dir, port, semantic)
     print(f"Memories: {server.url}", flush=True)
-    if (NEXT / "index.html").is_file():
-        print(f"New page: {server.url.replace('/#t=', '/next/#t=')}", flush=True)
     print("Keep this terminal open while you use it; Ctrl+C stops it.", flush=True)
     if open_browser:
         try:
