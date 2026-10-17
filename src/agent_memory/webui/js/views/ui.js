@@ -35,6 +35,3 @@ export const select = (label, value, items, act, cls = "", placeholder = "") => 
 /** A menu that opens under its trigger (the trigger names it with popovertarget). */
 export const menu = (id, content, cls = "", align = "start") =>
   html`<div${attrs({ id, popover: "", class: `menu ${cls}`, "data-align": align, "data-live": "style" })}>${content}</div>`;
-
-/** A note that something is good, waiting or wrong. */
-export const status = (tone, text) => html`<span class="status"><i class="dot ${tone}"></i>${text}</span>`;

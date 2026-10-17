@@ -137,8 +137,6 @@ const ACTIONS = {
   },
   toggleHealth: () => { settings.healthOpen = !settings.healthOpen; app.changed(); },
   useProfile: (id) => { closeMenus(); app.useProfile(id); },
-  openSettings: () => { closeMenus(); app.go("settings"); },
-  profileNewFromMenu: () => { closeMenus(); app.go("settings"); ACTIONS.profileNew(); },
   profileNew: async () => { await app.newProfile(); setTimeout(() => document.getElementById("pf-folder")?.focus()); },
   profileCancel: () => app.cancelProfile(),
   profileRemove: () => app.removeProfile(),
@@ -186,14 +184,9 @@ document.addEventListener("beforetoggle", (e) => {
   const trigger = document.querySelector(`[popovertarget="${menu.id}"]`);
   if (!trigger) return;
   const r = trigger.getBoundingClientRect(), w = parseFloat(getComputedStyle(menu).width) || 288;
-  if (menu.dataset.align === "side" && innerWidth >= 640) {  // beside a trigger low in the rail, growing upwards
-    Object.assign(menu.style, { left: `${r.right + 8}px`, top: "auto", bottom: `${Math.max(8, innerHeight - r.bottom)}px`, maxHeight: `${Math.max(160, r.bottom - 16)}px` });
-    return;
-  }
-  const left = menu.dataset.align === "end" || menu.dataset.align === "side" ? r.right - w : r.left;
+  const left = menu.dataset.align === "end" ? r.right - w : r.left;
   menu.style.left = `${Math.max(8, Math.min(innerWidth - w - 8, left))}px`;
   menu.style.top = `${r.bottom + 4}px`;
-  menu.style.bottom = "auto";
   menu.style.maxHeight = `${Math.max(160, innerHeight - r.bottom - 16)}px`;
   if (menu.querySelector(".menu-find")) { app.menuQuery = ""; app.changed(); }
 }, true);
