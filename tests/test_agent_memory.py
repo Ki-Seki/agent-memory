@@ -2,6 +2,7 @@ import atexit
 import io
 import json
 import os
+import re
 import shutil
 import subprocess
 import sys
@@ -627,6 +628,36 @@ class DemoTest(unittest.TestCase):
             os.environ.clear()
             os.environ.update(before)
             shutil.rmtree(root, ignore_errors=True)
+
+
+class SiteTest(unittest.TestCase):
+    def test_site_builds_with_a_demo_that_matches_the_demo_memories(self):
+        from agent_memory import demo
+
+        site = Path(__file__).resolve().parent.parent / "site"
+        snapshot = json.loads((site / "demo" / "snapshot.json").read_text("utf-8"))
+        # saved by `scripts/site.py snapshot`; run it again after changing the demo memories
+        self.assertEqual(snapshot["fingerprint"], demo.fingerprint())
+        self.assertEqual(len(snapshot["state"]["memories"]), len(list(demo.MEMORIES.rglob("*.md"))))
+        self.assertEqual(set(snapshot["search"]), set(snapshot["queries"]))
+        out = ROOT / "site-build"
+        script = site.parent / "scripts" / "site.py"
+        subprocess.run([sys.executable, str(script), "build", str(out)], check=True, capture_output=True)
+        for page in (
+            "index.html",
+            "docs.html",
+            "assets/site.css",
+            "assets/how-it-works.svg",
+            "demo/index.html",
+            "demo/js/main.js",
+        ):
+            self.assertTrue((out / page).is_file(), page)
+        self.assertIn('src="demo.js"', (out / "demo" / "index.html").read_text("utf-8"))
+        for page in ("index.html", "docs.html"):  # every local link and image is there
+            text = (out / page).read_text("utf-8")
+            for ref in re.findall(r'(?:href|src|srcset)="(?![a-z]+:)([^"#?]+)', text):
+                target = out / ref
+                self.assertTrue(target.is_file() or (target / "index.html").is_file(), f"{page} -> {ref}")
 
 
 class PageTest(unittest.TestCase):

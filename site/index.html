@@ -1,0 +1,163 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>agent-memory · one memory for Claude Code and Codex</title>
+<meta name="description" content="agent-memory keeps what your coding agents learn as plain Markdown files in a git repository you own, shared by Claude Code and Codex.">
+<meta property="og:title" content="agent-memory">
+<meta property="og:description" content="One memory for Claude Code and Codex, kept as plain Markdown in a git repository you own.">
+<meta property="og:image" content="assets/shots/memories-light.png">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Crect width='24' height='24' rx='7' fill='%235b5bd6'/%3E%3Cpath d='M6.5 17v-5.75a2.75 2.75 0 0 1 5.5 0V17M12 11.25a2.75 2.75 0 0 1 5.5 0V14' fill='none' stroke='%23fff' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3Ccircle cx='17.5' cy='17.2' r='1.6' fill='%23fff'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="assets/site.css">
+<script type="module" src="assets/site.js"></script>
+</head>
+<body>
+
+<header class="top">
+  <div class="wrap">
+    <a class="brand" href="./" aria-label="agent-memory home">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><rect width="24" height="24" rx="7" fill="#5b5bd6"/><path d="M6.5 17v-5.75a2.75 2.75 0 0 1 5.5 0V17M12 11.25a2.75 2.75 0 0 1 5.5 0V14" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><circle cx="17.5" cy="17.2" r="1.6" fill="#fff"/></svg>
+      agent-memory
+    </a>
+    <nav class="nav" aria-label="Site">
+      <a href="docs.html">Docs</a>
+      <a href="demo/">Live demo</a>
+      <a class="gh" href="https://github.com/Ki-Seki/agent-memory" aria-label="agent-memory on GitHub"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 0c4.42 0 8 3.58 8 8a8.013 8.013 0 0 1-5.45 7.59c-.4.08-.55-.17-.55-.38 0-.27.01-1.13.01-2.2 0-.75-.25-1.23-.54-1.48 1.78-.2 3.65-.88 3.65-3.95 0-.88-.31-1.59-.82-2.15.08-.2.36-1.02-.08-2.12 0 0-.67-.22-2.2.82-.64-.18-1.32-.27-2-.27-.68 0-1.36.09-2 .27-1.53-1.03-2.2-.82-2.2-.82-.44 1.1-.16 1.92-.08 2.12-.51.56-.82 1.28-.82 2.15 0 3.06 1.86 3.75 3.64 3.95-.23.2-.44.55-.51 1.07-.46.21-1.61.55-2.33-.66-.15-.24-.6-.83-1.23-.82-.67.01-.27.38.01.53.34.19.73.9.82 1.13.16.45.68 1.31 2.69.94 0 .67.01 1.3.01 1.49 0 .21-.15.45-.55.38A7.995 7.995 0 0 1 0 8c0-4.42 3.58-8 8-8Z"/></svg><span class="hide-sm">GitHub</span></a>
+    </nav>
+  </div>
+</header>
+
+<main>
+  <section class="hero">
+    <div class="wrap">
+      <span class="pill"><b>Open source</b>For Claude Code and Codex</span>
+      <h1>One memory for Claude Code and Codex</h1>
+      <p class="lede">agent-memory keeps what your agents learn as plain Markdown files in a git repository you own. Each session starts with what matters where it runs; each turn ends with a commit.</p>
+      <div class="ctas">
+        <a class="btn primary" href="demo/">Try the live demo <svg class="i go" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></a>
+        <a class="btn" href="docs.html">Read the docs</a>
+      </div>
+      <div class="cmd"><code>uv tool install "agent-memory-git[ui]"</code></div>
+    </div>
+    <a class="window" href="demo/" aria-label="Open the live demo">
+      <div class="window-bar"><i></i><i></i><i></i><span>127.0.0.1:8790</span></div>
+      <picture>
+        <source media="(prefers-color-scheme: dark)" srcset="assets/shots/memories-dark.png">
+        <img src="assets/shots/memories-light.png" width="1440" height="860" alt="mem ui: a list of memories on the left, one open on the right with its provenance">
+      </picture>
+    </a>
+  </section>
+
+  <section class="band" id="how">
+    <div class="wrap">
+      <div class="kicker">How it works</div>
+      <h2>Two hooks and a folder of Markdown</h2>
+      <p class="sub"><code>mem install</code> wires the same hooks into both tools. Nothing runs in the background, and git does the syncing.</p>
+      <div class="steps">
+        <div class="step"><h3>Session start</h3><p>A hook works out where the session runs and injects an index of the memories that apply: everything global, plus what was learned in this folder or repository.</p></div>
+        <div class="step"><h3>While you work</h3><p>The agent saves what is worth keeping as one Markdown file per memory, following the rules in PROTOCOL.md: who you are, how you want work done, facts about a project, where to find things.</p></div>
+        <div class="step"><h3>Turn end</h3><p>A hook stamps each new memory with where it came from and commits it, then pushes if there is a remote. The next session, in either tool and on any machine that pulls, sees it.</p></div>
+      </div>
+      <div class="diagram"><img src="assets/how-it-works.svg" width="960" height="576" alt="mem install wires hooks into Claude Code and Codex; at session start they load an index from the private data repository, and at the end of each turn they commit and push new memories back"></div>
+    </div>
+  </section>
+
+  <section class="band alt" id="why">
+    <div class="wrap">
+      <div class="kicker">Why it holds up</div>
+      <h2>Plain files, clear rules, nothing to run</h2>
+      <div class="features">
+        <div class="feature">
+          <svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 3 4 7l4 4"/><path d="M4 7h16"/><path d="m16 21 4-4-4-4"/><path d="M20 17H4"/></svg>
+          <h3>Shared by both tools</h3>
+          <p>A preference you gave Codex is there the next time Claude Code starts, and the other way round. Each tool's own memory is turned off, so there is one source.</p>
+        </div>
+        <div class="feature">
+          <svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M10 9H8"/><path d="M16 13H8"/><path d="M16 17H8"/></svg>
+          <h3>Files you can read</h3>
+          <p>Each memory is a Markdown file with a short frontmatter. Grep it, edit it, review it in a pull request; its history is plain <code>git log</code>.</p>
+        </div>
+        <div class="feature">
+          <svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0"/><circle cx="12" cy="10" r="3"/></svg>
+          <h3>Loads what matters here</h3>
+          <p>Global memories load everywhere. Project memories load only in the folder or repository they came from, and in its other clones and worktrees.</p>
+        </div>
+        <div class="feature">
+          <svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M12 7v5l4 2"/></svg>
+          <h3>Where each one came from</h3>
+          <p>Tool, session, model, host, folder, repository, branch and commit are recorded by the hooks, never written by the agent.</p>
+        </div>
+        <div class="feature">
+          <svg class="i" viewBox="0 0 24 24" aria-hidden="true"><line x1="6" x2="6" y1="3" y2="15"/><circle cx="18" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><path d="M18 9a9 9 0 0 1-9 9"/></svg>
+          <h3>Git all the way</h3>
+          <p>Memories live in a git repository you own, and every change is a commit you can review or revert. Push to a private remote to sync machines, or keep it all on one. <a href="https://github.com/Ki-Seki/agent-memory-data-demo">See an example</a>.</p>
+        </div>
+        <div class="feature">
+          <svg class="i" viewBox="0 0 24 24" aria-hidden="true"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+          <h3>Local by default</h3>
+          <p>No service and no account. Search by meaning uses a small embedding model on your CPU; the network is only git and an optional update check.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="band" id="page">
+    <div class="wrap split">
+      <div>
+        <div class="kicker">mem ui</div>
+        <h2>A page to keep it tidy</h2>
+        <p class="sub">Run <code>mem ui</code> to search, read and edit memories in a local page. Every change is a git commit, with Undo.</p>
+        <ul class="ticks">
+          <li><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg><span><b>Search by words and by meaning</b>, across Chinese and English.</span></li>
+          <li><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg><span><b>Filter</b> by type, place, source, keyword, date and status.</span></li>
+          <li><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg><span><b>Insights</b>: changes week by week, near-duplicates side by side, and the index a session would get.</span></li>
+          <li><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg><span><b>Settings</b> for keywords, sync, the local model and one-click updates.</span></li>
+        </ul>
+        <div class="ctas"><a class="btn primary" href="demo/#/insights">Open Insights in the demo <svg class="i go" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></a></div>
+      </div>
+      <a class="window" href="demo/#/insights" aria-label="Open Insights in the live demo">
+        <div class="window-bar"><i></i><i></i><i></i><span>127.0.0.1:8790/#/insights</span></div>
+        <picture>
+          <source media="(prefers-color-scheme: dark)" srcset="assets/shots/insights-dark.png">
+          <img src="assets/shots/insights-light.png" width="1440" height="900" loading="lazy" alt="mem ui Insights: totals, memories added per week by type, where memories load and which tool wrote them">
+        </picture>
+      </a>
+    </div>
+  </section>
+
+  <section class="band alt" id="start">
+    <div class="wrap start">
+      <div>
+        <div class="kicker">Get started</div>
+        <h2>Set up in a few minutes</h2>
+        <p class="sub">You need Python 3.11 or newer, git and <a href="https://docs.astral.sh/uv/">uv</a>. Every step that edits your tools' settings shows a diff first.</p>
+        <p class="note">Codex asks you to trust new hooks once: open <code>/hooks</code> in Codex and enable the three agent-memory hooks. The <a href="docs.html#install">docs</a> list every file <code>mem install</code> changes, and <code>mem uninstall</code> puts them back.</p>
+      </div>
+      <div>
+        <pre class="code"><code>uv tool install "agent-memory-git[ui]"
+mem init ~/repos/agent-memory-data   <span class="c"># your data repository</span>
+mem import claude --dry-run          <span class="c"># optional: existing memories</span>
+mem install --dry-run                <span class="c"># every change, as a diff</span>
+mem install</code></pre>
+        <p class="note">Or look around first, with nothing installed:</p>
+        <div class="cmd" style="margin-top:10px"><code>uvx --from "agent-memory-git[ui]" mem ui --demo</code></div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer class="foot">
+  <div class="wrap">
+    <a class="brand" href="./"><svg viewBox="0 0 24 24" aria-hidden="true"><rect width="24" height="24" rx="7" fill="#5b5bd6"/><path d="M6.5 17v-5.75a2.75 2.75 0 0 1 5.5 0V17M12 11.25a2.75 2.75 0 0 1 5.5 0V14" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><circle cx="17.5" cy="17.2" r="1.6" fill="#fff"/></svg>agent-memory</a>
+    <span>MIT License</span>
+    <nav aria-label="More">
+      <a href="docs.html">Docs</a>
+      <a href="demo/">Live demo</a>
+      <a href="https://github.com/Ki-Seki/agent-memory">GitHub</a>
+      <a href="https://pypi.org/project/agent-memory-git/">PyPI</a>
+    </nav>
+  </div>
+</footer>
+</body>
+</html>

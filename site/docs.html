@@ -1,0 +1,176 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Docs · agent-memory</title>
+<meta name="description" content="The details of agent-memory: the memory file, where memories load, what mem install changes, commands and configuration.">
+<meta property="og:title" content="agent-memory">
+<meta property="og:description" content="One memory for Claude Code and Codex, kept as plain Markdown in a git repository you own.">
+<meta property="og:image" content="assets/shots/memories-light.png">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Crect width='24' height='24' rx='7' fill='%235b5bd6'/%3E%3Cpath d='M6.5 17v-5.75a2.75 2.75 0 0 1 5.5 0V17M12 11.25a2.75 2.75 0 0 1 5.5 0V14' fill='none' stroke='%23fff' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3Ccircle cx='17.5' cy='17.2' r='1.6' fill='%23fff'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="assets/site.css">
+<script type="module" src="assets/site.js"></script>
+</head>
+<body>
+
+<header class="top">
+  <div class="wrap">
+    <a class="brand" href="./" aria-label="agent-memory home">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><rect width="24" height="24" rx="7" fill="#5b5bd6"/><path d="M6.5 17v-5.75a2.75 2.75 0 0 1 5.5 0V17M12 11.25a2.75 2.75 0 0 1 5.5 0V14" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><circle cx="17.5" cy="17.2" r="1.6" fill="#fff"/></svg>
+      agent-memory
+    </a>
+    <nav class="nav" aria-label="Site">
+      <a href="docs.html" aria-current="page">Docs</a>
+      <a href="demo/">Live demo</a>
+      <a class="gh" href="https://github.com/Ki-Seki/agent-memory" aria-label="agent-memory on GitHub"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 0c4.42 0 8 3.58 8 8a8.013 8.013 0 0 1-5.45 7.59c-.4.08-.55-.17-.55-.38 0-.27.01-1.13.01-2.2 0-.75-.25-1.23-.54-1.48 1.78-.2 3.65-.88 3.65-3.95 0-.88-.31-1.59-.82-2.15.08-.2.36-1.02-.08-2.12 0 0-.67-.22-2.2.82-.64-.18-1.32-.27-2-.27-.68 0-1.36.09-2 .27-1.53-1.03-2.2-.82-2.2-.82-.44 1.1-.16 1.92-.08 2.12-.51.56-.82 1.28-.82 2.15 0 3.06 1.86 3.75 3.64 3.95-.23.2-.44.55-.51 1.07-.46.21-1.61.55-2.33-.66-.15-.24-.6-.83-1.23-.82-.67.01-.27.38.01.53.34.19.73.9.82 1.13.16.45.68 1.31 2.69.94 0 .67.01 1.3.01 1.49 0 .21-.15.45-.55.38A7.995 7.995 0 0 1 0 8c0-4.42 3.58-8 8-8Z"/></svg><span class="hide-sm">GitHub</span></a>
+    </nav>
+  </div>
+</header>
+
+<main class="wrap docs">
+  <header class="docs-head">
+    <h1>Docs</h1>
+    <p>The details behind the <a href="./">overview</a>. To try the page itself, open the <a href="demo/">live demo</a>.</p>
+    <nav class="jump" aria-label="On this page">
+      <a href="#memory-files">A memory file</a><a href="#where-memories-load">Where memories load</a><a href="#install">Install</a><a href="#mem-ui">mem ui</a><a href="#commands">Commands</a><a href="#configuration">Configuration</a><a href="#development">Development</a>
+    </nav>
+  </header>
+
+  <section id="memory-files">
+    <h2>A memory file</h2>
+    <p>One Markdown file per memory, in <code>memories/YYYY/MM/&lt;id&gt;.md</code> of your data repository; the folders only keep listings short.</p>
+    <figure class="anatomy">
+<pre class="file"><code>---
+id: 20261002-shop-web-v3-freeze-5xtp
+name: shop-web-v3-freeze
+<mark data-n="1">type: project
+scope: here</mark><mark data-n="2">description: "shop-web v3 feature freeze on 2026-11-01: no schema migrations after that date"</mark>created: 2026-10-02T16:45:00+08:00
+<mark data-n="3">source:
+  tool: claude-code
+  session_name: shop-web-v3-plan
+  host: laptop
+  git_remote: git.example.com/shop-web
+  git_branch: main</mark>---
+<mark data-n="4">Feature freeze for shop-web v3 is 2026-11-01. After that only bug fixes land.
+
+**Why:** the data team snapshots the schema for the Q4 reporting work.
+
+**How to apply:** if a change needs a migration, flag it before the freeze.</mark></code></pre>
+      <ol class="callouts">
+        <li><b>Type and scope.</b> <code>user</code> (who you are), <code>feedback</code> (how you want work done), <code>project</code> (facts about a project) or <code>reference</code> (where to find things). <code>global</code> loads everywhere, <code>here</code> only where it was recorded.</li>
+        <li><b>Description.</b> One line, under 150 characters: what the session index shows.</li>
+        <li><b>Source.</b> Stamped by the Stop hook, never by the agent: tool, session, model, host, folder, repository, branch and commit.</li>
+        <li><b>The memory.</b> The fact first, then why, then how to apply it, as <a href="https://github.com/Ki-Seki/agent-memory/blob/main/src/agent_memory/PROTOCOL.md">PROTOCOL.md</a> asks.</li>
+      </ol>
+    </figure>
+    <p>Agents write new memories into a per-session staging folder and edit existing files in place. At the end of each turn the Stop hook stamps ids and provenance, moves staged files into <code>memories/</code>, commits, and pushes in the background when the repository has a remote.</p>
+  </section>
+
+  <section id="where-memories-load">
+    <h2>Where memories load</h2>
+    <p>At session start a hook injects an index, under the 10,000-character hook limit: every <code>global</code> memory, plus the <code>here</code> memories recorded close to where the session runs, closest first.</p>
+    <figure class="ladder" aria-label="How a here memory matches a session, by score">
+      <div class="rung"><span>Same folder</span><i style="--w:100%"></i><b>100</b></div>
+      <div class="rung"><span>Same git checkout, same host</span><i style="--w:90%"></i><b>90</b></div>
+      <div class="rung"><span>Same remote: other clones and worktrees</span><i style="--w:80%"></i><b>80</b></div>
+      <div class="rung"><span>The session runs inside its folder</span><i style="--w:70%"></i><b>70</b></div>
+      <div class="rung"><span>Its folder is inside the session's</span><i style="--w:60%"></i><b>60</b></div>
+    </figure>
+    <p>Your home folder and its direct children, such as <code>~/repos</code>, are too broad to match by containment. Sessions in throwaway folders (Claude Code scratch workspaces, Codex per-thread folders) file their <code>here</code> memories under the project folder they worked in most, keeping the original as <code>source.original_cwd</code>; <code>mem relocate</code> does the same for existing memories. <code>mem index</code> shows what a session started in the current folder would see.</p>
+  </section>
+
+  <section id="install">
+    <h2>Install</h2>
+<pre><code>uv tool install "agent-memory-git[ui]"   # the mem command; [ui] adds numpy for mem ui
+mem init ~/repos/agent-memory-data       # the data repository and ~/.config/agent-memory
+mem import claude --dry-run              # preview, then run without --dry-run
+mem import codex --dry-run
+mem install --dry-run                    # every change, as a diff
+mem install</code></pre>
+    <p>Codex asks you to trust new hooks once: open <code>/hooks</code> in Codex and enable the three agent-memory hooks. A remote is optional: give the data repository a private one to share memories across machines, or leave it out and everything is still committed, on this machine only. <a href="https://github.com/Ki-Seki/agent-memory-data-demo">agent-memory-data-demo</a> shows what one with a remote looks like: the demo memories, committed the way the hooks commit them. <code>mem install</code> edits these files and records each edit in <code>~/.config/agent-memory/install-state.json</code>:</p>
+    <table>
+      <thead><tr><th>File</th><th>Change</th></tr></thead>
+      <tbody>
+        <tr><td><code>~/.claude/settings.json</code></td><td>SessionStart, Stop and SessionEnd hooks; <code>autoMemoryEnabled: false</code>; read and edit permission on the data repository; <code>mem search/list/show</code> allowed</td></tr>
+        <tr><td><code>~/.claude/CLAUDE.md</code></td><td>a marked block importing <code>~/.config/agent-memory/PROTOCOL.md</code>, a copy of the protocol</td></tr>
+        <tr><td><code>~/.codex/hooks.json</code></td><td>the same three hooks</td></tr>
+        <tr><td><code>~/.codex/config.toml</code></td><td>Codex's own memories off; the data repository added to the writable roots</td></tr>
+        <tr><td><code>~/.codex/AGENTS.md</code></td><td>a marked block with the protocol</td></tr>
+        <tr><td><code>~/.zshrc</code> or <code>~/.bashrc</code></td><td>a marked block putting <code>~/.local/bin</code> on PATH, only if a new login shell lacks it</td></tr>
+      </tbody>
+    </table>
+    <p><b>Upgrading.</b> Use Update in <code>mem ui</code>'s Settings, or run <code>uv tool upgrade agent-memory-git</code> and then <code>mem install</code>, which refreshes the protocol copies. <code>mem doctor</code> says when they are out of date.</p>
+    <p><b>Uninstalling.</b> <code>mem uninstall</code> reverts exactly those edits, keeping other changes the tools made since, and puts each tool's own memory settings back as they were. The data repository is never touched.</p>
+  </section>
+
+  <section id="mem-ui">
+    <h2>mem ui</h2>
+    <p><code>mem ui</code> serves the page on <code>127.0.0.1</code> while its terminal stays open. Every API request needs the token from the link it prints, new each run, so other web pages cannot read or change memories. Each change is one git commit with Undo; if an agent edits the same file meanwhile, saving is refused rather than overwriting.</p>
+    <p>Search by meaning and similar memories use Qwen3-Embedding-0.6B (int8 ONNX) on the CPU, in a separate <code>uv run --with onnxruntime --with tokenizers</code> environment. Get the model once with <code>mem ui --fetch-model</code> (about 625 MB; a pinned revision, its weights checked by SHA-256). Without it, or with <code>--keywords-only</code>, similar memories come from keywords and search matches words only. Keywords are the words that most set a memory apart (TF-IDF); words that should never be keywords, such as your own name, go in Settings.</p>
+  </section>
+
+  <section id="commands">
+    <h2>Commands</h2>
+<pre><code>mem init DIR                    create the data repository and the config
+mem install [--dry-run]         wire the hooks and the protocol into both tools
+mem uninstall [--dry-run]       put those files back as they were
+mem import claude|codex         bring in each tool's existing memories
+mem index [--cwd DIR]           what a session started here would see
+mem list [--global|--here] [--all] [--type T]
+mem search WORDS... [--all]     full-text search; --all includes other places
+mem show ID|NAME|PATH
+mem add --name N --type T --scope S --description D BODY|-
+mem flush                       commit anything left in staging
+mem relocate [PATH...]          re-file memories recorded in throwaway folders
+mem sync [--pull-only]          pull --rebase and push the data repository
+mem lint [ID...] [--summary]    memories that do not follow the format
+mem ui [--port N] [--no-open]   the page; --demo opens made-up memories instead
+mem doctor                      check the installation</code></pre>
+    <p>Every command has <code>--help</code>.</p>
+  </section>
+
+  <section id="configuration">
+    <h2>Configuration</h2>
+    <p><code>~/.config/agent-memory/config.json</code>, written by <code>mem init</code> and by Settings in <code>mem ui</code>:</p>
+    <table>
+      <thead><tr><th>Key</th><th>Effect</th></tr></thead>
+      <tbody>
+        <tr><td><code>data_dir</code></td><td>the data repository</td></tr>
+        <tr><td><code>keyword_stopwords</code></td><td>words never used as keywords</td></tr>
+        <tr><td><code>check_updates</code></td><td><code>false</code> turns off the daily check for a new release</td></tr>
+        <tr><td><code>throwaway_patterns</code></td><td>folders treated as throwaway, in place of the built-in ones</td></tr>
+        <tr><td><code>embed_model_dir</code></td><td>where the embedding model is, instead of <code>~/.cache/agent-memory/models</code></td></tr>
+      </tbody>
+    </table>
+    <p><code>AGENT_MEMORY_DATA</code> points any command at another data repository for one run, and <code>AGENT_MEMORY_CONFIG_DIR</code> at another config folder.</p>
+  </section>
+
+  <section id="development">
+    <h2>Development</h2>
+<pre><code>uv sync --all-extras            # dev tools and numpy
+uv run pytest
+uv run ruff check . &amp;&amp; uv run ruff format .
+uv run scripts/site.py serve    # this site and its live demo, at http://127.0.0.1:8800/</code></pre>
+    <p>The page <code>mem ui</code> serves is plain HTML, CSS and JavaScript modules in <code>src/agent_memory/webui/</code>, with no build step and no npm packages: edit a file and reload. <code>uv run mem ...</code> runs the working copy without touching the installed one; to have every session use it, install it in place of the release:</p>
+<pre><code>uv tool install --force --editable ".[ui]" &amp;&amp; mem install     # the checkout, live
+uv tool install --force "agent-memory-git[ui]" &amp;&amp; mem install   # the release again</code></pre>
+    <p>To release, <code>uv run scripts/release.py prepare patch</code> opens a version PR; once it is merged, <code>uv run scripts/release.py publish &lt;PR_NUMBER&gt;</code> creates the GitHub Release and GitHub Actions publishes it to PyPI.</p>
+    <p>Hooks never fail the host session; their errors go to <code>&lt;data&gt;/.cache/agent-memory.log</code>, and <code>mem doctor</code> reports recent ones. Git operations take turns through a lock file, so parallel sessions on one machine are safe; across machines, unique file names keep merge conflicts rare, and a failed rebase is aborted and logged for you to resolve.</p>
+  </section>
+</main>
+
+<footer class="foot">
+  <div class="wrap">
+    <a class="brand" href="./"><svg viewBox="0 0 24 24" aria-hidden="true"><rect width="24" height="24" rx="7" fill="#5b5bd6"/><path d="M6.5 17v-5.75a2.75 2.75 0 0 1 5.5 0V17M12 11.25a2.75 2.75 0 0 1 5.5 0V14" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><circle cx="17.5" cy="17.2" r="1.6" fill="#fff"/></svg>agent-memory</a>
+    <span>MIT License</span>
+    <nav aria-label="More">
+      <a href="docs.html">Docs</a>
+      <a href="demo/">Live demo</a>
+      <a href="https://github.com/Ki-Seki/agent-memory">GitHub</a>
+      <a href="https://pypi.org/project/agent-memory-git/">PyPI</a>
+    </nav>
+  </div>
+</footer>
+</body>
+</html>
