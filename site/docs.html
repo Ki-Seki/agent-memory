@@ -33,7 +33,7 @@
     <h1>Docs</h1>
     <p>The details behind the <a href="./">overview</a>. To try the page itself, open the <a href="demo/">live demo</a>.</p>
     <nav class="jump" aria-label="On this page">
-      <a href="#memory-files">A memory file</a><a href="#where-memories-load">Where memories load</a><a href="#install">Install</a><a href="#mem-ui">mem ui</a><a href="#commands">Commands</a><a href="#configuration">Configuration</a><a href="#development">Development</a>
+      <a href="#memory-files">A memory file</a><a href="#where-memories-load">Where memories load</a><a href="#install">Install</a><a href="#mem-ui">mem ui</a><a href="#profiles">Profiles</a><a href="#commands">Commands</a><a href="#configuration">Configuration</a><a href="#development">Development</a>
     </nav>
   </header>
 
@@ -110,6 +110,17 @@ mem install</code></pre>
     <p>Search by meaning and similar memories use Qwen3-Embedding-0.6B (int8 ONNX) on the CPU, in a separate <code>uv run --with onnxruntime --with tokenizers</code> environment. Get the model once with <code>mem ui --fetch-model</code> (about 625 MB; a pinned revision, its weights checked by SHA-256). Without it, or with <code>--keywords-only</code>, similar memories come from keywords and search matches words only. Keywords are the words that most set a memory apart (TF-IDF); words that should never be keywords, such as your own name, go in Settings.</p>
   </section>
 
+  <section id="profiles">
+    <h2>Profiles</h2>
+    <p>A profile is a separate set of memories: its own data repository, with its own remote or none. Keep work and personal memories apart, or a client's away from both. New sessions of either tool load and save memories in the active profile; a session that is running when you switch keeps saving to the one it started in. When there is more than one, the index says which profile it is from.</p>
+    <p>Each profile gets a name of two words, such as Quiet Harbor, picked when it is made, and a picture drawn from that name; neither changes. Add, switch and remove profiles at the top of Settings in <code>mem ui</code> (switching there also changes the profile the page shows; the <a href="demo/#/settings">live demo</a> has two to try), or with <code>mem profile</code>:</p>
+<pre><code>mem profile                                   list them; * marks the active one
+mem profile add ~/repos/agent-memory-work [--remote URL]   prints the name it got
+mem profile use quiet-harbor                  new sessions use Quiet Harbor from now on
+mem profile remove quiet-harbor               forget it; the folder and remote stay</code></pre>
+    <p>A new or empty folder becomes a fresh repository, or a clone of the remote when that already has memories; an existing memory repository is used as it is. Folders holding anything else are refused. Adding or removing a profile also updates the folders Claude Code and Codex may read and write, without touching the hooks.</p>
+  </section>
+
   <section id="commands">
     <h2>Commands</h2>
 <pre><code>mem init DIR                    create the data repository and the config
@@ -126,6 +137,7 @@ mem relocate [PATH...]          re-file memories recorded in throwaway folders
 mem sync [--pull-only]          pull --rebase and push the data repository
 mem lint [ID...] [--summary]    memories that do not follow the format
 mem ui [--port N] [--no-open]   the page; --demo opens made-up memories instead
+mem profile [use|add|remove]    separate memory repositories to switch between
 mem doctor                      check the installation</code></pre>
     <p>Every command has <code>--help</code>.</p>
   </section>
@@ -136,7 +148,8 @@ mem doctor                      check the installation</code></pre>
     <table>
       <thead><tr><th>Key</th><th>Effect</th></tr></thead>
       <tbody>
-        <tr><td><code>data_dir</code></td><td>the data repository</td></tr>
+        <tr><td><code>data_dir</code></td><td>the data repository (the active profile's, when there are profiles)</td></tr>
+        <tr><td><code>profiles</code>, <code>profile</code></td><td>each profile's name and folder, and which one is active; written by <code>mem profile</code> and Settings</td></tr>
         <tr><td><code>keyword_stopwords</code></td><td>words never used as keywords</td></tr>
         <tr><td><code>check_updates</code></td><td><code>false</code> turns off the daily check for a new release</td></tr>
         <tr><td><code>throwaway_patterns</code></td><td>folders treated as throwaway, in place of the built-in ones</td></tr>
