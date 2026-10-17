@@ -10,7 +10,9 @@ background like hook commits; Undo reverts that commit.
 """
 
 import hashlib
+import importlib.metadata
 import json
+import re
 import secrets
 import subprocess
 import sys
@@ -21,8 +23,8 @@ from urllib.parse import parse_qs, urlparse
 
 import numpy as np
 
-from . import frontmatter, gitsync, store, ui
-from .context import detect, hostname
+from . import config, frontmatter, gitsync, select, store, ui
+from .context import detect, hostname, normalize_remote
 from .util import SCOPES, TYPES, atomic_write, id_path, log_exc, new_id, now_iso, slugify
 
 STATIC = Path(__file__).with_name("webui")
@@ -33,6 +35,10 @@ CSP = (
 )
 PLACE_FIELDS = ("cwd", "git_root", "git_remote", "git_branch")
 SEARCH_HITS = 8
+ACTIVITY_COMMITS = 2000
+HOOK_LIMIT = 10000  # what Claude Code injects at most from a hook
+COUNTS = re.compile(r"memory: \+(\d+) ~(\d+) -(\d+)")
+UI_SUBJECT = re.compile(r"memory: (add|edit|delete|undo) (?:(\d+) memories)?")
 
 
 class ApiError(Exception):
@@ -85,6 +91,103 @@ class UiApp:
         r = gitsync.git(self.data, "rev-list", "--count", "@{u}..HEAD", timeout=5)
         ahead = int(r.stdout.strip()) if r.returncode == 0 and r.stdout.strip().isdigit() else 0
         return {"remote": True, "ahead": ahead}
+
+    # ------------------------------------------------------------ insights and settings
+
+    def activity(self):
+        """Commits to the data repository, newest first: when, which tool, how many memories added, changed, deleted."""
+        fmt = "%H%x1f%aI%x1f%s%x1f%(trailers:key=Tool,valueonly,separator=%x2C)%x1e"
+        r = gitsync.git(self.data, "log", f"--format={fmt}", "-n", str(ACTIVITY_COMMITS), timeout=10)
+        commits = []
+        for record in r.stdout.split("\x1e") if r.returncode == 0 else []:
+            parts = record.strip("\n").split("\x1f")
+            if len(parts) != 4 or not parts[2].startswith("memory: "):
+                continue
+            sha, when, subject, tool = parts
+            counts = COUNTS.match(subject)
+            if counts:
+                added, changed, deleted = map(int, counts.groups())
+            else:
+                ui_change = UI_SUBJECT.match(subject)
+                verb, many = ui_change.groups() if ui_change else ("", None)
+                n = int(many) if many else 1
+                added, changed, deleted = (
+                    (n if verb == "add" else 0),
+                    (n if verb in ("edit", "undo") else 0),
+                    (n if verb == "delete" else 0),
+                )
+            commits.append(
+                {
+                    "sha": sha[:10],
+                    "date": when,
+                    "subject": subject,
+                    "tool": tool.strip() or None,
+                    "added": added,
+                    "changed": changed,
+                    "deleted": deleted,
+                }
+            )
+        return {"commits": commits}
+
+    def index_preview(self, place):
+        """The index a session gets at one of the known places, or with no place only the global part."""
+        ctx = {}
+        if place:
+            known = {p["key"]: p.get("ctx", {}) for p in self.current().get("places", [])}
+            if place not in known:
+                raise ApiError(404, "unknown place")
+            ctx = dict(known[place])
+        memories = store.load_all(self.data)
+        paths = {
+            "memories": str(self.mdir),
+            "staging": str(self.data / "staging" / "<session>"),
+            "mem": str(config.BIN),
+        }
+        text = select.render(memories, ctx, paths)
+        globals_, here = select.visible(memories, ctx)
+        return {"text": text, "chars": len(text), "limit": HOOK_LIMIT, "global": len(globals_), "here": len(here)}
+
+    def settings(self):
+        remote = gitsync.git(self.data, "remote", "get-url", "origin", timeout=5)
+        try:
+            version = importlib.metadata.version("agent-memory-git")
+        except importlib.metadata.PackageNotFoundError:
+            version = "dev"
+        return {
+            "version": version,
+            "dataDir": ui._short(str(self.data)),
+            "remote": normalize_remote(remote.stdout.strip()) if remote.returncode == 0 else None,
+            "sync": self.sync_status(),
+            "keywordStopwords": config.load().get("keyword_stopwords", []),
+            "model": {
+                "name": ui.MODEL["name"],
+                "ready": ui.model_ready(),
+                "dir": ui._short(str(ui.model_dir())),
+                "fetch": "mem ui --fetch-model",
+                "size": "about 625 MB",
+            },
+            "semantic": bool(self.state.get("semantic")),
+        }
+
+    def set_settings(self, p):
+        words = p.get("keyword_stopwords")
+        if not isinstance(words, list) or not all(isinstance(w, str) for w in words):
+            raise ApiError(400, "keyword_stopwords must be a list of words")
+        cfg = config.load()
+        cfg["keyword_stopwords"] = sorted({w.strip().lower() for w in words if w.strip()})
+        config.save(cfg)
+        self.refresh()  # keywords are chosen when the state is built
+        return self.settings()
+
+    def doctor(self):
+        from .install import doctor_checks
+
+        return {"checks": [{"ok": passed, "text": text} for passed, text in doctor_checks()]}
+
+    def sync(self, p):
+        ok = gitsync.sync(self.data)
+        self.refresh()
+        return {"ok": ok, "sync": self.state["sync"]}
 
     def search(self, query):
         """Memories closest in meaning to the query (the page does word matching itself)."""
@@ -302,7 +405,14 @@ class UiApp:
 
 class Handler(BaseHTTPRequestHandler):
     server_version = "agent-memory"
-    POSTS = {"/api/create": "create", "/api/edit": "edit", "/api/delete": "delete", "/api/undo": "undo"}
+    POSTS = {
+        "/api/create": "create",
+        "/api/edit": "edit",
+        "/api/delete": "delete",
+        "/api/undo": "undo",
+        "/api/settings": "set_settings",
+        "/api/sync": "sync",
+    }
 
     def log_message(self, *args):
         pass
@@ -363,6 +473,10 @@ class Handler(BaseHTTPRequestHandler):
             "/api/state": app.current,
             "/api/stamp": lambda: {"stamp": app.stamp()},
             "/api/search": lambda: app.search(q.get("q")),
+            "/api/activity": app.activity,
+            "/api/index-preview": lambda: app.index_preview(q.get("place", "")),
+            "/api/settings": app.settings,
+            "/api/doctor": app.doctor,
         }
         if url.path not in routes:
             return self._send(404, {"error": "not found"})
