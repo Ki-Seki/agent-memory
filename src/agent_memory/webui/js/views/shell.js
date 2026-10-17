@@ -35,8 +35,7 @@ function rail() {
     </button>
     ${railButton("insights", "Insights", "chart-column")}
     <div class="spacer"></div>
-    ${railProfile()}
-    ${railButton("settings", settings, "settings-2")}
+    ${railProfile(railButton("settings", settings, "settings-2"))}
   </nav>`;
 }
 
