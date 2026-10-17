@@ -796,7 +796,25 @@ class PackagingTest(unittest.TestCase):
     def test_hooks_run_the_package_with_python_m(self):
         from agent_memory import config
 
-        self.assertEqual(config.mem_command(), [sys.executable, "-m", "agent_memory"])
+        cmd = config.mem_command()
+        self.assertTrue(Path(cmd[0]).samefile(sys.executable))
+        self.assertEqual(cmd[1:], ["-m", "agent_memory"])
+
+    def test_hooks_name_the_python_beside_the_interpreter_when_it_is_the_same_file(self):
+        from agent_memory import config
+
+        venv, other, bare = (ROOT / "bins" / d for d in ("venv", "other", "bare"))
+        for d in (venv, other, bare):
+            d.mkdir(parents=True)
+            (d / "python3.11").write_text("")
+        (venv / "python").symlink_to("python3.11")  # how a venv lays them out
+        (venv / "python3").symlink_to("python")
+        (other / "python").write_text("")  # a different interpreter
+        cases = {venv / "python3": venv / "python", venv / "python": venv / "python"}
+        cases |= {other / "python3.11": other / "python3.11", bare / "python3.11": bare / "python3.11"}
+        for started, expected in cases.items():
+            with mock.patch.object(config.sys, "executable", str(started)):
+                self.assertEqual(config.mem_command()[0], str(expected), started)
 
     def test_protocol_ships_inside_the_package(self):
         from agent_memory import config

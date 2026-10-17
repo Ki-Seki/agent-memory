@@ -14,9 +14,21 @@ CONFIG_FILE = CONFIG_DIR / "config.json"
 PROTOCOL_COPY = CONFIG_DIR / "PROTOCOL.md"  # what Claude Code imports; `mem install` refreshes it
 
 
+def _python():
+    """This interpreter, as the `python` beside it when that is the same file. Whether `mem` was
+    started as python3 or python3.11 (uv has changed its entry scripts) then leaves the hook
+    commands alone, so `mem install` does not rewrite them and Codex does not ask to trust them again."""
+    exe = Path(sys.executable)
+    try:
+        plain = exe.with_name("python")
+        return str(plain) if plain != exe and plain.samefile(exe) else sys.executable
+    except (OSError, ValueError):  # no `python` beside it, or no sys.executable at all
+        return sys.executable
+
+
 def mem_command():
     """The argv that runs `mem` with this interpreter, for hooks and background sync."""
-    return [sys.executable, "-m", "agent_memory"]
+    return [_python(), "-m", "agent_memory"]
 
 
 def _mem_path():
