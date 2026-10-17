@@ -35,8 +35,9 @@
   <Tip text={label} side="right">
     {#snippet children(props)}
       <button {...props} aria-label={label} aria-current={app.page === p ? "page" : undefined} onclick={() => app.go(p)}
-        class="grid size-10 place-items-center rounded-[9px] transition-colors {app.page === p ? 'bg-surface text-accent shadow-[0_0_0_1px_var(--line)]' : 'text-ink-3 hover:bg-hover hover:text-ink'}">
+        class="relative grid size-10 place-items-center rounded-[9px] transition-colors {app.page === p ? 'bg-surface text-accent shadow-[0_0_0_1px_var(--line)]' : 'text-ink-3 hover:bg-hover hover:text-ink'}">
         <Icon class="size-[19px]" />
+        {#if p === "settings" && app.update?.available}<i class="absolute top-2 right-2 size-2 rounded-full bg-accent ring-2 ring-panel" aria-hidden="true"></i>{/if}
       </button>
     {/snippet}
   </Tip>
@@ -54,7 +55,7 @@
     </Tip>
     {@render railButton("insights", "Insights", ChartColumn)}
     <div class="flex-1 max-sm:hidden"></div>
-    {@render railButton("settings", "Settings", Settings2)}
+    {@render railButton("settings", app.update?.available ? `Settings · version ${app.update.latest} is out` : "Settings", Settings2)}
   </nav>
 
   {#if app.page === "memories"}
