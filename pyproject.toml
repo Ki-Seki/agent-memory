@@ -23,9 +23,10 @@ ui = ["numpy>=2.0"]
 mem = "agent_memory.cli:main"
 
 [project.urls]
-Homepage = "https://github.com/Ki-Seki/agent-memory"
+Homepage = "https://ki-seki.github.io/agent-memory/"
+Documentation = "https://ki-seki.github.io/agent-memory/docs.html"
+Demo = "https://ki-seki.github.io/agent-memory/demo/"
 Repository = "https://github.com/Ki-Seki/agent-memory"
-Demo = "https://github.com/Ki-Seki/agent-memory-data-demo"
 
 [build-system]
 requires = ["uv_build>=0.12.13,<0.13.0"]
