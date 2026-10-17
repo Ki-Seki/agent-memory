@@ -28,7 +28,7 @@ from . import config, frontmatter, gitsync, select, store, ui, update
 from .context import detect, hostname, normalize_remote
 from .util import SCOPES, TYPES, atomic_write, id_path, log_exc, new_id, now_iso, slugify
 
-STATIC = Path(__file__).with_name("webui")  # the page, built from web/ by `npm run build`
+STATIC = Path(__file__).with_name("webui")  # the page: plain HTML, CSS and JavaScript modules, no build step
 MIME = {
     ".html": "text/html; charset=utf-8",
     ".css": "text/css; charset=utf-8",
@@ -40,11 +40,6 @@ MIME = {
 CSP = (
     "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; "
     "connect-src 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'none'"
-)
-NOT_BUILT = (
-    "<!doctype html><meta charset=utf-8><title>agent-memory</title>"
-    "<p style='font:15px/1.6 system-ui;margin:3rem auto;max-width:36rem'>This copy of agent-memory has no built page. "
-    "In a checkout, build it with <code>cd web &amp;&amp; npm ci &amp;&amp; npm run build</code>, then reload.</p>"
 )
 RESTART_TOKEN = "AGENT_MEMORY_UI_TOKEN"
 PLACE_FIELDS = ("cwd", "git_root", "git_remote", "git_branch")
@@ -514,12 +509,9 @@ class Handler(BaseHTTPRequestHandler):
         target = (root / rel).resolve() if rel else None
         if target and target.is_file() and root in target.parents and target.suffix in MIME:
             return self._send(200, target.read_bytes(), MIME[target.suffix])
-        index = root / "index.html"
-        if not index.is_file():  # a checkout where the page was never built
-            return self._send(503, NOT_BUILT.encode(), MIME[".html"])
-        if rel.startswith("assets/"):
+        if Path(rel).suffix in MIME:  # a file the page asked for that is not there
             return self._send(404, {"error": "not found"})
-        return self._send(200, index.read_bytes(), MIME[".html"])
+        return self._send(200, (root / "index.html").read_bytes(), MIME[".html"])
 
     def do_POST(self):
         url = urlparse(self.path)
