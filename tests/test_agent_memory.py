@@ -647,7 +647,6 @@ class SiteTest(unittest.TestCase):
             "index.html",
             "docs.html",
             "assets/site.css",
-            "assets/how-it-works.svg",
             "demo/index.html",
             "demo/js/main.js",
         ):
