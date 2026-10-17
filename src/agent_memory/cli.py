@@ -220,7 +220,7 @@ def cmd_import(args):
 def cmd_doctor(args):
     from .install import doctor
 
-    doctor()
+    return doctor()
 
 
 def cmd_hook(args):

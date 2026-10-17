@@ -800,6 +800,16 @@ class DoctorTest(unittest.TestCase):
             checks = dict((text, ok) for ok, text in install.doctor_checks())
         self.assertIs(checks.get("no remote: memories stay on this machine"), True)
 
+    def test_doctor_exits_non_zero_when_a_check_fails(self):
+        from agent_memory import cli
+
+        for checks, code in (([(True, "a"), (True, "b")], 0), ([(True, "a"), (False, "b")], 1)):
+            with (
+                mock.patch.object(install, "doctor_checks", return_value=checks),
+                mock.patch("sys.stdout", io.StringIO()),
+            ):
+                self.assertEqual(cli.main(["doctor"]), code)
+
 
 class PackagingTest(unittest.TestCase):
     def test_hooks_run_the_package_with_python_m(self):
