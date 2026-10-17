@@ -719,6 +719,34 @@ class UpdateTest(unittest.TestCase):
         self.assertEqual(args(pinned + '[tool.options]\nindex-url = "https://example.org/simple"\n'), upgrade)
         self.assertEqual(args(), upgrade)
 
+    def test_an_update_that_installs_nothing_says_so(self):
+        from agent_memory import config
+
+        u = self.update
+        calls = []
+
+        def run(cmd, **kw):
+            calls.append(cmd)
+            return subprocess.CompletedProcess([], 0, "0.1.3\n" if "-c" in cmd else "Nothing to upgrade\n", "")
+
+        def upgrade(latest):
+            (config.CONFIG_DIR / u.CACHE_NAME).write_text(json.dumps({"latest": latest}))
+            with (
+                mock.patch.object(u, "how_installed", return_value="uv-tool"),
+                mock.patch.object(u, "current", return_value="0.1.3"),
+                mock.patch.object(u.shutil, "which", return_value="/bin/uv"),
+                mock.patch.object(u.subprocess, "run", side_effect=run),
+            ):
+                return u.upgrade()
+
+        missed = upgrade("0.1.4")
+        self.assertEqual((missed["ok"], missed["changed"], missed["to"]), (False, False, "0.1.3"))
+        self.assertIn("0.1.4", missed["error"])
+        self.assertIn("Nothing to upgrade", missed["log"])
+        current = upgrade("0.1.3")
+        self.assertEqual((current["ok"], current["changed"], current["error"]), (True, False, None))
+        self.assertNotIn(["-m", "agent_memory", "install"], [c[1:] for c in calls])  # nothing to refresh
+
     def test_restart_keeps_the_token_and_stops_serving(self):
         import threading
         import urllib.request

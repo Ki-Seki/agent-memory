@@ -35,6 +35,13 @@ def _cache():
     return config.CONFIG_DIR / CACHE_NAME
 
 
+def _cached():
+    try:
+        return json.loads(_cache().read_text("utf-8"))
+    except (OSError, ValueError):
+        return {}
+
+
 def current():
     try:
         return importlib.metadata.version(PACKAGE)
@@ -139,10 +146,7 @@ def _uv_command(args):
 def status(force=False):
     """What the page shows: this version, the latest one known, and how to update."""
     auto = config.load().get("check_updates", True)
-    try:
-        cached = json.loads(_cache().read_text("utf-8"))
-    except (OSError, ValueError):
-        cached = {}
+    cached = _cached()
     if force or (auto and time.time() - cached.get("checked", 0) > CHECK_EVERY):
         latest = fetch_latest()
         if latest:
@@ -183,14 +187,25 @@ def upgrade():
         capture_output=True,
         text=True,
     ).stdout.strip()
+    if after in ("", before):  # nothing new installed, so nothing for mem install to refresh
+        known = _cached().get("latest")
+        missed = newer(known, before)  # e.g. a version bound uv kept; its output says why
+        return {
+            "ok": not missed,
+            "from": before,
+            "to": before,
+            "changed": False,
+            "error": f"uv did not install {known}; its output is below." if missed else None,
+            "log": _tail(up.stdout, up.stderr),
+        }
     inst = subprocess.run(
         [sys.executable, "-m", "agent_memory", "install"], capture_output=True, text=True, timeout=120
     )
     return {
         "ok": inst.returncode == 0,
         "from": before,
-        "to": after or before,
-        "changed": bool(after) and after != before,
+        "to": after,
+        "changed": True,
         "error": None if inst.returncode == 0 else "mem install failed after the upgrade.",
         "log": _tail(up.stdout, up.stderr, inst.stdout, inst.stderr),
     }
