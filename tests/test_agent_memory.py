@@ -1298,15 +1298,22 @@ class ProfilesTest(unittest.TestCase):
         from agent_memory import profiles
 
         pid, _ = profiles.add(self.work)
+        work = profiles.listing()[0][pid]["name"]
         payload = {"session_id": "s-work", "cwd": str(self.root)}
         text = json.loads(run_hook("session-start", "codex", payload))["hookSpecificOutput"]["additionalContext"]
-        self.assertIn(f"profile: {profiles.listing()[0][pid]['name']} ", text)
+        self.assertIn(f"profile: {work} ", text)
         sdir = capture.session_dir(self.work, "codex", "s-work")
         self.assertIn(str(sdir), text)
         (sdir / "fact.md").write_text(
             "---\nname: fact\ntype: project\nscope: global\ndescription: a work fact\n---\nFact.\n", "utf-8"
         )
         profiles.use("default")  # the user switches while the session runs
+        # SessionStart fires again when the session compacts or resumes; it stays where it started
+        text = json.loads(run_hook("session-start", "codex", {**payload, "source": "compact"}))
+        text = text["hookSpecificOutput"]["additionalContext"]
+        self.assertIn(f"profile: {work} ", text)
+        self.assertIn(str(sdir), text)
+        self.assertFalse(capture.session_dir(self.personal, "codex", "s-work").exists())
         run_hook("stop", "codex", payload)
         self.assertEqual([m["name"] for m in store.load_all(self.work)], ["fact"])
         self.assertEqual(store.load_all(self.personal), [])

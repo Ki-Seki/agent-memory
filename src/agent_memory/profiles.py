@@ -102,6 +102,17 @@ def active_name():
     return found[active]["name"] if len(found) > 1 else None
 
 
+def name_of(data_dir):
+    """The name of the profile kept in `data_dir`, on the same terms as active_name()."""
+    if locked():
+        return None
+    found, _ = listing()
+    if len(found) < 2:
+        return None
+    folder = Path(data_dir).expanduser().resolve()
+    return next((p["name"] for p in found.values() if Path(p["data_dir"]).expanduser().resolve() == folder), None)
+
+
 def _save(cfg, found, active):
     cfg["profiles"] = found
     cfg["profile"] = active

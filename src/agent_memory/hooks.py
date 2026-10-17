@@ -67,7 +67,7 @@ def session_start(payload, tool, data_dir):
         ctx,
         paths,
         throwaway=workdir.is_throwaway(ctx.get("cwd")),
-        profile=profiles.active_name(),
+        profile=profiles.name_of(data_dir),
     )
 
 
@@ -84,7 +84,8 @@ def flush(payload, tool, data_dir, final):
 
 def _home(payload, tool, active):
     """The data repository holding this session's staging folder: the profile that was active when the
-    session started, which need not be the active one now."""
+    session started, which need not be the active one now. SessionStart fires again for a running session
+    when it compacts or resumes, so that event asks too; a new session has no folder yet and gets `active`."""
     sid = payload.get("session_id")
     for data_dir in profiles.dirs() if sid else []:
         if capture.session_dir(data_dir, tool, str(sid)).is_dir():
@@ -95,7 +96,7 @@ def _home(payload, tool, active):
 def main(event, tool):
     payload = _payload()
     data_dir = config.data_dir()
-    if data_dir and event != "session-start":
+    if data_dir:
         data_dir = _home(payload, tool, data_dir)
     if not data_dir or not (data_dir / ".git").exists():
         return 0
