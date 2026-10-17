@@ -60,6 +60,26 @@ jobs:
       - run: uv sync --locked --all-extras
       - run: uv run --locked --all-extras pytest
 
+  web:
+    name: Page type check and build
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: web
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: "24"
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+      - run: npm ci
+      - run: npm run check
+      - run: npm run build
+
   build:
     name: Build and install distributions
     runs-on: ubuntu-latest
@@ -78,11 +98,19 @@ jobs:
         env:
           RELEASE_TAG: ${{ github.event.release.tag_name }}
         run: test "$RELEASE_TAG" = "v$(uv version --short)"
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: "24"
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+      - name: Build the page into the package
+        working-directory: web
+        run: npm ci && npm run build
       - run: uv build --no-sources
       - name: Install each distribution and run mem from it
         run: |
           for release_dist in dist/*.whl dist/*.tar.gz; do
-            uv run --isolated --no-project --with "$release_dist" python -c "from agent_memory import config; assert config.PROTOCOL.is_file(); assert (config.PACKAGE_DIR / 'webui' / 'index.html').is_file(); assert (config.PACKAGE_DIR / 'embed_worker.py').is_file()"
+            uv run --isolated --no-project --with "$release_dist" python -c "from agent_memory import config; assert config.PROTOCOL.is_file(); assert (config.PACKAGE_DIR / 'webui' / 'index.html').is_file(); assert (config.PACKAGE_DIR / 'webui_next' / 'index.html').is_file(); assert (config.PACKAGE_DIR / 'embed_worker.py').is_file()"
             uv run --isolated --no-project --with "$release_dist" mem --help > /dev/null
           done
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
