@@ -180,7 +180,8 @@ class UiApp:
                 "fetch": "mem ui --fetch-model",
                 "size": "about 625 MB",
             },
-            "semantic": bool(self.state.get("semantic")),
+            # with no memories yet there is nothing to embed, but searching by meaning works once there are
+            "semantic": bool(self.state.get("semantic")) or (self.semantic and not self.state.get("memories")),
         }
 
     def set_settings(self, p):
