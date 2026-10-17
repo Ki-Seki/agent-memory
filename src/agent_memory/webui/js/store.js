@@ -53,7 +53,7 @@ class App {
   insights = { commits: [], place: "", preview: null, hover: {} };
   settings = { s: null, checks: null, word: "", syncing: false, checking: false, lookingUp: false, failed: null,
     remoteEdit: false, remoteDraft: "", remoteBusy: false, remoteNote: null, healthOpen: false };
-  profiles = null;  // { active, locked, next, profiles }, from /api/profiles
+  profiles = null;  // { active, locked, demo, next, profiles }, from /api/profiles
   pform = null;  // the profile being added: its name to be, folder and remote
   switching = "";
   wide = matchMedia("(min-width: 1024px)");
@@ -377,7 +377,7 @@ class App {
   // ------------------------------------------------------------ profiles
 
   async loadProfiles() {
-    try { this.profiles = await api("/api/profiles"); this.changed(); } catch { /* an older server or the demo: no profiles */ }
+    try { this.profiles = await api("/api/profiles"); this.changed(); } catch { /* an older server: no profiles */ }
   }
   /** Show another profile, which new sessions then use too. */
   async useProfile(id) {
@@ -388,7 +388,7 @@ class App {
     this.switching = id; this.changed();
     try {
       this.#took(await api("/api/profiles/use", { id }));
-      this.toast(`Switched to ${to?.name ?? id}; new sessions use it too`);
+      this.toast(`Switched to ${to?.name ?? id}${this.profiles?.demo ? "" : "; new sessions use it too"}`);
     } catch (e) { this.toast(e.message, { error: true }); }
     finally { this.switching = ""; this.changed(); }
   }
@@ -429,7 +429,7 @@ class App {
       const r = await api("/api/profiles/add", { name: f.name, folder: f.folder, remote: f.remote.trim() || null });
       const made = r.profiles.find((p) => p.id === r.id)?.name ?? f.name;
       await this.#took(r);
-      this.toast(r.active !== r.id ? `${made}: ${r.message}` : `${made}: ${r.message} New sessions use it.`);
+      this.toast(r.demo || r.active !== r.id ? `${made}: ${r.message}` : `${made}: ${r.message} New sessions use it.`);
     } catch (e) { f.busy = false; f.error = e.message; this.changed(); }
   }
   /** Forget the profile the page shows, after asking; its folder and remote stay. */

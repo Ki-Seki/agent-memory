@@ -25,7 +25,9 @@ export function profileStrip() {
       </button>`)}
       <button type="button"${attrs({ class: cx("ptab", "add"), "aria-pressed": String(adding), "data-act": "profileNew" })}>${icon("plus")}New profile</button>
     </div>
-    ${list.length > 1 && now && !adding ? html`<p class="profiles-help">New Claude Code and Codex sessions use <b>${now.name}</b>. Sessions already running keep the profile they started in.</p>` : ""}
+    ${list.length > 1 && now && !adding ? html`<p class="profiles-help">${app.profiles.demo
+      ? html`Set up for real, new Claude Code and Codex sessions would use <b>${now.name}</b>; the demo is not connected to them.`
+      : html`New Claude Code and Codex sessions use <b>${now.name}</b>. Sessions already running keep the profile they started in.`}</p>` : ""}
   </div>`;
 }
 
@@ -67,7 +69,7 @@ export function railProfile() {
   if (list.length < 2 || !now) return "";
   return html`<button type="button" class="rail-profile" popovertarget="menu-profiles"${attrs({ "aria-label": `Profile: ${now.name}`, "data-tip": `Profile: ${now.name}`, "data-tip-side": "right" })}>${avatar(now.name)}</button>
     ${menu("menu-profiles", html`<div class="menu-list" role="menu">
-      <div class="menu-note pad">New sessions use the profile picked here.</div>
+      <div class="menu-note pad">${app.profiles.demo ? "The profile the page shows." : "New sessions use the profile picked here."}</div>
       ${list.map((p) => html`<button type="button" role="menuitemradio"${attrs({ class: "menu-item tall", "aria-checked": String(p.active), "data-act": "useProfile", "data-arg": p.id })}>
         ${avatar(p.name, "sm")}<span class="grow truncate">${p.name}</span><span class="count">${plural(p.memories, "memory", "memories")}</span>${p.active ? icon("check", "accent") : html`<span class="tick-space"></span>`}
       </button>`)}

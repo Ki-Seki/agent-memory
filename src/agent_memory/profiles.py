@@ -230,6 +230,11 @@ def add(folder, remote=None, switch=True, name=None):
     for p in found.values():
         if folder.is_absolute() and _same(p["data_dir"], folder):
             raise ProfileError(f"The {p['name']} profile uses that folder already.")
+    sandbox = os.environ.get("AGENT_MEMORY_DEMO")  # `mem ui --demo` (demo.ENV): leave nothing behind
+    if sandbox and folder.is_absolute() and not folder.resolve().is_relative_to(Path(sandbox).resolve()):
+        raise ProfileError(
+            f"In the demo, a new profile's folder has to be inside {short(sandbox)}, which goes when it stops."
+        )
     note = prepare(folder, remote)
     cfg = config.load()  # a clone can take a while; start from the config as it is now
     found, active = listing(cfg)
@@ -297,6 +302,7 @@ def summary():
     found, active = listing()
     return {
         "locked": locked(),
+        "demo": bool(os.environ.get("AGENT_MEMORY_DEMO")),  # no agent uses the demo's profiles
         "active": active,
         "next": new_name(found),  # what the next profile will be called
         "profiles": [] if locked() else [describe(k, p, active) for k, p in found.items()],

@@ -11,6 +11,7 @@ demo.js answering the page's calls from the saved snapshot instead of a server.
 import functools
 import http.server
 import json
+import os
 import re
 import shutil
 import sys
@@ -23,45 +24,62 @@ SITE = ROOT / "site"
 WEBUI = ROOT / "src" / "agent_memory" / "webui"
 SNAPSHOT = SITE / "demo" / "snapshot.json"
 BUILD = SITE / "_build"
-DATA = "~/agent-memory-data"  # where the demo's data repository appears to be
+HOME = "~"  # where the demo's data repositories appear to be, one per profile (demo.PROFILES)
 # what the demo offers to search for, to show search by meaning across languages
 QUERIES = ["payments are failing", "partition the data", "部署", "数据库迁移"]
 
 
 def snapshot():
-    """Everything the demo page asks the server for, answered once from the demo memories."""
+    """Everything the demo page asks the server for, answered once from the demo memories of each profile."""
     sys.path.insert(0, str(ROOT / "src"))
-    from agent_memory import config, demo, ui, ui_server
+    os.environ.pop("AGENT_MEMORY_DATA", None)  # the profiles pick the folder, as in `mem ui --demo`
+    from agent_memory import config, demo, profiles, ui, ui_server
 
     if not ui.model_ready():
         sys.exit("The snapshot needs the embedding model for similar memories and search: run `mem ui --fetch-model`.")
+    keep = {k: v for k, v in config.load().items() if k == "embed_model_dir"}
     with tempfile.TemporaryDirectory() as tmp:
-        data = demo.make(Path(tmp) / "data")
-        app = ui_server.UiApp(data, semantic=True)
+        dirs = {pid: Path(tmp) / p["folder"] for pid, p in demo.PROFILES.items()}
+        listed = {pid: {"name": p["name"], "data_dir": str(dirs[pid])} for pid, p in demo.PROFILES.items()}
+        # a config of its own in tmp, so the index each profile shows names it as yours would
+        config.CONFIG_DIR, config.CONFIG_FILE = Path(tmp) / "config", Path(tmp) / "config" / "config.json"
+        out = {
+            "fingerprint": demo.fingerprint(),
+            "active": next(iter(listed)),
+            "words": [profiles.ADJECTIVES, profiles.NOUNS],  # so the demo names new profiles as mem does
+            "profiles": {},
+        }
+        encoder = None
         try:
-            state = app.current()
-            out = {
-                "fingerprint": demo.fingerprint(),
-                "state": {**state, "sync": {"remote": True, "ahead": 0}},
-                "activity": app.activity(),
-                "previews": {p: app.index_preview(p) for p in ["", *(p["key"] for p in state["places"])]},
-                "settings": {
-                    **app.settings(),
-                    "remote": "git.example.com/agent-memory-data",
-                    "sync": {"remote": True, "ahead": 0},
-                    "keywordStopwords": [],
-                },
-                "doctor": {"checks": [{"ok": True, "text": text} for text in DOCTOR]},
-                "queries": QUERIES,
-                "search": {q: app.search(q) for q in QUERIES},
-            }
+            for pid, p in demo.PROFILES.items():
+                demo.make(dirs[pid], profile=pid)
+                config.save({**keep, "data_dir": str(dirs[pid]), "profiles": listed, "profile": pid})
+                app = ui_server.UiApp(dirs[pid], semantic=True, encoder=encoder)
+                encoder = app.encoder
+                state = app.current()
+                out["profiles"][pid] = {
+                    "name": p["name"],
+                    "dataDir": f"{HOME}/{p['folder']}",
+                    "state": {**state, "sync": {"remote": True, "ahead": 0}},
+                    "activity": app.activity(),
+                    "previews": {q: app.index_preview(q) for q in ["", *(x["key"] for x in state["places"])]},
+                    "settings": {
+                        **app.settings(),
+                        "remote": f"git.example.com/{p['folder']}",
+                        "sync": {"remote": True, "ahead": 0},
+                        "keywordStopwords": [],
+                    },
+                    "search": {q: app.search(q) for q in QUERIES},
+                }
         finally:
-            if app.encoder:
-                app.encoder.close()
+            if encoder:
+                encoder.close()
+        out["doctor"] = {"checks": [{"ok": True, "text": text} for text in DOCTOR]}
+        out["queries"] = QUERIES
         text = json.dumps(out, ensure_ascii=False, indent=1)
         # paths on this machine become the ones a reader would have
-        paths = [(str(p), DATA) for p in (data.resolve(), data)] + [
-            (str(p), "~") for p in (Path(tmp).resolve(), Path(tmp))
+        paths = [(str(p), f"{HOME}/{p.name}") for d in dirs.values() for p in (d.resolve(), d)] + [
+            (str(p), HOME) for p in (Path(tmp).resolve(), Path(tmp))
         ]
         for real, shown in [*paths, (str(config.BIN), "~/.local/bin/mem")]:
             text = text.replace(real, shown)
@@ -73,7 +91,7 @@ def snapshot():
 
 
 DOCTOR = [
-    f"data repository: {DATA}",
+    "data repository: ~/agent-memory-data",  # demo.js names the folder of the profile it shows
     "install state: ~/.config/agent-memory/install-state.json",
     "Claude auto memory disabled",
     "Claude SessionStart hook",
@@ -105,7 +123,8 @@ def build(out=BUILD):
     (out / "demo" / "index.html").write_text(page, "utf-8")
     version = tomllib.loads((ROOT / "pyproject.toml").read_text("utf-8"))["project"]["version"]
     snap = json.loads(SNAPSHOT.read_text("utf-8"))
-    snap["settings"]["version"] = version
+    for profile in snap["profiles"].values():
+        profile["settings"]["version"] = version
     (out / "demo" / "snapshot.json").write_text(json.dumps(snap, ensure_ascii=False), "utf-8")
     (out / ".nojekyll").write_text("")
     print(f"built the site into {out}")

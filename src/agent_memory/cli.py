@@ -195,7 +195,7 @@ def cmd_ui(args):
         )
         os.execv(sys.executable, [sys.executable, "-m", "agent_memory", *again])
     if os.environ.get(demo.ENV):
-        print("Demo: made-up memories in a temporary repository; nothing you change is kept.", flush=True)
+        print("Demo: made-up memories in temporary repositories; nothing you change is kept.", flush=True)
         atexit.register(shutil.rmtree, os.environ[demo.ENV], ignore_errors=True)
         # closing the terminal (SIGHUP) or `kill` (SIGTERM) would end the process without that clean-up
         for name in ("SIGHUP", "SIGTERM"):

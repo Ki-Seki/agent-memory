@@ -605,8 +605,11 @@ class DemoTest(unittest.TestCase):
 
         data = demo.make(ROOT / "demo-data", today=dt.date(2030, 1, 10))
         memories = store.load_all(data)
-        self.assertEqual(len(memories), len(list(demo.MEMORIES.rglob("*.md"))))
+        self.assertEqual(len(memories), len(list(demo.memories("work").rglob("*.md"))))
         self.assertTrue(max(m["created"] for m in memories).startswith("2030-01-09"))  # the newest is a day old
+        personal = store.load_all(demo.make(ROOT / "demo-personal", today=dt.date(2030, 1, 10), profile="personal"))
+        self.assertEqual(len(personal), len(list(demo.memories("personal").rglob("*.md"))))
+        self.assertLess(max(m["created"] for m in personal), "2030-01-09")  # moved by the same days as Work
         commits = ui_server.UiApp(data, semantic=False).activity()["commits"]
         self.assertEqual(sum(c["added"] for c in commits), len(memories))
         self.assertEqual({c["tool"] for c in commits}, {"claude-code", "codex"})
@@ -615,19 +618,43 @@ class DemoTest(unittest.TestCase):
         self.assertEqual(log.stdout, "")  # everything committed
 
     def test_demo_keeps_your_config_out_of_it(self):
-        from agent_memory import config, demo
+        from agent_memory import config, demo, profiles
 
+        saved = config.CONFIG_FILE.read_text() if config.CONFIG_FILE.exists() else None
         config.save({**config.load(), "keyword_stopwords": ["mine"], "embed_model_dir": "~/models/here"})
         before = dict(os.environ)
+        root = None
         try:
             root = demo.prepare()
             cfg = json.loads((root / "config" / "config.json").read_text())
-            self.assertEqual(cfg, {"data_dir": str(root / "agent-memory-data"), "embed_model_dir": "~/models/here"})
-            self.assertEqual(os.environ["AGENT_MEMORY_DATA"], str(root / "agent-memory-data"))
+            self.assertEqual(cfg["embed_model_dir"], "~/models/here")
+            self.assertNotIn("keyword_stopwords", cfg)
+            self.assertNotIn("AGENT_MEMORY_DATA", os.environ)  # the demo's own profiles pick the folder
+            self.assertEqual(os.environ["AGENT_MEMORY_CONFIG_DIR"], str(root / "config"))
+            self.assertEqual(
+                {k: (p["name"], p["data_dir"]) for k, p in cfg["profiles"].items()},
+                {
+                    "work": ("Quiet Harbor", str(root / "agent-memory-data")),
+                    "personal": ("Sunny Orchard", str(root / "agent-memory-personal")),
+                },
+            )
+            self.assertEqual((cfg["profile"], cfg["data_dir"]), ("work", str(root / "agent-memory-data")))
+            # new profiles stay in the demo's folder, which goes when it stops
+            with mock.patch.object(config, "CONFIG_FILE", root / "config" / "config.json"):
+                with self.assertRaises(profiles.ProfileError):
+                    profiles.add(ROOT / "demo-elsewhere")
+                self.assertFalse((ROOT / "demo-elsewhere").exists())
+                pid, _ = profiles.add(root / "agent-memory-side")
+                self.assertEqual(profiles.listing()[1], pid)
         finally:
             os.environ.clear()
             os.environ.update(before)
-            shutil.rmtree(root, ignore_errors=True)
+            if root:
+                shutil.rmtree(root, ignore_errors=True)
+            if saved is None:
+                config.CONFIG_FILE.unlink(missing_ok=True)
+            else:
+                config.CONFIG_FILE.write_text(saved)
 
     def test_demo_folder_goes_when_the_terminal_closes(self):
         import signal
@@ -653,14 +680,19 @@ class DemoTest(unittest.TestCase):
 
 class SiteTest(unittest.TestCase):
     def test_site_builds_with_a_demo_that_matches_the_demo_memories(self):
-        from agent_memory import demo
+        from agent_memory import demo, profiles
 
         site = Path(__file__).resolve().parent.parent / "site"
         snapshot = json.loads((site / "demo" / "snapshot.json").read_text("utf-8"))
         # saved by `scripts/site.py snapshot`; run it again after changing the demo memories
         self.assertEqual(snapshot["fingerprint"], demo.fingerprint())
-        self.assertEqual(len(snapshot["state"]["memories"]), len(list(demo.MEMORIES.rglob("*.md"))))
-        self.assertEqual(set(snapshot["search"]), set(snapshot["queries"]))
+        self.assertEqual(list(snapshot["profiles"]), list(demo.PROFILES))
+        self.assertEqual(snapshot["words"], [list(profiles.ADJECTIVES), list(profiles.NOUNS)])
+        self.assertTrue(all(profiles.generated(p["name"]) for p in demo.PROFILES.values()))  # named as mem would
+        for pid, p in snapshot["profiles"].items():
+            self.assertEqual(len(p["state"]["memories"]), len(list(demo.memories(pid).rglob("*.md"))), pid)
+            self.assertEqual(set(p["search"]), set(snapshot["queries"]))
+            self.assertIn(f"profile: {p['name']} ", p["previews"][""]["text"])
         out = ROOT / "site-build"
         script = site.parent / "scripts" / "site.py"
         subprocess.run([sys.executable, str(script), "build", str(out)], check=True, capture_output=True)
