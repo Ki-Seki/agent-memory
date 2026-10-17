@@ -690,6 +690,63 @@ class UpdateTest(unittest.TestCase):
         self.assertEqual(calls[0], ["/bin/uv", "tool", "upgrade", u.PACKAGE])
         self.assertEqual(calls[-1][1:], ["-m", "agent_memory", "install"])
 
+    def test_a_pinned_install_is_installed_again_without_the_pin(self):
+        u = self.update
+        env = ROOT / "uv-tool-env"
+        env.mkdir(exist_ok=True)
+        receipt = env / "uv-receipt.toml"
+
+        def args(text=None):
+            receipt.unlink(missing_ok=True)
+            if text:
+                receipt.write_text(text)
+            with mock.patch.object(u.sys, "prefix", str(env)):
+                return u.upgrade_args()
+
+        mem = 'entrypoints = [{ name = "mem", install-path = "/bin/mem", from = "agent-memory-git" }]\n'
+        plain = '[tool]\nrequirements = [{ name = "agent-memory-git", extras = ["ui"] }]\n' + mem
+        pinned = (
+            '[tool]\nrequirements = [{ name = "agent-memory-git", extras = ["ui"], specifier = "==0.1.3" },'
+            ' { name = "extra-pkg", specifier = ">=1" }]\npython = "3.11"\n' + mem
+        )
+        upgrade = ["tool", "upgrade", u.PACKAGE]
+        self.assertEqual(args(plain), upgrade)
+        self.assertEqual(
+            args(pinned),
+            ["tool", "install", "--upgrade", "agent-memory-git[ui]", "--python", "3.11", "--with", "extra-pkg>=1"],
+        )
+        # what a plain install could lose stays with uv tool upgrade, which then reports the pin
+        self.assertEqual(args(pinned + '[tool.options]\nindex-url = "https://example.org/simple"\n'), upgrade)
+        self.assertEqual(args(), upgrade)
+
+    def test_an_update_that_installs_nothing_says_so(self):
+        from agent_memory import config
+
+        u = self.update
+        calls = []
+
+        def run(cmd, **kw):
+            calls.append(cmd)
+            return subprocess.CompletedProcess([], 0, "0.1.3\n" if "-c" in cmd else "Nothing to upgrade\n", "")
+
+        def upgrade(latest):
+            (config.CONFIG_DIR / u.CACHE_NAME).write_text(json.dumps({"latest": latest}))
+            with (
+                mock.patch.object(u, "how_installed", return_value="uv-tool"),
+                mock.patch.object(u, "current", return_value="0.1.3"),
+                mock.patch.object(u.shutil, "which", return_value="/bin/uv"),
+                mock.patch.object(u.subprocess, "run", side_effect=run),
+            ):
+                return u.upgrade()
+
+        missed = upgrade("0.1.4")
+        self.assertEqual((missed["ok"], missed["changed"], missed["to"]), (False, False, "0.1.3"))
+        self.assertIn("0.1.4", missed["error"])
+        self.assertIn("Nothing to upgrade", missed["log"])
+        current = upgrade("0.1.3")
+        self.assertEqual((current["ok"], current["changed"], current["error"]), (True, False, None))
+        self.assertNotIn(["-m", "agent_memory", "install"], [c[1:] for c in calls])  # nothing to refresh
+
     def test_restart_keeps_the_token_and_stops_serving(self):
         import threading
         import urllib.request
