@@ -1,6 +1,7 @@
 // Profiles: separate memory repositories, each its own folder and remote. Settings lists them above the
-// repository card, which shows the active one; the rail offers a quick switch once there are several. A
-// profile's name is picked for it when it is made, and its picture is drawn from the name.
+// repository card, which shows the active one; the rail's last button is the active profile's picture, with
+// Settings and a quick switch behind it. A profile's name is picked for it when it is made, and its picture is
+// drawn from the name.
 import { avatar } from "../avatar.js";
 import { plural } from "../format.js";
 import { attrs, cx, html } from "../h.js";
@@ -64,15 +65,21 @@ export function profileNewCard() {
 
 // ---------------------------------------------------------------- the rail
 
-export function railProfile() {
+/** The rail's last button: the active profile's picture, opening a menu with Settings and the profiles. Without
+ *  profiles (AGENT_MEMORY_DATA picks the folder, or an older server) the rail keeps `fallback`, a Settings button. */
+export function railProfile(fallback) {
   const list = shown(), now = active();
-  if (list.length < 2 || !now) return "";
-  return html`<button type="button" class="rail-profile" popovertarget="menu-profiles"${attrs({ "aria-label": `Profile: ${now.name}`, "data-tip": `Profile: ${now.name}`, "data-tip-side": "right" })}>${avatar(now.name)}</button>
+  if (!now) return fallback;
+  const update = app.update?.available ? app.update.latest : "";
+  const label = `${now.name} · Settings${update ? ` · version ${update} is out` : ""}`;
+  return html`<button type="button" class="rail-profile" popovertarget="menu-profiles"${attrs({ "aria-label": label, "data-tip": label, "data-tip-side": "right", "aria-current": app.page === "settings" ? "page" : null })}>${avatar(now.name)}${update ? html`<i class="badge" aria-hidden="true"></i>` : ""}</button>
     ${menu("menu-profiles", html`<div class="menu-list" role="menu">
-      <div class="menu-note pad">${app.profiles.demo ? "The profile the page shows." : "New sessions use the profile picked here."}</div>
+      <button type="button" role="menuitem" class="menu-item" data-act="openSettings">${icon("settings-2")}<span class="grow">Settings</span>${update ? html`<span class="count accent">${update} is out</span>` : ""}</button>
+      <div class="menu-sep" role="separator"></div>
+      <div class="menu-note pad">${app.profiles.demo ? "Profile the page shows" : "Profile new sessions use"}</div>
       ${list.map((p) => html`<button type="button" role="menuitemradio"${attrs({ class: "menu-item tall", "aria-checked": String(p.active), "data-act": "useProfile", "data-arg": p.id })}>
         ${avatar(p.name, "sm")}<span class="grow truncate">${p.name}</span><span class="count">${plural(p.memories, "memory", "memories")}</span>${p.active ? icon("check", "accent") : html`<span class="tick-space"></span>`}
       </button>`)}
-    </div>
-    <div class="menu-foot"><button type="button" class="menu-wide" data-act="manageProfiles">Manage profiles</button></div>`, "", "side")}`;
+      <button type="button" role="menuitem" class="menu-item" data-act="profileNewFromMenu">${icon("plus")}<span class="grow">New profile</span></button>
+    </div>`, "", "side")}`;
 }

@@ -184,7 +184,8 @@ body.resizing { cursor: col-resize; user-select: none; }
 .rail-btn:hover { background: var(--hover); color: var(--ink); }
 .rail-btn[aria-current="page"] { background: var(--surface); color: var(--accent); box-shadow: 0 0 0 1px var(--line); }
 .rail-btn .i { width: 19px; height: 19px; }
-.rail-btn .badge { position: absolute; top: 8px; right: 8px; width: 8px; height: 8px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 0 2px var(--panel); }
+.rail-btn .badge, .rail-profile .badge { position: absolute; top: 8px; right: 8px; width: 8px; height: 8px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 0 2px var(--panel); }
+.rail-profile .badge { top: 5px; right: 5px; }
 
 /* the list is 372, 400 or 440px wide by window size, until its edge is dragged (--list-w);
    whatever the width, the open memory keeps at least 420px */
@@ -562,11 +563,13 @@ table.nums td:last-child { color: var(--ink); }
 .field-help { margin-top: 6px; font-size: 12.5px; color: var(--ink-3); }
 .pform-error { font-size: 13px; color: var(--bad); }
 .pform-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
-.rail-profile { display: grid; width: 40px; height: 40px; place-items: center; border-radius: 9px; transition: background-color .15s; }
+.rail-profile { position: relative; display: grid; width: 40px; height: 40px; place-items: center; border-radius: 9px; transition: background-color .15s, box-shadow .15s; }
 .rail-profile:hover, .rail-profile:has(+ .menu:popover-open) { background: var(--hover); }
+.rail-profile[aria-current="page"] { background: var(--surface); box-shadow: 0 0 0 1px var(--line); }
 .rail-profile:has(+ .menu:popover-open)::after { display: none; }  /* the menu says it already */
 .rail-profile .pavatar { width: 26px; height: 26px; }
 .menu-item.tall { height: 36px; }
+.menu-sep { height: 1px; margin: 4px -4px; background: var(--line); }
 .menu-note.pad { margin: 0; padding: 6px 8px 4px; }
 .tick-space { width: 14px; flex-shrink: 0; }
 @media (max-width: 639px) {

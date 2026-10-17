@@ -113,7 +113,7 @@ mem install</code></pre>
   <section id="profiles">
     <h2>Profiles</h2>
     <p>A profile is a separate set of memories: its own data repository, with its own remote or none. Keep work and personal memories apart, or a client's away from both. New sessions of either tool load and save memories in the active profile; a session that is running when you switch keeps saving to the one it started in. When there is more than one, the index says which profile it is from.</p>
-    <p>Each profile gets a name of two words, such as Quiet Harbor, picked when it is made, and a picture drawn from that name; neither changes. Add, switch and remove profiles at the top of Settings in <code>mem ui</code> (switching there also changes the profile the page shows; the <a href="demo/#/settings">live demo</a> has two to try), or with <code>mem profile</code>:</p>
+    <p>Each profile gets a name of two words, such as Quiet Harbor, picked when it is made, and a picture drawn from that name; neither changes. In <code>mem ui</code>, add, switch and remove profiles at the top of Settings, or switch from the active profile's picture at the bottom of the rail, which also leads to Settings. Switching there also changes the profile the page shows; the <a href="demo/#/settings">live demo</a> has two to try. From a terminal, use <code>mem profile</code>:</p>
 <pre><code>mem profile                                   list them; * marks the active one
 mem profile add ~/repos/agent-memory-work [--remote URL]   prints the name it got
 mem profile use quiet-harbor                  new sessions use Quiet Harbor from now on
