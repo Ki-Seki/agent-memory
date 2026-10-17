@@ -95,7 +95,7 @@ function state() {
     .filter((p) => p.count);
   const words = new Set(stopwords);
   return {
-    ...snap.state, places, stamp: String(stamp), sync: { remote: true, ahead: 0 },
+    ...snap.state, places, stamp: String(stamp), sync: { remote: !!remoteUrl, ahead: 0 },
     memories: memories.map(({ near, allKeywords, ...m }) => ({
       ...m,
       similar: near.filter((x) => at.has(x.id)).map((x) => ({ i: at.get(x.id), s: x.s })),
@@ -128,7 +128,12 @@ function find(id, base) {
 
 // ---------------------------------------------------------------- the calls the page makes
 
-const settings = () => ({ ...snap.settings, keywordStopwords: stopwords });
+let remoteUrl = "https://git.example.com/agent-memory-data.git";
+const settings = () => ({
+  ...snap.settings, name: "agent-memory-data", keywordStopwords: stopwords, lastCommit: commits[0]?.date ?? null,
+  remote: remoteUrl ? remoteUrl.replace(/^[a-z]+:\/\/|^[\w.-]+@|\.git$/g, "").replace(":", "/") : null, remoteUrl,
+  sync: { remote: !!remoteUrl, ahead: 0 },
+});
 const update = () => {
   const v = snap.settings.version;
   return { current: v, latest: v, available: false, checked: nowIso(), auto: autoUpdates, method: "uv-tool", command: "uv tool upgrade agent-memory-git && mem install", oneClick: true };
@@ -223,7 +228,14 @@ const POST = {
     stamp++;
     return settings();
   },
-  "/api/sync": () => ({ ok: true, sync: { remote: true, ahead: 0 } }),
+  "/api/sync": () => ({ ok: true, sync: { remote: !!remoteUrl, ahead: 0 } }),
+  "/api/remote": (p) => {
+    if (p.url == null) { remoteUrl = null; stamp++; return { ok: true, message: "Disconnected; memories stay on this machine.", settings: settings() }; }
+    const url = String(p.url).trim();
+    if (!/^(?:(?:https?|ssh|git|file):\/\/\S+|[\w.-]+@[\w.-]+:\S+|[~/]\S*)$/.test(url)) throw new ApiError("That does not look like a git remote: use https://…, git@host:owner/repo.git, or a folder.", 400);
+    remoteUrl = url; stamp++;
+    return { ok: true, message: "Connected. (In the demo nothing is pushed.)", settings: settings() };
+  },
   "/api/update/check": update,
   "/api/update": () => ({ ok: true, changed: false }),
 };
