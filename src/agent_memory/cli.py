@@ -4,6 +4,7 @@ import argparse
 import atexit
 import os
 import shutil
+import signal
 import sys
 from pathlib import Path
 
@@ -196,6 +197,10 @@ def cmd_ui(args):
     if os.environ.get(demo.ENV):
         print("Demo: made-up memories in a temporary repository; nothing you change is kept.", flush=True)
         atexit.register(shutil.rmtree, os.environ[demo.ENV], ignore_errors=True)
+        # closing the terminal (SIGHUP) or `kill` (SIGTERM) would end the process without that clean-up
+        for name in ("SIGHUP", "SIGTERM"):
+            if hasattr(signal, name):
+                signal.signal(getattr(signal, name), lambda *_: sys.exit(0))
     ui_server.run(_data(), port=args.port, open_browser=not args.no_open, semantic=not args.keywords_only)
 
 
