@@ -622,8 +622,8 @@ class DemoTest(unittest.TestCase):
         try:
             root = demo.prepare()
             cfg = json.loads((root / "config" / "config.json").read_text())
-            self.assertEqual(cfg, {"data_dir": str(root / "data"), "embed_model_dir": "~/models/here"})
-            self.assertEqual(os.environ["AGENT_MEMORY_DATA"], str(root / "data"))
+            self.assertEqual(cfg, {"data_dir": str(root / "agent-memory-data"), "embed_model_dir": "~/models/here"})
+            self.assertEqual(os.environ["AGENT_MEMORY_DATA"], str(root / "agent-memory-data"))
         finally:
             os.environ.clear()
             os.environ.update(before)
@@ -732,6 +732,34 @@ class PageTest(unittest.TestCase):
                 name for name in used if name not in handled[kind] and not (kind == "input" and name == "draft")
             )
             self.assertFalse(missing, f"data-{kind} with no handler: {missing}")
+
+
+class RemoteSettingTest(unittest.TestCase):
+    def test_connect_change_and_disconnect_a_remote(self):
+        from agent_memory import gitsync, ui_server
+
+        data, bare = ROOT / "remote-setting-data", ROOT / "remote-setting.git"
+        for path in (data, bare):
+            shutil.rmtree(path, ignore_errors=True)
+        subprocess.run(["git", "init", "-q", "--bare", "-b", "main", str(bare)], check=True)
+        install.init_data(data)
+        app = ui_server.UiApp(data, semantic=False)
+        self.assertIsNone(app.settings()["remote"])
+
+        with self.assertRaises(ui_server.ApiError):  # never something git would read as an option
+            app.set_remote({"url": "--upload-pack=touch x"})
+        r = app.set_remote({"url": str(bare)})  # empty: this repository is pushed to it
+        self.assertTrue(r["ok"], r["message"])
+        self.assertEqual(r["settings"]["remoteUrl"], str(bare))
+        self.assertEqual(gitsync.git(bare, "rev-parse", "main").stdout, gitsync.git(data, "rev-parse", "HEAD").stdout)
+        self.assertEqual(app.sync_status(), {"remote": True, "ahead": 0})
+
+        r = app.set_remote({"url": None})
+        self.assertTrue(r["ok"])
+        self.assertFalse(gitsync.has_remote(data))
+        r = app.set_remote({"url": str(bare)})  # already has this branch: linked and synced
+        self.assertTrue(r["ok"], r["message"])
+        self.assertEqual(r["message"], "Connected and synced.")
 
 
 class UiSyncStatusTest(unittest.TestCase):

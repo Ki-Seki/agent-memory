@@ -95,7 +95,7 @@ def make(dest, today=None):
 def prepare():
     """A temporary demo: data repository and config folder, named in the environment for `mem ui`."""
     root = Path(tempfile.mkdtemp(prefix="agent-memory-demo-"))
-    data, cfg_dir = root / "data", root / "config"
+    data, cfg_dir = root / "agent-memory-data", root / "config"
     make(data, today=_dt.date.today())
     cfg_dir.mkdir()
     keep = {k: v for k, v in config.load().items() if k == "embed_model_dir"}  # where the model already is

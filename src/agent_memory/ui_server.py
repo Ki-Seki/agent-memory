@@ -48,6 +48,8 @@ ACTIVITY_COMMITS = 2000
 HOOK_LIMIT = 10000  # what Claude Code injects at most from a hook
 COUNTS = re.compile(r"memory: \+(\d+) ~(\d+) -(\d+)")
 UI_SUBJECT = re.compile(r"memory: (add|edit|delete|undo) (?:(\d+) memories)?")
+# what a remote may look like: a URL, scp-style user@host:path, or a folder; never something git reads as an option
+REMOTE_URL = re.compile(r"^(?:(?:https?|ssh|git|file)://\S+|[\w.-]+@[\w.-]+:\S+|[~/]\S*)$")
 
 
 class ApiError(Exception):
@@ -158,14 +160,19 @@ class UiApp:
 
     def settings(self):
         remote = gitsync.git(self.data, "remote", "get-url", "origin", timeout=5)
+        url = remote.stdout.strip() if remote.returncode == 0 else ""
         try:
             version = importlib.metadata.version("agent-memory-git")
         except importlib.metadata.PackageNotFoundError:
             version = "dev"
+        last = gitsync.git(self.data, "log", "-1", "--format=%aI", timeout=5).stdout.strip()
         return {
             "version": version,
             "dataDir": ui._short(str(self.data)),
-            "remote": normalize_remote(remote.stdout.strip()) if remote.returncode == 0 else None,
+            "name": self.data.name,
+            "lastCommit": last or None,
+            "remote": normalize_remote(url) if url else None,
+            "remoteUrl": re.sub(r"(://)[^/@]+@", r"\1", url) or None,  # without any credentials in it
             "sync": self.sync_status(),
             "keywordStopwords": config.load().get("keyword_stopwords", []),
             "model": {
@@ -205,6 +212,50 @@ class UiApp:
         from .install import doctor_checks
 
         return {"checks": [{"ok": passed, "text": text} for passed, text in doctor_checks()]}
+
+    def set_remote(self, p):
+        """Connect the data repository to a remote ({url}), or disconnect it ({url: null}).
+
+        A new remote that already has this branch is pulled from first; an empty one gets this branch
+        pushed to it, so the hooks' pull and push work from then on.
+        """
+        url = p.get("url")
+        if url is None:
+            if gitsync.has_remote(self.data):
+                gitsync.git(self.data, "remote", "remove", "origin")
+            self.refresh()
+            return {"ok": True, "message": "Disconnected; memories stay on this machine.", "settings": self.settings()}
+        url = str(url).strip()
+        if not REMOTE_URL.match(url):
+            raise ApiError(
+                400, "That does not look like a git remote: use https://…, git@host:owner/repo.git, or a folder."
+            )
+        if url.startswith("~"):
+            url = os.path.expanduser(url)  # git takes a folder as given, so ~ has to be spelled out
+        verb = "set-url" if gitsync.git(self.data, "remote", "get-url", "origin").returncode == 0 else "add"
+        r = gitsync.git(self.data, "remote", verb, "origin", url)
+        if r.returncode != 0:
+            raise ApiError(400, f"git remote {verb} failed: {(r.stderr or r.stdout).strip()}")
+        branch = gitsync.git(self.data, "branch", "--show-current").stdout.strip() or "main"
+        fetch = gitsync.git(self.data, "fetch", "-q", "origin", timeout=60)
+        if fetch.returncode != 0:
+            message = f"Saved, but the remote could not be reached: {fetch.stderr.strip().splitlines()[-1] if fetch.stderr.strip() else 'no answer'}"
+            self.refresh()
+            return {"ok": False, "message": message, "settings": self.settings()}
+        if gitsync.git(self.data, "rev-parse", "--verify", "-q", f"origin/{branch}").returncode == 0:
+            gitsync.git(self.data, "branch", f"--set-upstream-to=origin/{branch}")
+            ok = gitsync.sync(self.data)
+            message = "Connected and synced." if ok else "Connected, but syncing failed; see .cache/agent-memory.log."
+        else:
+            push = gitsync.git(self.data, "push", "-q", "-u", "origin", branch, timeout=60)
+            ok = push.returncode == 0
+            message = (
+                "Connected; this repository is pushed to it."
+                if ok
+                else f"Saved, but the push failed: {push.stderr.strip()}"
+            )
+        self.refresh()
+        return {"ok": ok, "message": message, "settings": self.settings()}
 
     def sync(self, p):
         ok = gitsync.sync(self.data)
@@ -434,6 +485,7 @@ class Handler(BaseHTTPRequestHandler):
         "/api/undo": "undo",
         "/api/settings": "set_settings",
         "/api/sync": "sync",
+        "/api/remote": "set_remote",
         "/api/update/check": "check_update",
         "/api/update": "run_update",
     }

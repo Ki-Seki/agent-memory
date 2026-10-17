@@ -51,7 +51,8 @@ class App {
   update = null;
   updating = "";
   insights = { commits: [], place: "", preview: null, hover: {} };
-  settings = { s: null, checks: null, word: "", syncing: false, checking: false, lookingUp: false, failed: null };
+  settings = { s: null, checks: null, word: "", syncing: false, checking: false, lookingUp: false, failed: null,
+    remoteEdit: false, remoteDraft: "", remoteBusy: false, remoteNote: null, healthOpen: false };
   wide = matchMedia("(min-width: 1024px)");
   demo = null;  // the online demo sets { queries } to suggest searches
   #base = "";
