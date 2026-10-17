@@ -87,8 +87,19 @@ function chart(id, buckets, series, colors, labels, empty) {
 // ---------------------------------------------------------------- the page
 
 const TYPE_COLORS = { feedback: "var(--t-feedback)", reference: "var(--t-reference)", project: "var(--t-project)", user: "var(--t-user)" };
-const TOOL_COLORS = { claude: "color-mix(in srgb, var(--ink) 78%, transparent)", codex: "color-mix(in srgb, var(--ink) 45%, transparent)", you: "color-mix(in srgb, var(--ink) 22%, transparent)" };
-const who = (tool) => (tool === "codex" ? "codex" : tool === "ui" ? "you" : "claude");
+// who made a change, from its commit's Tool trailer: you in this page (ui) or with `mem add` (cli); `manual`
+// marks staged memories committed without their session, so like a missing trailer it says nothing of who
+const WHO = ["claude", "codex", "you", "other"];
+const WHO_LABELS = { claude: "Claude Code", codex: "Codex", you: "You (this page or mem add)", other: "Not recorded" };
+const TOOL_COLORS = {
+  claude: "color-mix(in srgb, var(--ink) 80%, transparent)",
+  codex: "color-mix(in srgb, var(--ink) 55%, transparent)",
+  you: "color-mix(in srgb, var(--ink) 32%, transparent)",
+  other: "color-mix(in srgb, var(--ink) 14%, transparent)",
+};
+const TOOL_NAMES = new Map([["claude-code", "Claude Code"], ["codex", "Codex"], ["ui", "You, in this page"], ["cli", "You, with mem add"]]);
+const WHO_BY_TOOL = new Map([["claude-code", "claude"], ["codex", "codex"], ["ui", "you"], ["cli", "you"]]);
+const who = (tool) => WHO_BY_TOOL.get(tool) ?? "other";
 
 const bars = (items, act) => {
   const top = Math.max(1, items[0]?.n ?? 1);
@@ -100,7 +111,7 @@ const bars = (items, act) => {
 export function insightsPage() {
   const M = app.M;
   const added = weeks(TYPES, M.map((m) => ({ date: m.created, add: (n) => n[m.type]++ })));
-  const changes = weeks(["claude", "codex", "you"], app.insights.commits.map((c) => ({ date: c.date, add: (n) => { n[who(c.tool)] += c.added + c.changed + c.deleted; } })));
+  const changes = weeks(WHO, app.insights.commits.map((c) => ({ date: c.date, add: (n) => { n[who(c.tool)] += c.added + c.changed + c.deleted; } })));
   const thisWeek = M.filter((m) => Date.now() - Date.parse(m.created) <= 7 * DAY).length;
   const tidy = M.filter((m) => m.issues.length);
   const old = M.filter(stale);
@@ -108,7 +119,7 @@ export function insightsPage() {
     { label: "Everywhere", key: "global", title: "Loads in every session", n: M.filter((m) => m.scope === "global").length, icon: "globe" },
     ...app.places.map((p) => ({ label: placeShort(p.key), key: "place:" + p.key, title: p.key, n: p.count, icon: "folder" })),
   ].sort((a, b) => b.n - a.n);
-  const toolName = (t) => (t === "claude-code" ? "Claude Code" : t === "codex" ? "Codex" : t === "ui" ? "You, in this page" : t);
+  const toolName = (t) => TOOL_NAMES.get(t) ?? t;
   const tools = [...new Set(M.map((m) => m.tool).filter(Boolean))].map((t) => ({ label: toolName(t), key: t, n: M.filter((m) => m.tool === t).length })).sort((a, b) => b.n - a.n);
   const pairs = duplicatePairs();
   const preview = app.insights.preview;
@@ -128,7 +139,7 @@ export function insightsPage() {
         : html`<p class="card-note">No two memories are more than 45% alike.</p>`}
     </section>
 
-    <section class="card span2"><h2>Changes per week</h2>${chart("changes", changes, ["claude", "codex", "you"], TOOL_COLORS, { claude: "Claude Code", codex: "Codex", you: "You, in this page" }, `No memory changes in the past ${WEEKS} weeks.`)}</section>
+    <section class="card span2"><h2>Changes per week</h2>${chart("changes", changes, WHO, TOOL_COLORS, WHO_LABELS, `No memory changes in the past ${WEEKS} weeks.`)}</section>
 
     <section class="card span2">
       <div class="card-head"><div><h2>What an agent sees at session start</h2><p class="card-note">The index the SessionStart hook injects, for a session started in this place.</p></div>
