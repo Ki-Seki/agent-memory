@@ -579,13 +579,6 @@ class UiServerTest(unittest.TestCase):
         import urllib.error
         import urllib.request
 
-        from agent_memory import ui_server
-
-        built = ROOT / "webui-built"
-        (built / "assets").mkdir(parents=True, exist_ok=True)
-        (built / "index.html").write_text("<!doctype html><title>page</title>")
-        (built / "assets" / "app.js").write_text("export {}")
-
         def get(path):
             try:
                 with urllib.request.urlopen(f"http://127.0.0.1:{self.port}{path}") as r:
@@ -593,17 +586,68 @@ class UiServerTest(unittest.TestCase):
             except urllib.error.HTTPError as e:
                 return e.code, None, e.read()
 
-        page = b"<!doctype html><title>page</title>"
-        with mock.patch.object(ui_server, "STATIC", built):
-            self.assertEqual(get("/")[2], page)
-            self.assertEqual(get("/insights")[2], page)  # the page routes
-            self.assertEqual(get("/assets/app.js")[1], "text/javascript; charset=utf-8")
-            self.assertEqual(get("/assets/missing.js")[0], 404)
-            self.assertEqual(get("/../ui_server.py")[2], page)  # never the file
-        with mock.patch.object(ui_server, "STATIC", ROOT / "never-built"):
-            status, _, body = get("/")
-            self.assertEqual(status, 503)
-            self.assertIn(b"npm run build", body)
+        status, ctype, page = get("/")
+        self.assertEqual((status, ctype), (200, "text/html; charset=utf-8"))
+        self.assertIn(b'<div id="app">', page)
+        self.assertEqual(get("/insights")[2], page)  # the page routes
+        self.assertEqual(get("/js/main.js")[1], "text/javascript; charset=utf-8")
+        self.assertEqual(get("/app.css")[1], "text/css; charset=utf-8")
+        self.assertEqual(get("/js/missing.js")[0], 404)
+        self.assertEqual(get("/../ui_server.py")[2], page)  # never the file
+
+
+class PageTest(unittest.TestCase):
+    """The page has no build step, so check here what a bundler would: imports resolve, and every action,
+    input and change an element names is one main.js handles."""
+
+    WEBUI = Path(__file__).resolve().parent.parent / "src" / "agent_memory" / "webui"
+
+    def scripts(self):
+        return {p: p.read_text("utf-8") for p in (self.WEBUI / "js").rglob("*.js")}
+
+    def test_imports_resolve(self):
+        import re
+
+        for path, text in self.scripts().items():
+            for target in re.findall(r'^import .*? from "(\.[^"]+)";$', text, re.M):
+                self.assertTrue((path.parent / target).resolve().is_file(), f"{path.name} imports {target}")
+            for name in re.findall(r"^import \{ ([^}]+) \} from", text, re.M):
+                self.assertTrue(name.strip(), path.name)
+        index = (self.WEBUI / "index.html").read_text("utf-8")
+        for ref in re.findall(r'(?:src|href)="([^":]+)"', index):
+            self.assertTrue((self.WEBUI / ref).is_file(), ref)
+
+    def test_every_named_handler_exists(self):
+        import re
+
+        main = (self.WEBUI / "js" / "main.js").read_text("utf-8")
+        tables = {
+            "act": re.search(r"const ACTIONS = \{(.*?)\n\};", main, re.S).group(1),
+            "input": re.search(r"const INPUTS = \{(.*?)\n\};", main, re.S).group(1),
+            "change": re.search(r"const CHANGES = \{(.*?)\n\};", main, re.S).group(1),
+        }
+        handled = {kind: set(re.findall(r"^\s+(\w+):", body, re.M)) for kind, body in tables.items()}
+        views = "\n".join(self.scripts().values())
+        # names given straight to an element, or to the helpers in views/ui.js that pass them on
+        helpers = {
+            "act": [
+                r'iconButton\("[^"]+", "[^"]+", "(\w+)"',
+                r'toggle\([^,]+, "[^"]+", "(\w+)"\)',
+                r'checkbox\([^,]+, "[^"]+", "(\w+)"',
+                r'segmented\(.*?(?:\]|\)\)), "(\w+)"',
+            ],
+            "input": [],
+            "change": [r'select\(.*?(?:\]|placeItems), "(\w+)"'],
+        }
+        for kind in ("act", "input", "change"):
+            used = set(re.findall(rf'data-{kind}="(\w+)', views)) | set(re.findall(rf'"data-{kind}": "(\w+)"', views))
+            for pattern in helpers[kind]:
+                used |= set(re.findall(pattern, views))
+            self.assertTrue(used, kind)
+            missing = sorted(
+                name for name in used if name not in handled[kind] and not (kind == "input" and name == "draft")
+            )
+            self.assertFalse(missing, f"data-{kind} with no handler: {missing}")
 
 
 class UiSyncStatusTest(unittest.TestCase):

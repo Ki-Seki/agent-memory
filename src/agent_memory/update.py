@@ -26,7 +26,7 @@ CACHE_NAME = "update-check.json"
 # how to update, by how this copy was installed; for `uv tool` it depends on the install, see upgrade_args
 COMMANDS = {
     "uvx": f'uvx --refresh --from "{PACKAGE}[ui]" mem ui',
-    "dev": "git pull && (cd web && npm ci && npm run build) && mem install",  # run in the checkout
+    "dev": "git pull && mem install",  # run in the checkout
     "other": f'pip install -U "{PACKAGE}[ui]" && mem install',
 }
 

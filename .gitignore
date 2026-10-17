@@ -7,5 +7,3 @@ dist/
 .venv
 .ruff_cache/
 .pytest_cache/
-web/node_modules/
-src/agent_memory/webui/
