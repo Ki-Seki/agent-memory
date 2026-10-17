@@ -59,7 +59,36 @@
         <div class="step"><h3>While you work</h3><p>The agent saves what is worth keeping as one Markdown file per memory, following the rules in PROTOCOL.md: who you are, how you want work done, facts about a project, where to find things.</p></div>
         <div class="step"><h3>Turn end</h3><p>A hook stamps each new memory with where it came from and commits it, then pushes if there is a remote. The next session, in either tool and on any machine that pulls, sees it.</p></div>
       </div>
-      <div class="diagram"><img src="assets/how-it-works.svg" width="960" height="576" alt="mem install wires hooks into Claude Code and Codex; at session start they load an index from the private data repository, and at the end of each turn they commit and push new memories back"></div>
+      <figure class="loop" aria-label="Claude Code and Codex read an index from your git data repository at session start and commit new memories to it at the end of each turn; an optional private remote keeps your other machines in sync">
+        <div class="agents">
+          <div class="agent"><span class="agent-icon"><svg class="i " viewBox="0 0 24 24" aria-hidden="true"><polyline points="4 17 10 11 4 5"/><line x1="12" x2="20" y1="19" y2="19"/></svg></span><div><b>Claude Code</b><span>hooks · CLAUDE.md</span></div></div>
+          <div class="agent"><span class="agent-icon"><svg class="i " viewBox="0 0 24 24" aria-hidden="true"><polyline points="4 17 10 11 4 5"/><line x1="12" x2="20" y1="19" y2="19"/></svg></span><div><b>Codex</b><span>hooks · AGENTS.md</span></div></div>
+        </div>
+        <div class="wire" aria-hidden="true">
+          <div class="lane recall"><span>index at session start</span><i></i></div>
+          <div class="lane save"><span>commit at turn end</span><i></i></div>
+        </div>
+        <div class="repo">
+          <div class="repo-head"><svg class="i " viewBox="0 0 24 24" aria-hidden="true"><line x1="6" x2="6" y1="3" y2="15"/><circle cx="18" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><path d="M18 9a9 9 0 0 1-9 9"/></svg><b>agent-memory-data</b><em>git</em></div>
+          <div class="tree">
+            <div class="tree-dir"><svg class="i " viewBox="0 0 24 24" aria-hidden="true"><path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"/></svg>memories/2026/10/</div>
+            <ul><li><i class="dot t-feedback"></i><span>ask-before-push.md</span></li><li><i class="dot t-project"></i><span>shop-web-v3-freeze.md</span></li><li><i class="dot t-reference"></i><span>payments-runbook.md</span></li><li><i class="dot t-user"></i><span>reply-language.md</span></li></ul>
+          </div>
+          <div class="log">
+            <p><code>a1f3c9e</code> memory: +1 ~0 -0 (codex: on-call)</p>
+            <p><code>7b20d4a</code> memory: +1 ~0 -0 (claude-code: plan)</p>
+          </div>
+          <div class="repo-foot">You browse and edit it in <code>mem ui</code></div>
+        </div>
+        <div class="wire sync" aria-hidden="true">
+          <div class="lane both"><span>push · pull</span><i></i></div>
+        </div>
+        <div class="remote">
+          <span class="agent-icon soft"><svg class="i " viewBox="0 0 24 24" aria-hidden="true"><path d="M20 16V7a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v9m16 0H4m16 0 1.28 2.55a1 1 0 0 1-.9 1.45H3.62a1 1 0 0 1-.9-1.45L4 16"/></svg></span>
+          <b>Your other machines</b>
+          <span>through a private remote, if you add one</span>
+        </div>
+      </figure>
     </div>
   </section>
 

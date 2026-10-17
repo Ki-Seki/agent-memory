@@ -98,7 +98,6 @@ def build(out=BUILD):
     shutil.rmtree(out, ignore_errors=True)
     shutil.copytree(SITE, out, ignore=shutil.ignore_patterns("_build", ".DS_Store"))
     shutil.copytree(WEBUI, out / "demo", dirs_exist_ok=True)
-    shutil.copy2(ROOT / "docs" / "how-it-works.svg", out / "assets" / "how-it-works.svg")
     page = (WEBUI / "index.html").read_text("utf-8")
     page = page.replace('src="js/main.js"', 'src="demo.js"').replace(
         "<title>Memories · agent-memory</title>", "<title>Live demo · agent-memory</title>"
