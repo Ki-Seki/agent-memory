@@ -52,6 +52,11 @@ function face(n) {
   return `<g transform="${move}" opacity=".9">${eye(40 - spread)}${eye(40 + spread)}${mouth}</g>`;
 }
 
+/** The picture's colours alone, without its face or corners: Settings blurs it into a glow behind the profile. */
+export function glow(name) {
+  return raw(`<svg viewBox="0 0 80 80" preserveAspectRatio="none" aria-hidden="true">${marble(hash(name))}</svg>`);
+}
+
 /** The picture for a profile called `name`, sized by CSS (.pavatar); its rounded corners are #pav-clip. */
 export function avatar(name, cls = "") {
   return raw(`<svg class="pavatar ${cls}" viewBox="0 0 80 80" aria-hidden="true"><g clip-path="url(#pav-clip)">${marble(hash(name))}${face(hash(`${name}face`))}</g></svg>`);
