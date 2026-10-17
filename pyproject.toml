@@ -1,6 +1,6 @@
 [project]
 name = "agent-memory-git"
-version = "0.1.8"
+version = "0.1.9"
 description = "Shared, git-backed memory for Claude Code and Codex."
 readme = "README.md"
 license = "MIT"
