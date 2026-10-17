@@ -61,6 +61,17 @@ async function saveWords(words) {
   try { settings.s = await api("/api/settings", { keyword_stopwords: words }); await app.reload(); app.toast("Keywords updated"); }
   catch (e) { app.toast(e.message, { error: true }); }
 }
+async function setRemote(url) {
+  if (url !== null && !url) return;
+  Object.assign(settings, { remoteBusy: true, remoteNote: null }); app.changed();
+  try {
+    const r = await api("/api/remote", { url });
+    settings.s = r.settings;
+    Object.assign(settings, { remoteEdit: !r.ok && url !== null, remoteNote: { ok: r.ok, text: r.message } });
+    await app.reload();
+  } catch (e) { settings.remoteNote = { ok: false, text: e.message }; }
+  finally { settings.remoteBusy = false; app.changed(); }
+}
 function filterAndGo(key, value) { app.clearFilters(); app.setList(key, [value]); app.go("memories"); }
 const pair = (arg) => { const i = arg.indexOf(":"); return [arg.slice(0, i), arg.slice(i + 1)]; };
 
@@ -114,6 +125,17 @@ const ACTIONS = {
     finally { settings.syncing = false; app.changed(); }
   },
   removeWord: (w) => settings.s && saveWords(settings.s.keywordStopwords.filter((x) => x !== w)),
+  remoteEdit: () => {
+    Object.assign(settings, { remoteEdit: true, remoteDraft: settings.s?.remoteUrl ?? "", remoteNote: null }); app.changed();
+    setTimeout(() => document.getElementById("remote-url")?.focus());  // once the form is drawn
+  },
+  remoteCancel: () => { Object.assign(settings, { remoteEdit: false, remoteNote: null }); app.changed(); },
+  remoteSave: () => setRemote(settings.remoteDraft.trim()),
+  remoteDisconnect: async () => {
+    const ok = await app.ask({ title: "Disconnect the remote?", body: "Memories stay in this repository and keep being committed; they are just no longer pushed or pulled. The remote itself is not touched.", action: "Disconnect", danger: true });
+    if (ok) setRemote(null);
+  },
+  toggleHealth: () => { settings.healthOpen = !settings.healthOpen; app.changed(); },
   runChecks: () => app.runChecks(),
 };
 
@@ -121,6 +143,7 @@ const INPUTS = {
   search: (v) => app.search(v),
   menuQuery: (v) => { app.menuQuery = v; app.changed(); },
   word: (v) => { settings.word = v; },
+  remoteDraft: (v) => { settings.remoteDraft = v; app.changed(); },
 };
 const CHANGES = {
   rangeFrom: (v) => { const r = rangeOf(); app.setAdded(v || r[1] ? `range:${v}:${r[1]}` : ""); },
@@ -233,6 +256,10 @@ addEventListener("keydown", (e) => {
     if (e.key === "ArrowDown" || e.key === "ArrowUp") { e.preventDefault(); return app.moveCursor(e.key === "ArrowDown" ? 1 : -1); }
     if (e.key === "Enter") { e.preventDefault(); return app.openCursor(); }
     if (e.key === "Escape") { e.stopPropagation(); return app.q ? app.search("") : el.blur(); }
+  }
+  if (el?.id === "remote-url" && (e.key === "Enter" || e.key === "Escape")) {
+    e.preventDefault();
+    return e.key === "Enter" ? setRemote(settings.remoteDraft.trim()) : ACTIONS.remoteCancel();
   }
   if (el?.id === "add-word" && e.key === "Enter") {
     e.preventDefault();

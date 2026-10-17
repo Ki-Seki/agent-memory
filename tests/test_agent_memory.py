@@ -622,8 +622,8 @@ class DemoTest(unittest.TestCase):
         try:
             root = demo.prepare()
             cfg = json.loads((root / "config" / "config.json").read_text())
-            self.assertEqual(cfg, {"data_dir": str(root / "data"), "embed_model_dir": "~/models/here"})
-            self.assertEqual(os.environ["AGENT_MEMORY_DATA"], str(root / "data"))
+            self.assertEqual(cfg, {"data_dir": str(root / "agent-memory-data"), "embed_model_dir": "~/models/here"})
+            self.assertEqual(os.environ["AGENT_MEMORY_DATA"], str(root / "agent-memory-data"))
         finally:
             os.environ.clear()
             os.environ.update(before)
