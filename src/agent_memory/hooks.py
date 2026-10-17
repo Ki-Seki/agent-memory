@@ -12,7 +12,7 @@ import sys
 import time
 from pathlib import Path
 
-from . import capture, config, gitsync, select, store, workdir
+from . import capture, config, gitsync, profiles, select, store, workdir
 from .context import detect
 from .util import log, log_exc
 
@@ -62,7 +62,13 @@ def session_start(payload, tool, data_dir):
         "staging": str(sdir),
         "mem": str(config.BIN),
     }
-    return select.render(store.load_all(data_dir), ctx, paths, throwaway=workdir.is_throwaway(ctx.get("cwd")))
+    return select.render(
+        store.load_all(data_dir),
+        ctx,
+        paths,
+        throwaway=workdir.is_throwaway(ctx.get("cwd")),
+        profile=profiles.active_name(),
+    )
 
 
 def flush(payload, tool, data_dir, final):
@@ -76,9 +82,21 @@ def flush(payload, tool, data_dir, final):
         gitsync.spawn_sync(data_dir, push=True)
 
 
+def _home(payload, tool, active):
+    """The data repository holding this session's staging folder: the profile that was active when the
+    session started, which need not be the active one now."""
+    sid = payload.get("session_id")
+    for data_dir in profiles.dirs() if sid else []:
+        if capture.session_dir(data_dir, tool, str(sid)).is_dir():
+            return data_dir
+    return active
+
+
 def main(event, tool):
     payload = _payload()
     data_dir = config.data_dir()
+    if data_dir and event != "session-start":
+        data_dir = _home(payload, tool, data_dir)
     if not data_dir or not (data_dir / ".git").exists():
         return 0
     try:

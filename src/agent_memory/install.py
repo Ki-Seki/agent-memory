@@ -191,6 +191,11 @@ class Plan:
         old = self.files[path][0] if path in self.files else _read(path)
         self.files[path] = (old, new_text)
 
+    def text(self, path):
+        """The file as this plan leaves it so far."""
+        path = Path(path)
+        return self.files[path][1] if path in self.files else _read(path)
+
     def show(self):
         for path, (old, new) in self.files.items():
             if old == new:
@@ -217,7 +222,7 @@ class Plan:
                 path.write_text(new, "utf-8")
 
 
-def _claude_plan(plan, data_dir, state):
+def _claude_plan(plan, data_dirs, state):
     settings_path = CLAUDE_DIR / "settings.json"
     text = _read(settings_path)
     settings = json.loads(text) if text else {}
@@ -234,10 +239,7 @@ def _claude_plan(plan, data_dir, state):
         )
         hooks[event] = groups
 
-    data = _home_rel(data_dir)
     rules = [
-        f"Read({data}/**)",
-        f"Edit({data}/**)",
         f"Bash({config.BIN} search:*)",
         f"Bash({config.BIN} list:*)",
         f"Bash({config.BIN} show:*)",
@@ -250,6 +252,7 @@ def _claude_plan(plan, data_dir, state):
     allow.extend(added)
     state["claude.permissions"] = sorted(set(state.get("claude.permissions", [])) | set(added))
     plan.edit(settings_path, json.dumps(new, indent=2, ensure_ascii=False) + "\n")
+    _claude_access(plan, data_dirs, state)
 
     # Import a copy in the config folder: its path stays the same whichever way the package is
     # installed or upgraded, and `mem install` refreshes it.
@@ -258,7 +261,53 @@ def _claude_plan(plan, data_dir, state):
     plan.edit(claude_md, _block(_read(claude_md), f"@{config.PROTOCOL_COPY}"))
 
 
-def _codex_plan(plan, data_dir, state):
+def _folder_rules(data_dirs):
+    return [rule for d in data_dirs for rule in (f"Read({_home_rel(d)}/**)", f"Edit({_home_rel(d)}/**)")]
+
+
+def _claude_access(plan, data_dirs, state):
+    """Let Claude Code read and edit every profile's folder, and no longer one we added for a folder now gone."""
+    settings_path = CLAUDE_DIR / "settings.json"
+    settings = json.loads(plan.text(settings_path) or "{}")
+    wanted = _folder_rules(data_dirs)
+    ours = set(state.get("claude.permissions", []))
+    stale = {r for r in ours if r.startswith(("Read(", "Edit(")) and r not in wanted}
+    allow = settings.setdefault("permissions", {}).setdefault("allow", [])
+    added = [r for r in wanted if r not in allow]
+    allow[:] = [r for r in allow if r not in stale] + added
+    state["claude.permissions"] = sorted((ours - stale) | set(added))
+    plan.edit(settings_path, json.dumps(settings, indent=2, ensure_ascii=False) + "\n")
+
+
+def _codex_access(plan, data_dirs, state):
+    """Add every profile's folder to Codex's writable roots, and drop one we added for a folder now gone."""
+    toml_path = CODEX_DIR / "config.toml"
+    toml = plan.text(toml_path) or ""
+    roots = toml_get(toml, "sandbox_workspace_write", "writable_roots")
+    roots = [] if roots == MISSING else list(roots)
+    state.setdefault(
+        "codex.writable_roots.had_key",
+        toml_get(_read(toml_path) or "", "sandbox_workspace_write", "writable_roots") != MISSING,
+    )
+    ours = _codex_roots(state)
+    wanted = [str(d) for d in data_dirs]
+    stale = [r for r in ours if r not in wanted]
+    added = [r for r in wanted if r not in roots]
+    roots = [r for r in roots if r not in stale] + added
+    state.pop("codex.writable_root", None)
+    state["codex.writable_roots"] = list(dict.fromkeys([r for r in ours if r not in stale] + added))
+    toml = toml_set(toml, "sandbox_workspace_write", "writable_roots", json.dumps(roots))
+    tomllib.loads(toml)  # refuse to write a config Codex could not parse
+    plan.edit(toml_path, toml)
+
+
+def _codex_roots(state):
+    """The writable roots install added; older installs recorded one, as codex.writable_root."""
+    one = state.get("codex.writable_root")
+    return list(state.get("codex.writable_roots") or ([one] if one else []))
+
+
+def _codex_plan(plan, data_dirs, state):
     hooks_path = CODEX_DIR / "hooks.json"
     text = _read(hooks_path)
     doc = json.loads(text) if text else {}
@@ -279,18 +328,9 @@ def _codex_plan(plan, data_dir, state):
     for key in ("generate_memories", "use_memories"):
         state.setdefault(f"codex.memories.{key}", toml_get(toml, "memories", key))
         toml = toml_set(toml, "memories", key, "false")
-    roots = toml_get(toml, "sandbox_workspace_write", "writable_roots")
-    roots = [] if roots == MISSING else list(roots)
-    state.setdefault(
-        "codex.writable_roots.had_key",
-        toml_get(_read(toml_path) or "", "sandbox_workspace_write", "writable_roots") != MISSING,
-    )
-    if str(data_dir) not in roots:
-        roots.append(str(data_dir))
-        state["codex.writable_root"] = str(data_dir)
-    toml = toml_set(toml, "sandbox_workspace_write", "writable_roots", json.dumps(roots))
     tomllib.loads(toml)  # refuse to write a config Codex could not parse
     plan.edit(toml_path, toml)
+    _codex_access(plan, data_dirs, state)
 
     agents_md = CODEX_DIR / "AGENTS.md"
     protocol = config.PROTOCOL.read_text("utf-8")
@@ -307,6 +347,35 @@ def _load_state():
         return {}
 
 
+def _save_state(state):
+    STATE_FILE.parent.mkdir(parents=True, exist_ok=True)
+    STATE_FILE.write_text(json.dumps(state, indent=2, ensure_ascii=False) + "\n", "utf-8")
+
+
+def refresh_access():
+    """After profiles change: let Claude Code and Codex reach every profile's folder, and only those we added.
+
+    Only the permission entries change, so the hooks stay as they are and Codex does not ask to trust them
+    again. Does nothing before `mem install`. Returns the tools updated.
+    """
+    from . import profiles
+
+    state = _load_state()
+    dirs = profiles.dirs()
+    plan = Plan()
+    if state.get("claude") and CLAUDE_DIR.is_dir():
+        _claude_access(plan, dirs, state)
+    if state.get("codex") and CODEX_DIR.is_dir():
+        _codex_access(plan, dirs, state)
+    changed = [p for p, (old, new) in plan.files.items() if old != new]
+    if changed:
+        plan.apply(config.CONFIG_DIR / "backups" / _dt.datetime.now().strftime("access-%Y%m%d-%H%M%S"))
+        _save_state(state)
+    return [
+        name for name, d in (("Claude Code", CLAUDE_DIR), ("Codex", CODEX_DIR)) if any(d in p.parents for p in changed)
+    ]
+
+
 DATA_README = (
     "# agent-memory data\n\n"
     "One Markdown file per memory under `memories/YYYY/MM/`, written by Claude Code and\n"
@@ -315,7 +384,8 @@ DATA_README = (
 )
 
 
-def init_data(data_dir):
+def init_repo(data_dir):
+    """Create a data repository in data_dir, or fill in what one there lacks. True if that made a commit."""
     data_dir.mkdir(parents=True, exist_ok=True)
     (data_dir / "memories").mkdir(exist_ok=True)
     gi = data_dir / ".gitignore"
@@ -327,12 +397,17 @@ def init_data(data_dir):
     if not (data_dir / ".git").exists():
         gitsync.git(data_dir, "init", "-q", "-b", "main")
     gitsync.git(data_dir, "add", "-A")
-    gitsync.git(
+    r = gitsync.git(
         data_dir, "-c", "commit.gpgsign=false", "commit", "-q", "--no-verify", "-m", "Initialize memory repository"
     )
-    cfg = config.load()
-    cfg["data_dir"] = str(data_dir)
-    config.save(cfg)
+    return r.returncode == 0
+
+
+def init_data(data_dir):
+    from . import profiles
+
+    init_repo(data_dir)
+    profiles.set_folder(data_dir)
     print(f"data repository ready at {data_dir}; config written to {config.CONFIG_FILE}")
 
 
@@ -340,12 +415,15 @@ def install(dry_run=False, claude=True, codex=True):
     data_dir = config.data_dir()
     if not data_dir or not (data_dir / ".git").exists():
         sys.exit("run `mem init <data-dir>` first")
+    from . import profiles
+
+    dirs = profiles.dirs()
     state = _load_state()
     plan = Plan()
     if claude and CLAUDE_DIR.is_dir():
-        _claude_plan(plan, data_dir, state)
+        _claude_plan(plan, dirs, state)
     if codex and CODEX_DIR.is_dir():
-        _codex_plan(plan, data_dir, state)
+        _codex_plan(plan, dirs, state)
     _path_plan(plan, state)
 
     plan.show()
@@ -359,8 +437,7 @@ def install(dry_run=False, claude=True, codex=True):
     state["installed_at"] = stamp
     state["claude"] = state.get("claude") or (claude and CLAUDE_DIR.is_dir())
     state["codex"] = state.get("codex") or (codex and CODEX_DIR.is_dir())
-    STATE_FILE.parent.mkdir(parents=True, exist_ok=True)
-    STATE_FILE.write_text(json.dumps(state, indent=2, ensure_ascii=False) + "\n", "utf-8")
+    _save_state(state)
     print(f"installed; backups in {config.CONFIG_DIR / 'backups' / stamp}")
     if state.get("codex"):
         print("Codex: open /hooks in Codex once and trust the three agent-memory hooks.")
@@ -424,10 +501,10 @@ def uninstall(dry_run=False):
                 if prev == MISSING
                 else toml_set(toml, "memories", key, _toml_literal(prev))
             )
-        root = state.get("codex.writable_root")
+        ours = _codex_roots(state)
         roots = toml_get(toml, "sandbox_workspace_write", "writable_roots")
-        if root and roots != MISSING:
-            roots = [r for r in roots if r != root]
+        if ours and roots != MISSING:
+            roots = [r for r in roots if r not in ours]
             if roots or state.get("codex.writable_roots.had_key"):
                 toml = toml_set(toml, "sandbox_workspace_write", "writable_roots", json.dumps(roots))
             else:
