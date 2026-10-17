@@ -144,6 +144,18 @@ uv run ruff check .
 uv run ruff format .
 ```
 
+The new page for `mem ui` lives in `web/` (Svelte 5, TypeScript, Vite, Tailwind and bits-ui) and
+needs Node 20 or newer. `npm run build` there writes it into `src/agent_memory/webui_next/`, which
+`mem ui` serves at `/next/` and the package ships; CI builds it before packaging, so the built files
+are not committed. While working on it, `npm run dev` serves the page with hot reload and passes API
+calls to a running `mem ui` (set `MEM_UI` if it is not on port 8790); open it with the `#t=…` part of
+the link `mem ui` printed.
+
+```bash
+cd web && npm ci && npm run build   # the page, into the package
+npm run check                       # svelte-check, warnings fail it
+```
+
 `uv run mem ...` runs the working copy without touching the installed one. To have every
 session use the working copy, install it in place of the release and rewire the hooks; go back
 the same way:

@@ -575,6 +575,31 @@ class UiServerTest(unittest.TestCase):
         self.assertEqual(status, 200)
         self.assertTrue(res["checks"] and all({"ok", "text"} <= set(c) for c in res["checks"]))
 
+    def test_next_page_routes_to_its_index(self):
+        import urllib.error
+        import urllib.request
+
+        from agent_memory import ui_server
+
+        built = ROOT / "webui-next"
+        (built / "assets").mkdir(parents=True, exist_ok=True)
+        (built / "index.html").write_text("<!doctype html><title>next</title>")
+        (built / "assets" / "app.js").write_text("export {}")
+
+        def get(path):
+            try:
+                with urllib.request.urlopen(f"http://127.0.0.1:{self.port}{path}") as r:
+                    return r.status, r.headers["Content-Type"], r.read()
+            except urllib.error.HTTPError as e:
+                return e.code, None, b""
+
+        with mock.patch.object(ui_server, "NEXT", built):
+            self.assertEqual(get("/next/")[2], b"<!doctype html><title>next</title>")
+            self.assertEqual(get("/next/insights")[2], b"<!doctype html><title>next</title>")  # the page routes
+            self.assertEqual(get("/next/assets/app.js")[1], "text/javascript; charset=utf-8")
+            self.assertEqual(get("/next/assets/missing.js")[0], 404)
+            self.assertEqual(get("/next/../ui_server.py")[2], b"<!doctype html><title>next</title>")  # never the file
+
 
 class UiSyncStatusTest(unittest.TestCase):
     def test_finished_push_clears_not_pushed(self):
