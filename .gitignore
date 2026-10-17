@@ -8,4 +8,4 @@ dist/
 .ruff_cache/
 .pytest_cache/
 web/node_modules/
-src/agent_memory/webui_next/
+src/agent_memory/webui/

@@ -575,15 +575,15 @@ class UiServerTest(unittest.TestCase):
         self.assertEqual(status, 200)
         self.assertTrue(res["checks"] and all({"ok", "text"} <= set(c) for c in res["checks"]))
 
-    def test_next_page_routes_to_its_index(self):
+    def test_page_routes_to_its_index(self):
         import urllib.error
         import urllib.request
 
         from agent_memory import ui_server
 
-        built = ROOT / "webui-next"
+        built = ROOT / "webui-built"
         (built / "assets").mkdir(parents=True, exist_ok=True)
-        (built / "index.html").write_text("<!doctype html><title>next</title>")
+        (built / "index.html").write_text("<!doctype html><title>page</title>")
         (built / "assets" / "app.js").write_text("export {}")
 
         def get(path):
@@ -591,14 +591,19 @@ class UiServerTest(unittest.TestCase):
                 with urllib.request.urlopen(f"http://127.0.0.1:{self.port}{path}") as r:
                     return r.status, r.headers["Content-Type"], r.read()
             except urllib.error.HTTPError as e:
-                return e.code, None, b""
+                return e.code, None, e.read()
 
-        with mock.patch.object(ui_server, "NEXT", built):
-            self.assertEqual(get("/next/")[2], b"<!doctype html><title>next</title>")
-            self.assertEqual(get("/next/insights")[2], b"<!doctype html><title>next</title>")  # the page routes
-            self.assertEqual(get("/next/assets/app.js")[1], "text/javascript; charset=utf-8")
-            self.assertEqual(get("/next/assets/missing.js")[0], 404)
-            self.assertEqual(get("/next/../ui_server.py")[2], b"<!doctype html><title>next</title>")  # never the file
+        page = b"<!doctype html><title>page</title>"
+        with mock.patch.object(ui_server, "STATIC", built):
+            self.assertEqual(get("/")[2], page)
+            self.assertEqual(get("/insights")[2], page)  # the page routes
+            self.assertEqual(get("/assets/app.js")[1], "text/javascript; charset=utf-8")
+            self.assertEqual(get("/assets/missing.js")[0], 404)
+            self.assertEqual(get("/../ui_server.py")[2], page)  # never the file
+        with mock.patch.object(ui_server, "STATIC", ROOT / "never-built"):
+            status, _, body = get("/")
+            self.assertEqual(status, 503)
+            self.assertIn(b"npm run build", body)
 
 
 class UiSyncStatusTest(unittest.TestCase):

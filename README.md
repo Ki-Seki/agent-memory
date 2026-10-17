@@ -105,22 +105,30 @@ mem doctor                      check the installation
 
 ## Managing memories in a page
 
-`mem ui` starts a small server on `127.0.0.1` and opens a page listing every memory. Keep the
-terminal open while you use it. It needs `numpy`; the hooks do not.
+`mem ui` starts a small server on `127.0.0.1` and opens a page with three parts: Memories, Insights
+and Settings (the logo always leads back to Memories). Keep the terminal open while you use it. It
+needs `numpy`; the hooks do not.
 
 - **Find.** One search box (press `/`). Word matches appear as you type, with the matching words
   marked; a moment later the local model adds memories close in meaning, across Chinese and
   English. Filters narrow the list by type, where a memory loads (everywhere, or one project or
   folder), which tool wrote it, keyword, when it was added (a recent period or a date range), and
   status (needs tidying, as `mem lint` reports and the open memory lists, or unchanged for 60
-  days). Tick several values in one filter to see memories that match any of them. The date
-  column's header sets the order: newest, oldest, recently changed or A to Z.
-- **Read.** Click a row, or move with `j`/`k` and press Enter. The memory opens on the right with
-  the body rendered as Markdown with `[[links]]` that open other memories, every frontmatter field
-  (including each `source` entry), the most similar memories, and the file exactly as stored.
+  days). Tick several values in one filter to see memories that match any of them. The list's
+  header sets the order: newest, oldest, recently changed or A to Z.
+- **Read.** Click a memory, or move with `j`/`k`. It opens beside the list (drag the line between
+  them to resize) with the body rendered as Markdown, `[[links]]` that open other memories, where
+  it came from, every other frontmatter field, the most similar memories, and the file exactly as
+  stored. On a narrow window the list and the memory take turns.
 - **Change.** Edit (`e`) or delete from the open memory, add one with New (`n`), or tick several
-  rows (`x`) and delete them together. Every change is one git commit, pushed in the background,
-  with Undo. If an agent edits the same file meanwhile, saving is refused rather than overwriting.
+  memories (`x`) and delete them together. Every change is one git commit, pushed in the
+  background, with Undo. If an agent edits the same file meanwhile, saving is refused rather than
+  overwriting.
+- **Insights.** How many memories there are and how they change week by week, where they load and
+  which tool wrote them, pairs that read alike (compare them side by side and keep one), and the
+  index a session would get at a chosen place, against the 10,000-character hook limit.
+- **Settings.** Light or dark, the data repository and a sync on demand, words never to use as
+  keywords, the embedding model, and the same checks as `mem doctor`.
 
 Similar memories and search by meaning use Qwen3-Embedding-0.6B, int8 ONNX, on the CPU, in a
 separate `uv run --with onnxruntime --with tokenizers` environment; vectors are cached by content
@@ -129,7 +137,7 @@ pinned revision, checked by SHA-256). Without it, or with `--keywords-only`, sim
 come from keyword vectors and search matches words only.
 
 Keywords are the words that most set a memory apart from the others (TF-IDF). Words that should
-never be keywords, such as your own name, go in `keyword_stopwords` in
+never be keywords, such as your own name, go in Settings, which keeps them as `keyword_stopwords` in
 `~/.config/agent-memory/config.json`.
 
 The server only listens on loopback, and every request needs the one-time token from the link it
@@ -144,10 +152,9 @@ uv run ruff check .
 uv run ruff format .
 ```
 
-The new page for `mem ui` lives in `web/` (Svelte 5, TypeScript, Vite, Tailwind and bits-ui) and
-needs Node 20 or newer. `npm run build` there writes it into `src/agent_memory/webui_next/`, which
-`mem ui` serves at `/next/` and the package ships; CI builds it before packaging, so the built files
-are not committed. While working on it, `npm run dev` serves the page with hot reload and passes API
+The page `mem ui` serves lives in `web/` (Svelte 5, TypeScript, Vite, Tailwind and bits-ui) and
+needs Node 20 or newer. `npm run build` there writes it into `src/agent_memory/webui/`, which the
+package ships; CI builds it before packaging, so the built files are not committed. While working on it, `npm run dev` serves the page with hot reload and passes API
 calls to a running `mem ui` (set `MEM_UI` if it is not on port 8790); open it with the `#t=…` part of
 the link `mem ui` printed.
 
