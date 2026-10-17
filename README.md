@@ -37,8 +37,8 @@
 - **Memory in git.** One Markdown file per memory in a git repository you own, with where it came
   from recorded by the hooks. Every change is a commit you can review or revert; add a private
   remote to sync machines, or keep it all on one. Here is [an example](https://github.com/Ki-Seki/agent-memory-data-demo).
-  [Profiles](https://ki-seki.github.io/agent-memory/docs.html#profiles) keep work and personal
-  memories in repositories of their own.
+  [Profiles](https://ki-seki.github.io/agent-memory/docs.html#profiles) keep separate sets of
+  memories in repositories of their own, and a switch reaches running sessions too.
 - **Nothing to run.** Two hooks and git. No service, no account; search by meaning runs on your CPU.
 - **A page to keep it tidy.** `mem ui` searches by words and by meaning, edits with undo, and shows
   what changed week by week.

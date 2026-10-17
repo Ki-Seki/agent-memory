@@ -21,7 +21,7 @@ os.environ["AGENT_MEMORY_DATA"] = str(DATA)
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "src"))
 
-from agent_memory import capture, frontmatter, hooks, install, select, store  # noqa: E402
+from agent_memory import capture, cli, frontmatter, hooks, install, select, store  # noqa: E402
 from agent_memory.context import normalize_remote  # noqa: E402
 from agent_memory.util import HOME  # noqa: E402
 
@@ -596,6 +596,11 @@ class UiServerTest(unittest.TestCase):
         self.assertEqual(config.load()["keyword_stopwords"], ["alpha", "beta"])
         self.assertEqual(self.call("/api/settings", {"keyword_stopwords": "alpha"})[0], 400)
         self.call("/api/settings", {"keyword_stopwords": []})
+        self.assertIs(res["switchNote"], True)  # the switch dialog shows until told not to
+        status, res = self.call("/api/settings", {"switch_note": False})
+        self.assertIs(res["switchNote"], False)
+        self.assertIs(config.load()["switch_note"], False)
+        self.assertEqual(self.call("/api/settings", {"switch_note": "no"})[0], 400)
         status, res = self.call("/api/doctor")
         self.assertEqual(status, 200)
         self.assertTrue(res["checks"] and all({"ok", "text"} <= set(c) for c in res["checks"]))
@@ -1157,6 +1162,12 @@ class InstallTest(unittest.TestCase):
             hook = settings["hooks"]["SessionStart"][-1]["hooks"][0]["command"]
             self.assertTrue(hook.endswith("hook session-start --tool claude-code"), hook)
             self.assertIn(" -m agent_memory hook ", hook)
+            hook = settings["hooks"]["UserPromptSubmit"][-1]["hooks"][0]["command"]
+            self.assertTrue(hook.endswith("hook prompt --tool claude-code || true"), hook)
+            codex = json.loads(mid[str(install.CODEX_DIR / "hooks.json")])["hooks"]["UserPromptSubmit"]
+            self.assertEqual(codex[-1]["hooks"][0]["additionalContextLimit"], 0)
+            with mock.patch("sys.stdin", io.StringIO("{}")):  # an event from a newer install is not refused
+                self.assertEqual(cli.main(["hook", "later-event", "--tool", "codex"]), 0)
             self.assertIn(install.PATH_LINE, rc.read_text())
 
             install.install()  # idempotent
@@ -1188,7 +1199,7 @@ class InstallTest(unittest.TestCase):
 
 
 class ProfilesTest(unittest.TestCase):
-    """Profiles: several data repositories, one active; new sessions use it, running ones keep theirs."""
+    """Profiles: several data repositories, one active; sessions use it, running ones from their next message."""
 
     def setUp(self):
         from agent_memory import config
@@ -1243,6 +1254,24 @@ class ProfilesTest(unittest.TestCase):
         with self.assertRaises(profiles.ProfileError):
             profiles.remove("default")  # never the last one
 
+    def test_switching_says_what_it_means_for_running_sessions(self):
+        from agent_memory import config, profiles
+
+        def use(profile):
+            out = io.StringIO()
+            with mock.patch("sys.stdout", out):
+                cli.main(["profile", "use", profile])
+            return out.getvalue()
+
+        pid, _ = profiles.add(self.work)
+        said = use("default")
+        self.assertIn("running ones switch with their next message", said)
+        self.assertIn(cli.SWITCH_NOTE, said)
+        config.save({**config.load(), "switch_note": False})  # what Don't show this again sets
+        said = use(pid)
+        self.assertIn("running ones switch with their next message", said)
+        self.assertNotIn(cli.SWITCH_NOTE, said)
+
     def test_names_are_picked_not_given(self):
         from agent_memory import profiles
 
@@ -1294,25 +1323,47 @@ class ProfilesTest(unittest.TestCase):
         with self.assertRaises(profiles.ProfileError):
             profiles.use(laptop)  # its folder is gone
 
-    def test_running_sessions_keep_their_profile(self):
+    def test_running_sessions_follow_the_active_profile(self):
         from agent_memory import profiles
 
-        pid, _ = profiles.add(self.work)
-        payload = {"session_id": "s-work", "cwd": str(self.root)}
-        text = json.loads(run_hook("session-start", "codex", payload))["hookSpecificOutput"]["additionalContext"]
-        self.assertIn(f"profile: {profiles.listing()[0][pid]['name']} ", text)
-        sdir = capture.session_dir(self.work, "codex", "s-work")
-        self.assertIn(str(sdir), text)
-        (sdir / "fact.md").write_text(
-            "---\nname: fact\ntype: project\nscope: global\ndescription: a work fact\n---\nFact.\n", "utf-8"
-        )
-        profiles.use("default")  # the user switches while the session runs
-        run_hook("stop", "codex", payload)
-        self.assertEqual([m["name"] for m in store.load_all(self.work)], ["fact"])
-        self.assertEqual(store.load_all(self.personal), [])
+        def fact(sdir, name):
+            (sdir / f"{name}.md").write_text(
+                f"---\nname: {name}\ntype: project\nscope: global\ndescription: {name}\n---\nFact.\n", "utf-8"
+            )
 
-        text = json.loads(run_hook("session-start", "codex", {"session_id": "s-new", "cwd": str(self.root)}))
-        self.assertIn(str(self.personal), text["hookSpecificOutput"]["additionalContext"])
+        def context(out):
+            return json.loads(out)["hookSpecificOutput"]["additionalContext"] if out else ""
+
+        pid, _ = profiles.add(self.work)
+        found = profiles.listing()[0]
+        work, personal = found[pid]["name"], found["default"]["name"]
+        payload = {"session_id": "s-run", "cwd": str(self.root), "prompt": "go on"}
+        text = context(run_hook("session-start", "codex", payload))
+        self.assertIn(f"profile: {work} ", text)
+        in_work = capture.session_dir(self.work, "codex", "s-run")
+        self.assertIn(str(in_work), text)
+        self.assertEqual(run_hook("prompt", "codex", payload), "")  # nothing changed, nothing said
+        fact(in_work, "before")  # staged under the work index, before the switch
+
+        profiles.use("default")  # the user switches while the session runs
+        text = context(run_hook("prompt", "codex", payload))
+        self.assertTrue(text.startswith(hooks.SWITCHED))
+        self.assertIn(f"profile: {personal} ", text)
+        in_personal = capture.session_dir(self.personal, "codex", "s-run")
+        self.assertIn(str(in_personal), text)
+        self.assertEqual(run_hook("prompt", "codex", payload), "")  # said once
+        fact(in_personal, "after")
+
+        run_hook("stop", "codex", payload)  # each memory lands in the profile it was staged in
+        self.assertEqual([m["name"] for m in store.load_all(self.work)], ["before"])
+        self.assertEqual([m["name"] for m in store.load_all(self.personal)], ["after"])
+
+        profiles.use(pid)  # and back: the work index again, though its folder was there all along
+        self.assertIn(f"profile: {work} ", context(run_hook("prompt", "codex", payload)))
+        text = context(run_hook("session-start", "codex", {**payload, "source": "compact"}))
+        self.assertIn(f"profile: {work} ", text)  # compaction loads the active profile too
+
+        self.assertEqual(run_hook("prompt", "codex", {"session_id": "s-new", "cwd": str(self.root)}), "")
 
     def test_init_points_the_active_profile(self):
         from agent_memory import config, profiles

@@ -617,6 +617,19 @@ button.hero-meta-item:hover .copy-hint, button.hero-meta-item:focus-visible .cop
 .dialog::backdrop { background: rgb(0 0 0 / .3); }
 .dialog-title { font-size: 15px; font-weight: 600; }
 .dialog-body { margin-top: 8px; font-size: 13.5px; white-space: pre-line; color: var(--ink-2); }
+.sline { display: grid; grid-template-columns: auto auto; justify-content: start; margin-top: 14px; font-size: 12px; color: var(--ink-3); }
+.sline > span { padding-right: 14px; }
+.sline > .next:not(.sline-name) { padding-left: 14px; border-left: 1.5px dashed var(--ink-3); }
+.sline > .sline-name.next { padding-left: 15.5px; }
+.sline > .sline-when { padding-bottom: 4px; }
+.sline-msgs { display: flex; align-items: center; gap: 5px; height: 22px; }
+.sline-msgs i { width: 20px; height: 11px; border-radius: 6px; overflow: hidden; box-shadow: 0 0 0 0.5px var(--line); }
+.sline-msgs i svg { display: block; width: 100%; height: 100%; }
+.sline-msgs b { font-weight: 400; margin-left: 2px; }
+.sline-name { display: flex; align-items: center; gap: 6px; margin-top: 6px; color: var(--ink-2); }
+.sline-name .pavatar { width: 16px; height: 16px; }
+.dialog-check { display: flex; align-items: center; gap: 8px; margin-top: 14px; padding: 0; border: 0; background: none; color: var(--ink-2); font: inherit; font-size: 13px; cursor: pointer; }
+.dialog-check[aria-checked="true"] .check { border-color: var(--accent); background: var(--accent); color: var(--accent-ink); }
 .dialog-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 20px; }
 .dialog.wide { width: min(1040px, calc(100vw - 32px)); max-height: min(760px, calc(100vh - 48px)); padding: 0; }
 .dialog.wide[open] { display: flex; flex-direction: column; }

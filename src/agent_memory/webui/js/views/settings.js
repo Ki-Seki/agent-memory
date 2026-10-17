@@ -52,7 +52,7 @@ function hero() {
   const s = app.settings.s, st = app.settings, p = active();
   const name = p?.name ?? s?.name ?? "agent-memory";
   const count = `${app.M.length} ${app.M.length === 1 ? "memory" : "memories"}`;
-  const role = !p ? "" : app.profiles.demo ? "The profile the page shows" : "New sessions use this profile";
+  const role = !p ? "" : app.profiles.demo ? "The profile the page shows" : "Sessions use this profile";
   const note = st.remoteNote ? html`<p${attrs({ class: cx("hero-note", !st.remoteNote.ok && "bad"), role: "status" })}>${st.remoteNote.text}</p>` : "";
   return html`<section class="hero" data-key="hero" aria-label="${p ? "The open profile" : "The data repository"}">
     <div class="hero-glow" aria-hidden="true">${glow(name)}</div>

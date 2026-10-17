@@ -4,6 +4,7 @@ import { html } from "../h.js";
 import { icon } from "../icons.js";
 import { parse, renderBlocks } from "../markdown.js";
 import { app } from "../store.js";
+import { switchLine } from "./profiles.js";
 import { typeDot } from "./ui.js";
 
 export function selectionBar() {
@@ -29,7 +30,9 @@ export function confirmDialog() {
   const a = app.asking;
   if (!a) return "";
   return html`<h2 class="dialog-title">${a.title}</h2>
+    ${a.timeline ? switchLine(a.timeline.from, a.timeline.to) : ""}
     ${a.body ? html`<p class="dialog-body">${a.body}</p>` : ""}
+    ${a.check ? html`<button type="button" role="checkbox" class="dialog-check" aria-checked="${String(!!a.checked)}" data-act="askCheck"><span class="check" aria-hidden="true">${a.checked ? icon("check", "", 3) : ""}</span>${a.check}</button>` : ""}
     <div class="dialog-actions">
       <button type="button" class="btn" data-act="answer" data-arg="no">Cancel</button>
       <button type="button" class="${a.danger ? "btn danger" : "btn primary"}" data-act="answer" data-arg="yes" autofocus>${a.action}</button>
