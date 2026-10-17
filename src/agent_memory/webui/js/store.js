@@ -53,6 +53,7 @@ class App {
   insights = { commits: [], place: "", preview: null, hover: {} };
   settings = { s: null, checks: null, word: "", syncing: false, checking: false, lookingUp: false, failed: null };
   wide = matchMedia("(min-width: 1024px)");
+  demo = null;  // the online demo sets { queries } to suggest searches
   #base = "";
   #listeners = [];
   #queued = false;

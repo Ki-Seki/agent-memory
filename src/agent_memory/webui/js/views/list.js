@@ -13,7 +13,7 @@ function searchBox() {
     ${icon("search")}
     <input id="q" type="search" placeholder="Search memories" autocomplete="off" spellcheck="false" data-input="search"${attrs({ value: app.q })}>
     <span class="search-end">${app.q ? html`<button type="button" class="clear" aria-label="Clear search" data-act="clearSearch">${icon("x")}</button>` : kbd("/")}</span>
-  </label>`;
+  </label>${app.demo && !app.q ? html`<div class="try"><span>Try</span>${app.demo.queries.map((q) => html`<button type="button" data-act="trySearch" data-arg="${q}">${q}</button>`)}</div>` : ""}`;
 }
 
 // ---------------------------------------------------------------- filters
