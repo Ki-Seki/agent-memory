@@ -1,186 +1,86 @@
-# agent-memory
+<p align="center">
+  <img src="https://raw.githubusercontent.com/Ki-Seki/agent-memory/main/docs/logo.svg" width="64" height="64" alt="">
+</p>
 
-One memory for Claude Code and Codex, kept as plain Markdown files in a git repository you own.
+<h1 align="center">agent-memory</h1>
 
-When a session starts, a hook gives the agent an index of the memories that matter where it is
-running: everything marked global, plus what was learned in the same folder or repository. When
-a turn ends, a hook commits what the agent wrote, with full provenance (tool, session, host,
-folder, git remote), and pushes it. Both tools read and write the same files, so a preference
-you gave Codex is there the next time Claude Code starts, on any machine that pulls the data
-repository. This repository holds only the code; the memories live in a separate data
-repository.
+<p align="center">
+  <b>One memory for Claude Code and Codex.</b><br>
+  What your agents learn, kept as plain Markdown in a git repository you own.
+</p>
 
-![mem ui listing memories, with one open on the right](https://raw.githubusercontent.com/Ki-Seki/agent-memory/main/docs/mem-ui.png)
+<p align="center">
+  <a href="https://ki-seki.github.io/agent-memory/demo/"><b>Live demo</b></a> ·
+  <a href="https://ki-seki.github.io/agent-memory/">Website</a> ·
+  <a href="https://ki-seki.github.io/agent-memory/docs.html">Docs</a>
+</p>
 
-<sub>`mem ui` on the [demo data repository](https://github.com/Ki-Seki/agent-memory-data-demo).</sub>
+<p align="center">
+  <a href="https://pypi.org/project/agent-memory-git/"><img src="https://img.shields.io/pypi/v/agent-memory-git?color=5b5bd6" alt="PyPI"></a>
+  <a href="https://pypi.org/project/agent-memory-git/"><img src="https://img.shields.io/pypi/pyversions/agent-memory-git?color=5b5bd6" alt="Python"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-5b5bd6" alt="MIT license"></a>
+</p>
 
-## Try it without installing
+<a href="https://ki-seki.github.io/agent-memory/demo/">
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/Ki-Seki/agent-memory/main/site/assets/shots/memories-dark.png">
+  <img alt="mem ui, open in the live demo: a list of memories on the left, one open on the right with where it came from" src="https://raw.githubusercontent.com/Ki-Seki/agent-memory/main/site/assets/shots/memories-light.png">
+</picture>
+</a>
+
+## Why agent-memory
+
+- **Tell one agent, both remember.** A preference you give Codex is there the next time Claude
+  Code starts, and the other way round, on every machine that pulls.
+- **The right memories in each session.** Everything global, plus what was learned in this folder
+  or repository, and nothing from your other projects.
+- **Memory in git.** One Markdown file per memory in a git repository you own, with where it came
+  from recorded by the hooks. Every change is a commit you can review or revert; add a private
+  remote to sync machines, or keep it all on one. Here is [an example](https://github.com/Ki-Seki/agent-memory-data-demo).
+- **Nothing to run.** Two hooks and git. No service, no account; search by meaning runs on your CPU.
+- **A page to keep it tidy.** `mem ui` searches by words and by meaning, edits with undo, and shows
+  what changed week by week.
+
+## Quick start
+
+See it first, with nothing installed:
 
 ```bash
 uvx --from "agent-memory-git[ui]" mem ui --demo
 ```
 
-`uvx` runs `mem` from a throwaway environment, and `--demo` opens the page on made-up memories in a
-temporary repository with its own settings, so nothing is installed, no hooks change and your own
-memories are not touched. Add `--keywords-only` to skip the optional embedding model.
+Then set it up (Python 3.11+, git and [uv](https://docs.astral.sh/uv/)):
+
+```bash
+uv tool install "agent-memory-git[ui]"
+mem init ~/repos/agent-memory-data   # your data repository
+mem install --dry-run                # every change, as a diff
+mem install
+```
+
+Codex asks you to trust new hooks once: open `/hooks` in Codex and enable the three agent-memory
+hooks. The [docs](https://ki-seki.github.io/agent-memory/docs.html#install) cover importing existing
+memories, every file `mem install` changes, upgrading and uninstalling.
 
 ## How it works
 
 ![mem install wires hooks into Claude Code and Codex; at session start they load an index from the private data repository, and at the end of each turn they commit and push new memories back](https://raw.githubusercontent.com/Ki-Seki/agent-memory/main/docs/how-it-works.svg)
 
-- **One file per memory.** Frontmatter carries `type` (user / feedback / project / reference),
-  `scope` (global / here), a one-line `description`, and provenance under `source`: tool, session
-  id and name, model, host, folder, git root, remote, branch and commit. Files live in
-  `memories/YYYY/MM/<id>.md`; the folders exist only to keep listings short.
-- **Session start.** A SessionStart hook works out where the session runs (folder, host, git
-  identity), picks every `global` memory plus the `here` memories recorded at the same place,
-  and injects a compact index (under 10,000 characters, the Claude Code hook limit).
-- **Writing.** The agent writes new memories into a per-session staging folder and edits existing
-  files in place. At the end of each turn a Stop hook stamps ids and provenance, moves staged
-  files into `memories/`, commits, and pushes in the background. The agent never writes
-  provenance itself.
-- **Rules.** [`PROTOCOL.md`](src/agent_memory/PROTOCOL.md) tells the agent what to save and how.
-  `mem install` copies it to `~/.config/agent-memory/PROTOCOL.md`, which `~/.claude/CLAUDE.md`
-  imports, and into `~/.codex/AGENTS.md` for Codex.
+At session start a hook gives the agent an index of the memories that apply where it runs. The
+agent saves what is worth keeping as Markdown files, following
+[PROTOCOL.md](src/agent_memory/PROTOCOL.md), and at the end of each turn a hook records where each
+came from, commits and pushes. The [docs](https://ki-seki.github.io/agent-memory/docs.html) explain
+the file format, where memories load, the commands and the configuration.
 
-Sessions in throwaway folders (Claude Code scratch workspaces, Codex per-thread folders under
-`~/Documents/Codex/<date>/`) get their `here` memories filed under the project folder the
-transcript shows them working in most, with the original folder kept as `source.original_cwd`.
-`mem relocate` applies the same inference to existing memories. Patterns can be overridden with
-`throwaway_patterns` in `~/.config/agent-memory/config.json`.
-
-A `here` memory matches a session when they share the folder (100), the git checkout (90), the
-remote (80, other clones and worktrees), or when one folder contains the other (70 / 60). Home
-and its direct children such as `~/repos` are too broad to match through containment.
-
-## Setup
-
-Requires Python 3.11+, git and [uv](https://docs.astral.sh/uv/).
+## Contributing
 
 ```bash
-uv tool install "agent-memory-git[ui]"     # the mem command; [ui] adds numpy for mem ui
-mem init ~/repos/agent-memory-data     # create the data repository and ~/.config/agent-memory
-mem import claude --dry-run            # preview, then run without --dry-run
-mem import codex --dry-run
-mem install --dry-run                  # shows every change as a diff
-mem install
+uv sync --all-extras && uv run pytest
 ```
 
-To upgrade, run `uv tool upgrade agent-memory-git` and then `mem install`, which refreshes the
-protocol copies; `mem doctor` says when they are out of date. `mem ui` does both from Settings, with
-one click, when a newer release is out.
-
-`install` edits, and records in `~/.config/agent-memory/install-state.json`:
-
-| File | Change |
-|---|---|
-| `~/.claude/settings.json` | SessionStart / Stop / SessionEnd hooks, `autoMemoryEnabled: false`, read/edit permission on the data repository, `mem search/list/show` allowed |
-| `~/.claude/CLAUDE.md` | a marked block importing `~/.config/agent-memory/PROTOCOL.md`, a copy of the protocol |
-| `~/.codex/hooks.json` | the same three hooks |
-| `~/.codex/config.toml` | `memories.generate_memories = false`, `memories.use_memories = false`, data repository added to `sandbox_workspace_write.writable_roots` |
-| `~/.codex/AGENTS.md` | a marked block with the protocol |
-| `~/.zshrc` or `~/.bashrc` | a marked block putting `~/.local/bin`, where uv installs `mem`, on PATH, only if a new login shell lacks it |
-
-Codex asks you to trust new hooks once: open `/hooks` in Codex and enable the three
-agent-memory hooks.
-
-`mem uninstall` reverts exactly those edits (other changes the tools made in the meantime are
-kept) and turns native memory back on. The data repository is never touched by uninstall.
-
-## Commands
-
-```
-mem index [--cwd DIR]           what a session started here would see
-mem list [--global|--here|--all] [--type T]
-mem search WORDS... [--all]     full-text search; --all includes other locations
-mem show ID|NAME|PATH
-mem add --name N --type T --scope S --description D BODY|-
-mem flush                       commit anything left in staging
-mem relocate [PATH...] [--dry-run]  re-file memories recorded in throwaway folders
-mem sync [--pull-only]          pull --rebase and push the data repository
-mem lint [ID...] [--summary]    list memories that do not follow the body format
-mem ui [--port N] [--no-open] [--demo]  search, filter, read and edit memories in a local page
-mem doctor                      check the installation
-```
-
-## Managing memories in a page
-
-`mem ui` starts a small server on `127.0.0.1` and opens a page with three parts: Memories, Insights
-and Settings (the logo always leads back to Memories). Keep the terminal open while you use it. It
-needs `numpy`; the hooks do not.
-
-- **Find.** One search box (press `/`). Word matches appear as you type, with the matching words
-  marked; a moment later the local model adds memories close in meaning, across Chinese and
-  English. Filters narrow the list by type, where a memory loads (everywhere, or one project or
-  folder), which tool wrote it, keyword, when it was added (a recent period or a date range), and
-  status (needs tidying, as `mem lint` reports and the open memory lists, or unchanged for 60
-  days). Tick several values in one filter to see memories that match any of them. The list's
-  header sets the order: newest, oldest, recently changed or A to Z.
-- **Read.** Click a memory, or move with `j`/`k`. It opens beside the list (drag the line between
-  them to resize) with the body rendered as Markdown, `[[links]]` that open other memories, where
-  it came from, every other frontmatter field, the most similar memories, and the file exactly as
-  stored. On a narrow window the list and the memory take turns.
-- **Change.** Edit (`e`) or delete from the open memory, add one with New (`n`), or tick several
-  memories (`x`) and delete them together. Every change is one git commit, pushed in the
-  background, with Undo. If an agent edits the same file meanwhile, saving is refused rather than
-  overwriting.
-- **Insights.** How many memories there are and how they change week by week, where they load and
-  which tool wrote them, pairs that read alike (compare them side by side and keep one), and the
-  index a session would get at a chosen place, against the 10,000-character hook limit.
-- **Settings.** Light or dark, updates, the data repository and a sync on demand, words never to
-  use as keywords, the embedding model, and the same checks as `mem doctor`. Once a day the page
-  asks PyPI whether a newer release is out (only the package name is sent; turn it off there); when
-  `uv tool` installed agent-memory, Update runs the upgrade and `mem install` and restarts the page
-  on the new version.
-
-Similar memories and search by meaning use Qwen3-Embedding-0.6B, int8 ONNX, on the CPU, in a
-separate `uv run --with onnxruntime --with tokenizers` environment; vectors are cached by content
-in `<data>/.cache/embeddings/`. Get the model once with `mem ui --fetch-model` (about 625 MB,
-pinned revision, checked by SHA-256). Without it, or with `--keywords-only`, similar memories
-come from keyword vectors and search matches words only.
-
-Keywords are the words that most set a memory apart from the others (TF-IDF). Words that should
-never be keywords, such as your own name, go in Settings, which keeps them as `keyword_stopwords` in
-`~/.config/agent-memory/config.json`.
-
-The server only listens on loopback, and every request needs the one-time token from the link it
-prints, so other web pages cannot read or change memories.
-
-## Development
-
-```bash
-uv sync --all-extras          # dev tools and numpy
-uv run pytest
-uv run ruff check .
-uv run ruff format .
-```
-
-The page `mem ui` serves is plain HTML, CSS and JavaScript modules in `src/agent_memory/webui/`,
-with no build step and no npm packages: edit a file and reload the page. `js/views/` draws each part
-of the page as HTML, `js/store.js` holds what the page knows and does, and `js/main.js` turns
-clicks and keys into store calls.
-
-`uv run mem ...` runs the working copy without touching the installed one. To have every
-session use the working copy, install it in place of the release and rewire the hooks; go back
-the same way:
-
-```bash
-uv tool install --force --editable ".[ui]" && mem install    # the checkout, live
-uv tool install --force "agent-memory-git[ui]" && mem install  # the release again
-```
-
-To release, run `uv run scripts/release.py prepare patch` (or `minor`, `major`) to open a
-version PR. After it is merged, `uv run scripts/release.py publish <PR_NUMBER>` creates the GitHub
-Release, and GitHub Actions publishes it to PyPI.
-
-## Notes
-
-- Hooks never fail the host session; errors go to `<data>/.cache/agent-memory.log`.
-- Git operations are serialized with a lock file, so parallel sessions are safe on one machine.
-  Across machines, unique file names keep merge conflicts rare; a failed rebase is aborted and
-  logged for you to resolve.
-- Session names come from Claude Code's `custom-title` transcript entries and Codex's thread
-  database, when available.
+The `mem ui` page is plain HTML, CSS and JavaScript with no build step, and
+`uv run scripts/site.py serve` runs the website and its live demo locally. More in the
+[docs](https://ki-seki.github.io/agent-memory/docs.html#development).
 
 ## License
 
