@@ -57,11 +57,13 @@ class UiApp:
 
     def stamp(self):
         head = gitsync.git(self.data, "rev-parse", "--short", "HEAD", timeout=5).stdout.strip()
+        # a push in the background moves the upstream ref but not HEAD; without it a stale "not pushed" would stay
+        pushed = gitsync.git(self.data, "rev-parse", "--short", "@{u}", timeout=5).stdout.strip()
         newest, count = 0, 0
         for path in self.mdir.rglob("*.md"):
             count += 1
             newest = max(newest, path.stat().st_mtime_ns)
-        return f"{head}:{count}:{newest}"
+        return f"{head}:{pushed}:{count}:{newest}"
 
     def refresh(self):
         with self.lock:
