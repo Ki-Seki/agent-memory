@@ -479,13 +479,12 @@ def recent_hook_errors(log_text, now=None, days=ERROR_DAYS):
     return out
 
 
-def doctor():
-    ok = True
+def doctor_checks():
+    """Every check as (passed, description), for `mem doctor` and the page's Health section."""
+    results = []
 
     def check(cond, msg):
-        nonlocal ok
-        print(("ok   " if cond else "FAIL ") + msg)
-        ok &= bool(cond)
+        results.append((bool(cond), msg))
 
     data = config.data_dir()
     check(data and (data / ".git").exists(), f"data repository: {data}")
@@ -528,4 +527,11 @@ def doctor():
         errors = recent_hook_errors(_read(logf) or "")
         latest = f"; latest: {errors[-1]} (details in {logf})" if errors else ""
         check(not errors, f"no hook errors in the last {ERROR_DAYS} days ({len(errors)}{latest})")
-    return 0 if ok else 1
+    return results
+
+
+def doctor():
+    results = doctor_checks()
+    for passed, msg in results:
+        print(("ok   " if passed else "FAIL ") + msg)
+    return 0 if all(passed for passed, _ in results) else 1
