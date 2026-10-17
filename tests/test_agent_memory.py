@@ -690,6 +690,35 @@ class UpdateTest(unittest.TestCase):
         self.assertEqual(calls[0], ["/bin/uv", "tool", "upgrade", u.PACKAGE])
         self.assertEqual(calls[-1][1:], ["-m", "agent_memory", "install"])
 
+    def test_a_pinned_install_is_installed_again_without_the_pin(self):
+        u = self.update
+        env = ROOT / "uv-tool-env"
+        env.mkdir(exist_ok=True)
+        receipt = env / "uv-receipt.toml"
+
+        def args(text=None):
+            receipt.unlink(missing_ok=True)
+            if text:
+                receipt.write_text(text)
+            with mock.patch.object(u.sys, "prefix", str(env)):
+                return u.upgrade_args()
+
+        mem = 'entrypoints = [{ name = "mem", install-path = "/bin/mem", from = "agent-memory-git" }]\n'
+        plain = '[tool]\nrequirements = [{ name = "agent-memory-git", extras = ["ui"] }]\n' + mem
+        pinned = (
+            '[tool]\nrequirements = [{ name = "agent-memory-git", extras = ["ui"], specifier = "==0.1.3" },'
+            ' { name = "extra-pkg", specifier = ">=1" }]\npython = "3.11"\n' + mem
+        )
+        upgrade = ["tool", "upgrade", u.PACKAGE]
+        self.assertEqual(args(plain), upgrade)
+        self.assertEqual(
+            args(pinned),
+            ["tool", "install", "--upgrade", "agent-memory-git[ui]", "--python", "3.11", "--with", "extra-pkg>=1"],
+        )
+        # what a plain install could lose stays with uv tool upgrade, which then reports the pin
+        self.assertEqual(args(pinned + '[tool.options]\nindex-url = "https://example.org/simple"\n'), upgrade)
+        self.assertEqual(args(), upgrade)
+
     def test_restart_keeps_the_token_and_stops_serving(self):
         import threading
         import urllib.request
