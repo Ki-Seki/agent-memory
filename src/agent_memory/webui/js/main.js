@@ -85,6 +85,7 @@ const ACTIONS = {
   clearFilters: () => app.clearFilters(),
   setSort: (v) => { app.setSort(v); closeMenus(); },
   clearSearch: () => { app.search(""); document.getElementById("q")?.focus(); },
+  trySearch: (q) => app.search(q),
   pickAll: () => app.pickAll(app.rows.map((m) => m.id)),
   clearPicked: () => app.clearPicked(),
   removePicked: () => app.remove([...app.picked]),

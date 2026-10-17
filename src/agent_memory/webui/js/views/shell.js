@@ -62,5 +62,8 @@ function page() {
 export function view() {
   if (app.bootError) return html`<div class="boot">${app.bootError}</div>`;
   if (!app.data) return html`<div class="boot">Loading memories…</div>`;
-  return html`<div class="shell">${rail()}${app.page === "memories" ? memories() : page()}</div>${selectionBar()}${toasts()}`;
+  const bar = app.demo
+    ? html`<div class="demo-bar" data-key="demo-bar"><span><b>Live demo</b> with made-up memories; changes stay in this tab.</span><a href="../">About agent-memory</a><a href="../#start">Install</a></div>`
+    : "";
+  return html`${bar}<div class="shell">${rail()}${app.page === "memories" ? memories() : page()}</div>${selectionBar()}${toasts()}`;
 }

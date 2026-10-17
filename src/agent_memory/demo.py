@@ -6,6 +6,7 @@ project site's live demo is built from the same memories (scripts/site.py).
 """
 
 import datetime as _dt
+import hashlib
 import json
 import os
 import shutil
@@ -101,3 +102,11 @@ def prepare():
     (cfg_dir / "config.json").write_text(json.dumps({"data_dir": str(data), **keep}), "utf-8")
     os.environ.update({ENV: str(root), "AGENT_MEMORY_DATA": str(data), "AGENT_MEMORY_CONFIG_DIR": str(cfg_dir)})
     return root
+
+
+def fingerprint():
+    """A hash of the demo memories, so the site's saved demo data can tell when they change."""
+    h = hashlib.sha256()
+    for path in sorted(MEMORIES.rglob("*.md")):
+        h.update(str(path.relative_to(MEMORIES)).encode() + b"\0" + path.read_bytes() + b"\0")
+    return h.hexdigest()[:16]
