@@ -629,6 +629,27 @@ class DemoTest(unittest.TestCase):
             os.environ.update(before)
             shutil.rmtree(root, ignore_errors=True)
 
+    def test_demo_folder_goes_when_the_terminal_closes(self):
+        import signal
+        import time
+
+        tmp = ROOT / "demo-tmp"
+        tmp.mkdir(exist_ok=True)
+        env = {**os.environ, "TMPDIR": str(tmp), "PYTHONPATH": str(Path(__file__).resolve().parent.parent / "src")}
+        args = [sys.executable, "-m", "agent_memory", "ui", "--demo", "--no-open", "--keywords-only", "--port", "0"]
+        proc = subprocess.Popen(args, env=env, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
+        try:
+            for line in proc.stdout:
+                if line.startswith("Memories:"):
+                    break
+            self.assertEqual(len(list(tmp.glob("agent-memory-demo-*"))), 1)
+            proc.send_signal(signal.SIGHUP)
+            proc.wait(timeout=10)
+        finally:
+            proc.kill()
+        time.sleep(0.2)
+        self.assertEqual(list(tmp.glob("agent-memory-demo-*")), [])
+
 
 class SiteTest(unittest.TestCase):
     def test_site_builds_with_a_demo_that_matches_the_demo_memories(self):
