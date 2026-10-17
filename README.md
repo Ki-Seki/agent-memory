@@ -17,13 +17,12 @@ repository.
 ## Try it without installing
 
 ```bash
-git clone https://github.com/Ki-Seki/agent-memory-data-demo
-AGENT_MEMORY_DATA=agent-memory-data-demo uvx --from "agent-memory-git[ui]" mem ui --keywords-only
+uvx --from "agent-memory-git[ui]" mem ui --demo
 ```
 
-`uvx` runs `mem` from a throwaway environment and `AGENT_MEMORY_DATA` points it at the demo
-repository, so nothing is installed and no hooks change. `--keywords-only` skips the optional
-embedding model; leave it out after `mem ui --fetch-model` to also search by meaning.
+`uvx` runs `mem` from a throwaway environment, and `--demo` opens the page on made-up memories in a
+temporary repository with its own settings, so nothing is installed, no hooks change and your own
+memories are not touched. Add `--keywords-only` to skip the optional embedding model.
 
 ## How it works
 
@@ -100,7 +99,7 @@ mem flush                       commit anything left in staging
 mem relocate [PATH...] [--dry-run]  re-file memories recorded in throwaway folders
 mem sync [--pull-only]          pull --rebase and push the data repository
 mem lint [ID...] [--summary]    list memories that do not follow the body format
-mem ui [--port N] [--no-open]   search, filter, read and edit memories in a local page
+mem ui [--port N] [--no-open] [--demo]  search, filter, read and edit memories in a local page
 mem doctor                      check the installation
 ```
 

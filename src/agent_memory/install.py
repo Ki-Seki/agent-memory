@@ -307,6 +307,14 @@ def _load_state():
         return {}
 
 
+DATA_README = (
+    "# agent-memory data\n\n"
+    "One Markdown file per memory under `memories/YYYY/MM/`, written by Claude Code and\n"
+    "Codex through the agent-memory hooks. Edit or delete files freely; every change is\n"
+    "a git commit.\n"
+)
+
+
 def init_data(data_dir):
     data_dir.mkdir(parents=True, exist_ok=True)
     (data_dir / "memories").mkdir(exist_ok=True)
@@ -315,13 +323,7 @@ def init_data(data_dir):
         gi.write_text("staging/\n.cache/\n.DS_Store\n", "utf-8")
     readme = data_dir / "README.md"
     if not readme.exists():
-        readme.write_text(
-            "# agent-memory data\n\n"
-            "One Markdown file per memory under `memories/YYYY/MM/`, written by Claude Code and\n"
-            "Codex through the agent-memory hooks. Edit or delete files freely; every change is\n"
-            "a git commit.\n",
-            "utf-8",
-        )
+        readme.write_text(DATA_README, "utf-8")
     if not (data_dir / ".git").exists():
         gitsync.git(data_dir, "init", "-q", "-b", "main")
     gitsync.git(data_dir, "add", "-A")

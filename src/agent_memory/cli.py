@@ -1,6 +1,9 @@
 """`mem` command line."""
 
 import argparse
+import atexit
+import os
+import shutil
 import sys
 from pathlib import Path
 
@@ -179,10 +182,20 @@ def cmd_lint(args):
 
 
 def cmd_ui(args):
-    from . import ui, ui_server
+    from . import demo, ui, ui_server
 
     if args.fetch_model:
         return ui.fetch_model()
+    if args.demo:
+        # in a new process, so every path the config module works out on import points into the demo
+        demo.prepare()
+        again = (
+            ["ui", "--port", str(args.port)] + ["--no-open"] * args.no_open + ["--keywords-only"] * args.keywords_only
+        )
+        os.execv(sys.executable, [sys.executable, "-m", "agent_memory", *again])
+    if os.environ.get(demo.ENV):
+        print("Demo: made-up memories in a temporary repository; nothing you change is kept.", flush=True)
+        atexit.register(shutil.rmtree, os.environ[demo.ENV], ignore_errors=True)
     ui_server.run(_data(), port=args.port, open_browser=not args.no_open, semantic=not args.keywords_only)
 
 
@@ -285,6 +298,9 @@ def main(argv=None):
     sp.add_argument("--keywords-only", action="store_true", help="skip the embedding model")
     sp.add_argument(
         "--fetch-model", action="store_true", help="download the local embedding model (about 625 MB) and exit"
+    )
+    sp.add_argument(
+        "--demo", action="store_true", help="open made-up memories in a temporary repository instead of yours"
     )
     sp.set_defaults(fn=cmd_ui)
 
