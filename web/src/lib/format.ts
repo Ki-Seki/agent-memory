@@ -20,3 +20,13 @@ export function ymd(d: Date): string {
 export const localDay = (iso: string) => { const t = Date.parse(iso || ""); return t ? ymd(new Date(t)) : ""; };
 /** A place key shown short: its last folder. */
 export const placeShort = (key: string) => key.split("/").filter(Boolean).pop() || key;
+/** "just now", "5 minutes ago", "3 hours ago", "2 days ago". */
+export function since(iso: string | null | undefined): string {
+  const t = Date.parse(iso || "");
+  if (!t) return "";
+  const m = Math.round((Date.now() - t) / 60000);
+  if (m < 1) return "just now";
+  if (m < 60) return plural(m, "minute") + " ago";
+  if (m < 60 * 24) return plural(Math.round(m / 60), "hour") + " ago";
+  return plural(Math.round(m / 1440), "day") + " ago";
+}

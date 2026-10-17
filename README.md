@@ -68,7 +68,8 @@ mem install
 ```
 
 To upgrade, run `uv tool upgrade agent-memory-git` and then `mem install`, which refreshes the
-protocol copies; `mem doctor` says when they are out of date.
+protocol copies; `mem doctor` says when they are out of date. `mem ui` does both from Settings, with
+one click, when a newer release is out.
 
 `install` edits, and records in `~/.config/agent-memory/install-state.json`:
 
@@ -127,8 +128,11 @@ needs `numpy`; the hooks do not.
 - **Insights.** How many memories there are and how they change week by week, where they load and
   which tool wrote them, pairs that read alike (compare them side by side and keep one), and the
   index a session would get at a chosen place, against the 10,000-character hook limit.
-- **Settings.** Light or dark, the data repository and a sync on demand, words never to use as
-  keywords, the embedding model, and the same checks as `mem doctor`.
+- **Settings.** Light or dark, updates, the data repository and a sync on demand, words never to
+  use as keywords, the embedding model, and the same checks as `mem doctor`. Once a day the page
+  asks PyPI whether a newer release is out (only the package name is sent; turn it off there); when
+  `uv tool` installed agent-memory, Update runs the upgrade and `mem install` and restarts the page
+  on the new version.
 
 Similar memories and search by meaning use Qwen3-Embedding-0.6B, int8 ONNX, on the CPU, in a
 separate `uv run --with onnxruntime --with tokenizers` environment; vectors are cached by content

@@ -5,7 +5,7 @@ import { api, token } from "./api";
 import { activeCount, listFilters, noFilters, passes, touched, type Filters, type ListKey, type Sort } from "./filters";
 import { plural } from "./format";
 import { lexical } from "./search";
-import type { Memory, MemoryType, Scope, State } from "./types";
+import type { Memory, MemoryType, Scope, State, UpdateResult, UpdateStatus } from "./types";
 
 export type Page = "memories" | "insights" | "settings";
 export type Theme = "system" | "light" | "dark";
@@ -54,6 +54,8 @@ class App {
   cursor = $state(-1);
   toasts = $state<Toast[]>([]);
   asking = $state<Ask | null>(null);
+  update = $state<UpdateStatus | null>(null);
+  updating = $state<"" | "upgrading" | "restarting">("");
   /** Wide enough for the list and the open memory side by side. */
   wide = new MediaQuery("min-width: 1024px");
   /** The list's width beside an open memory, once dragged; null keeps the width for the window size. */
@@ -100,6 +102,7 @@ class App {
       this.bootError = err.status === 401 ? "This link has expired. Run `mem ui` again and use the new link." : `Could not load memories: ${err.message}`;
       return;
     }
+    this.refreshUpdate();  // checks PyPI at most once a day, unless turned off
     // memories that agents write while the page is open
     setInterval(async () => {
       if (document.hidden || !this.data || this.mode !== "view") return;
@@ -122,6 +125,38 @@ class App {
     if (location.hash !== hash) history.replaceState(null, "", hash);
   }
   go(page: Page) { this.page = page; this.writeRoute(); scrollTo(0, 0); }
+
+  // ------------------------------------------------------------ updates
+
+  async refreshUpdate(force = false) {
+    try { this.update = force ? await api<UpdateStatus>("/api/update/check", {}) : await api<UpdateStatus>("/api/update"); }
+    catch { /* offline: say nothing */ }
+  }
+  async setAutoUpdate(on: boolean) {
+    await api("/api/settings", { check_updates: on });
+    await this.refreshUpdate(on);
+  }
+  /** Update with uv, then restart mem ui on the new code and reload the page once it answers. */
+  async runUpdate(): Promise<UpdateResult> {
+    this.updating = "upgrading";
+    let r: UpdateResult;
+    try { r = await api<UpdateResult>("/api/update", {}); }
+    catch (e) { this.updating = ""; return { ok: false, error: (e as Error).message }; }
+    if (!r.ok || !r.changed) {
+      this.updating = "";
+      if (r.ok) { this.toast("Already up to date"); await this.refreshUpdate(true); }
+      return r;
+    }
+    this.updating = "restarting";
+    try { await api("/api/restart", {}); } catch { /* the server may stop before it answers */ }
+    const until = Date.now() + 60000;
+    while (Date.now() < until) {
+      await new Promise((ok) => setTimeout(ok, 800));
+      try { await api("/api/stamp"); location.reload(); return r; } catch { /* not back yet */ }
+    }
+    this.updating = "";
+    return { ...r, ok: false, error: `Updated to ${r.to}, but mem ui did not come back. Start it again in the terminal.` };
+  }
 
   // ------------------------------------------------------------ preferences
 

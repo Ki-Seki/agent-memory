@@ -53,3 +53,14 @@ export interface Settings {
   semantic: boolean;
 }
 export interface Check { ok: boolean; text: string }
+export interface UpdateStatus {
+  current: string | null;
+  latest: string | null;
+  available: boolean;
+  checked: string | null;
+  auto: boolean;
+  method: "uv-tool" | "uvx" | "dev" | "other";
+  command: string;
+  oneClick: boolean;
+}
+export interface UpdateResult { ok: boolean; from?: string; to?: string; changed?: boolean; error?: string | null; log?: string }
