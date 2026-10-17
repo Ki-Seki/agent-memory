@@ -596,6 +596,39 @@ class UiServerTest(unittest.TestCase):
         self.assertEqual(get("/../ui_server.py")[2], page)  # never the file
 
 
+class DemoTest(unittest.TestCase):
+    def test_demo_repository_has_a_history_and_recent_dates(self):
+        import datetime as dt
+
+        from agent_memory import demo, ui_server
+
+        data = demo.make(ROOT / "demo-data", today=dt.date(2030, 1, 10))
+        memories = store.load_all(data)
+        self.assertEqual(len(memories), len(list(demo.MEMORIES.rglob("*.md"))))
+        self.assertTrue(max(m["created"] for m in memories).startswith("2030-01-09"))  # the newest is a day old
+        commits = ui_server.UiApp(data, semantic=False).activity()["commits"]
+        self.assertEqual(sum(c["added"] for c in commits), len(memories))
+        self.assertEqual({c["tool"] for c in commits}, {"claude-code", "codex"})
+        self.assertEqual(commits[0]["date"][:10], "2030-01-09")
+        log = subprocess.run(["git", "-C", str(data), "status", "--porcelain"], capture_output=True, text=True)
+        self.assertEqual(log.stdout, "")  # everything committed
+
+    def test_demo_keeps_your_config_out_of_it(self):
+        from agent_memory import config, demo
+
+        config.save({**config.load(), "keyword_stopwords": ["mine"], "embed_model_dir": "~/models/here"})
+        before = dict(os.environ)
+        try:
+            root = demo.prepare()
+            cfg = json.loads((root / "config" / "config.json").read_text())
+            self.assertEqual(cfg, {"data_dir": str(root / "data"), "embed_model_dir": "~/models/here"})
+            self.assertEqual(os.environ["AGENT_MEMORY_DATA"], str(root / "data"))
+        finally:
+            os.environ.clear()
+            os.environ.update(before)
+            shutil.rmtree(root, ignore_errors=True)
+
+
 class PageTest(unittest.TestCase):
     """The page has no build step, so check here what a bundler would: imports resolve, and every action,
     input and change an element names is one main.js handles."""
