@@ -629,6 +629,95 @@ class UiSyncStatusTest(unittest.TestCase):
             self.assertEqual(app.current()["sync"], {"remote": True, "ahead": 0})
 
 
+class UpdateTest(unittest.TestCase):
+    def setUp(self):
+        from agent_memory import config, update
+
+        self.update = update
+        (config.CONFIG_DIR / update.CACHE_NAME).unlink(missing_ok=True)
+        config.save({})
+
+    def test_versions_compare_as_numbers(self):
+        newer = self.update.newer
+        self.assertTrue(newer("0.1.10", "0.1.9"))
+        self.assertTrue(newer("0.2.0", "0.1.9"))
+        self.assertTrue(newer("0.2.0", "0.2.0rc1"))
+        self.assertFalse(newer("0.1.3", "0.1.3"))
+        self.assertFalse(newer("0.1.2", "0.1.3"))
+        self.assertFalse(newer(None, "0.1.3"))
+
+    def test_check_is_cached_and_can_be_turned_off(self):
+        from agent_memory import config
+
+        u = self.update
+        with (
+            mock.patch.object(u, "current", return_value="0.1.3"),
+            mock.patch.object(u, "how_installed", return_value="uv-tool"),
+            mock.patch.object(u, "fetch_latest", return_value="0.1.4") as fetch,
+        ):
+            first = u.status()
+            self.assertEqual((first["latest"], first["available"], first["oneClick"]), ("0.1.4", True, True))
+            u.status()
+            self.assertEqual(fetch.call_count, 1)  # kept for a day
+            config.save({"check_updates": False})
+            (config.CONFIG_DIR / u.CACHE_NAME).unlink()
+            off = u.status()
+            self.assertEqual((off["latest"], off["auto"], fetch.call_count), (None, False, 1))
+            self.assertEqual(u.status(force=True)["latest"], "0.1.4")  # Check now still asks
+            self.assertEqual(fetch.call_count, 2)
+
+    def test_upgrade_needs_a_uv_tool_install(self):
+        with mock.patch.object(self.update, "how_installed", return_value="other"):
+            self.assertFalse(self.update.upgrade()["ok"])
+
+    def test_upgrade_runs_uv_then_mem_install(self):
+        u = self.update
+        done = lambda out="": subprocess.CompletedProcess([], 0, out, "")  # noqa: E731
+        calls = []
+
+        def run(cmd, **kw):
+            calls.append(cmd)
+            return done("0.1.4\n") if "-c" in cmd else done()
+
+        with (
+            mock.patch.object(u, "how_installed", return_value="uv-tool"),
+            mock.patch.object(u, "current", return_value="0.1.3"),
+            mock.patch.object(u.shutil, "which", return_value="/bin/uv"),
+            mock.patch.object(u.subprocess, "run", side_effect=run),
+        ):
+            res = u.upgrade()
+        self.assertEqual((res["ok"], res["from"], res["to"], res["changed"]), (True, "0.1.3", "0.1.4", True))
+        self.assertEqual(calls[0], ["/bin/uv", "tool", "upgrade", u.PACKAGE])
+        self.assertEqual(calls[-1][1:], ["-m", "agent_memory", "install"])
+
+    def test_restart_keeps_the_token_and_stops_serving(self):
+        import threading
+        import urllib.request
+
+        from agent_memory import ui, ui_server
+
+        data = ROOT / "restart-data"
+        install.init_data(data)
+        os.environ[ui_server.RESTART_TOKEN] = "kept-token"
+        with mock.patch.object(ui, "model_ready", return_value=False):
+            server = ui_server.make_server(data, port=0, semantic=False)
+        self.assertEqual(server.token, "kept-token")
+        self.assertNotIn(ui_server.RESTART_TOKEN, os.environ)
+        loop = threading.Thread(target=server.serve_forever, daemon=True)
+        loop.start()
+        req = urllib.request.Request(
+            f"http://127.0.0.1:{server.server_address[1]}/api/restart",
+            data=b"{}",
+            headers={"X-Mem-Token": "kept-token", "Content-Type": "application/json"},
+        )
+        with urllib.request.urlopen(req) as r:
+            self.assertEqual(json.loads(r.read()), {"restarting": True})
+        loop.join(5)
+        self.assertFalse(loop.is_alive())
+        self.assertTrue(server.restart)
+        server.server_close()
+
+
 class DoctorTest(unittest.TestCase):
     def test_only_recent_hook_errors_count(self):
         import datetime as dt

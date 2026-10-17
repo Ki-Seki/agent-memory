@@ -1,0 +1,156 @@
+"""Whether a newer release is out, and updating this copy when `uv tool` installed it.
+
+The check asks PyPI for the package's latest version (only the package name goes out) and keeps the
+answer for a day. Automatic checks can be turned off with `check_updates: false` in config.json.
+"""
+
+import datetime as _dt
+import importlib.metadata
+import json
+import re
+import shutil
+import subprocess
+import sys
+import time
+import urllib.request
+from pathlib import Path
+
+from . import config
+
+PACKAGE = "agent-memory-git"
+INDEX = f"https://pypi.org/pypi/{PACKAGE}/json"
+CHECK_EVERY = 24 * 3600
+CACHE_NAME = "update-check.json"
+# how to update, by how this copy was installed
+COMMANDS = {
+    "uv-tool": f"uv tool upgrade {PACKAGE} && mem install",
+    "uvx": f'uvx --refresh --from "{PACKAGE}[ui]" mem ui',
+    "dev": "git pull && (cd web && npm ci && npm run build) && mem install",  # run in the checkout
+    "other": f'pip install -U "{PACKAGE}[ui]" && mem install',
+}
+
+
+def _cache():
+    return config.CONFIG_DIR / CACHE_NAME
+
+
+def current():
+    try:
+        return importlib.metadata.version(PACKAGE)
+    except importlib.metadata.PackageNotFoundError:
+        return None
+
+
+def _key(version):
+    """A version as numbers to compare: 0.1.10 > 0.1.9; a pre-release sorts before its release."""
+    out = []
+    for part in version.split("."):
+        m = re.match(r"(\d+)(.*)", part)
+        if not m:
+            break
+        out += [int(m.group(1)), 0 if m.group(2) else 1]
+    return out
+
+
+def newer(latest, cur):
+    return bool(latest and cur) and _key(latest) > _key(cur)
+
+
+def fetch_latest(timeout=5):
+    """The latest release on PyPI, or None when PyPI cannot be reached."""
+    try:
+        with urllib.request.urlopen(INDEX, timeout=timeout) as r:
+            return json.load(r)["info"]["version"]
+    except Exception:  # some machines only reach PyPI through the system's certificates; curl uses those
+        pass
+    curl = shutil.which("curl")
+    if not curl:
+        return None
+    try:
+        r = subprocess.run([curl, "-fsSL", "--max-time", str(timeout), INDEX], capture_output=True, text=True)
+        return json.loads(r.stdout)["info"]["version"] if r.returncode == 0 else None
+    except (OSError, ValueError, KeyError):
+        return None
+
+
+def _inside(path, root):
+    try:
+        return Path(path).resolve().is_relative_to(Path(root).resolve())
+    except OSError:
+        return False
+
+
+def how_installed():
+    """'uv-tool' when `uv tool upgrade` can update this copy; else 'dev', 'uvx' or 'other'."""
+    try:
+        direct = importlib.metadata.distribution(PACKAGE).read_text("direct_url.json")
+    except importlib.metadata.PackageNotFoundError:
+        return "dev"
+    if direct and json.loads(direct).get("dir_info", {}).get("editable"):
+        return "dev"
+    uv = shutil.which("uv")
+    if uv:
+        for kind, args in (("uv-tool", ["tool", "dir"]), ("uvx", ["cache", "dir"])):
+            r = subprocess.run([uv, *args], capture_output=True, text=True, timeout=10)
+            if r.returncode == 0 and r.stdout.strip() and _inside(sys.prefix, r.stdout.strip()):
+                return kind
+    return "other"
+
+
+def status(force=False):
+    """What the page shows: this version, the latest one known, and how to update."""
+    auto = config.load().get("check_updates", True)
+    try:
+        cached = json.loads(_cache().read_text("utf-8"))
+    except (OSError, ValueError):
+        cached = {}
+    if force or (auto and time.time() - cached.get("checked", 0) > CHECK_EVERY):
+        latest = fetch_latest()
+        if latest:
+            cached = {"checked": time.time(), "latest": latest}
+            _cache().parent.mkdir(parents=True, exist_ok=True)
+            _cache().write_text(json.dumps(cached), "utf-8")
+    cur, latest, method = current(), cached.get("latest"), how_installed()
+    checked = cached.get("checked")
+    return {
+        "current": cur,
+        "latest": latest,
+        "available": newer(latest, cur),
+        "checked": _dt.datetime.fromtimestamp(checked).astimezone().isoformat() if checked else None,
+        "auto": auto,
+        "method": method,
+        "command": COMMANDS[method],
+        "oneClick": method == "uv-tool",
+    }
+
+
+def _tail(*outputs, lines=12):
+    text = "\n".join(o.strip() for o in outputs if o and o.strip())
+    return "\n".join(text.splitlines()[-lines:])
+
+
+def upgrade():
+    """`uv tool upgrade`, then `mem install` from the upgraded code. Returns what happened."""
+    if how_installed() != "uv-tool":
+        return {"ok": False, "error": "This copy was not installed with `uv tool`; update it with the command shown."}
+    before = current()
+    up = subprocess.run([shutil.which("uv"), "tool", "upgrade", PACKAGE], capture_output=True, text=True, timeout=600)
+    if up.returncode != 0:
+        return {"ok": False, "error": "uv tool upgrade failed.", "log": _tail(up.stdout, up.stderr)}
+    # a new process, so both run the upgraded code
+    after = subprocess.run(
+        [sys.executable, "-c", f"import importlib.metadata as m; print(m.version({PACKAGE!r}))"],
+        capture_output=True,
+        text=True,
+    ).stdout.strip()
+    inst = subprocess.run(
+        [sys.executable, "-m", "agent_memory", "install"], capture_output=True, text=True, timeout=120
+    )
+    return {
+        "ok": inst.returncode == 0,
+        "from": before,
+        "to": after or before,
+        "changed": bool(after) and after != before,
+        "error": None if inst.returncode == 0 else "mem install failed after the upgrade.",
+        "log": _tail(up.stdout, up.stderr, inst.stdout, inst.stderr),
+    }

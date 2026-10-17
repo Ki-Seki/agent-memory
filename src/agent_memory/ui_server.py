@@ -12,6 +12,7 @@ background like hook commits; Undo reverts that commit.
 import hashlib
 import importlib.metadata
 import json
+import os
 import re
 import secrets
 import subprocess
@@ -23,7 +24,7 @@ from urllib.parse import parse_qs, urlparse
 
 import numpy as np
 
-from . import config, frontmatter, gitsync, select, store, ui
+from . import config, frontmatter, gitsync, select, store, ui, update
 from .context import detect, hostname, normalize_remote
 from .util import SCOPES, TYPES, atomic_write, id_path, log_exc, new_id, now_iso, slugify
 
@@ -45,6 +46,7 @@ NOT_BUILT = (
     "<p style='font:15px/1.6 system-ui;margin:3rem auto;max-width:36rem'>This copy of agent-memory has no built page. "
     "In a checkout, build it with <code>cd web &amp;&amp; npm ci &amp;&amp; npm run build</code>, then reload.</p>"
 )
+RESTART_TOKEN = "AGENT_MEMORY_UI_TOKEN"
 PLACE_FIELDS = ("cwd", "git_root", "git_remote", "git_branch")
 SEARCH_HITS = 8
 ACTIVITY_COMMITS = 2000
@@ -182,14 +184,27 @@ class UiApp:
         }
 
     def set_settings(self, p):
-        words = p.get("keyword_stopwords")
-        if not isinstance(words, list) or not all(isinstance(w, str) for w in words):
-            raise ApiError(400, "keyword_stopwords must be a list of words")
+        """Change keyword_stopwords, check_updates, or both."""
         cfg = config.load()
-        cfg["keyword_stopwords"] = sorted({w.strip().lower() for w in words if w.strip()})
+        if "keyword_stopwords" in p:
+            words = p["keyword_stopwords"]
+            if not isinstance(words, list) or not all(isinstance(w, str) for w in words):
+                raise ApiError(400, "keyword_stopwords must be a list of words")
+            cfg["keyword_stopwords"] = sorted({w.strip().lower() for w in words if w.strip()})
+        if "check_updates" in p:
+            if not isinstance(p["check_updates"], bool):
+                raise ApiError(400, "check_updates must be true or false")
+            cfg["check_updates"] = p["check_updates"]
         config.save(cfg)
-        self.refresh()  # keywords are chosen when the state is built
+        if "keyword_stopwords" in p:
+            self.refresh()  # keywords are chosen when the state is built
         return self.settings()
+
+    def check_update(self, p):
+        return update.status(force=True)
+
+    def run_update(self, p):
+        return update.upgrade()
 
     def doctor(self):
         from .install import doctor_checks
@@ -424,6 +439,8 @@ class Handler(BaseHTTPRequestHandler):
         "/api/undo": "undo",
         "/api/settings": "set_settings",
         "/api/sync": "sync",
+        "/api/update/check": "check_update",
+        "/api/update": "run_update",
     }
 
     def log_message(self, *args):
@@ -485,6 +502,7 @@ class Handler(BaseHTTPRequestHandler):
             "/api/index-preview": lambda: app.index_preview(q.get("place", "")),
             "/api/settings": app.settings,
             "/api/doctor": app.doctor,
+            "/api/update": update.status,
         }
         if url.path not in routes:
             return self._send(404, {"error": "not found"})
@@ -507,6 +525,11 @@ class Handler(BaseHTTPRequestHandler):
         url = urlparse(self.path)
         if not self._guard(True):
             return
+        if url.path == "/api/restart":  # after an update: answer, then serve_forever ends and run() starts the new code
+            self.server.restart = True
+            self._send(200, {"restarting": True})
+            threading.Thread(target=self.server.shutdown, daemon=True).start()
+            return
         method = self.POSTS.get(url.path)
         if not method:
             return self._send(404, {"error": "not found"})
@@ -526,7 +549,9 @@ def make_server(data_dir, port=8790, semantic=True):
         server = ThreadingHTTPServer(("127.0.0.1", 0), Handler)
     port = server.server_address[1]
     server.hosts = {f"127.0.0.1:{port}", f"localhost:{port}"}
-    server.token = secrets.token_urlsafe(18)
+    # a restart after an update keeps the token, so the open page carries on
+    server.token = os.environ.pop(RESTART_TOKEN, None) or secrets.token_urlsafe(18)
+    server.restart = False
     server.app = app
     server.url = f"http://127.0.0.1:{port}/#t={server.token}"
     return server
@@ -555,3 +580,8 @@ def run(data_dir, port=8790, open_browser=True, semantic=True):
         server.server_close()
         if server.app.encoder:
             server.app.encoder.close()
+    if server.restart:
+        args = ["ui", "--port", str(server.server_address[1]), "--no-open"] + ([] if semantic else ["--keywords-only"])
+        print("Restarting with the updated version...", flush=True)
+        os.environ[RESTART_TOKEN] = server.token
+        os.execv(sys.executable, [sys.executable, "-m", "agent_memory", *args])
