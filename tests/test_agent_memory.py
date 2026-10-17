@@ -605,8 +605,11 @@ class DemoTest(unittest.TestCase):
 
         data = demo.make(ROOT / "demo-data", today=dt.date(2030, 1, 10))
         memories = store.load_all(data)
-        self.assertEqual(len(memories), len(list(demo.MEMORIES.rglob("*.md"))))
+        self.assertEqual(len(memories), len(list(demo.memories("work").rglob("*.md"))))
         self.assertTrue(max(m["created"] for m in memories).startswith("2030-01-09"))  # the newest is a day old
+        personal = store.load_all(demo.make(ROOT / "demo-personal", today=dt.date(2030, 1, 10), profile="personal"))
+        self.assertEqual(len(personal), len(list(demo.memories("personal").rglob("*.md"))))
+        self.assertLess(max(m["created"] for m in personal), "2030-01-09")  # moved by the same days as Work
         commits = ui_server.UiApp(data, semantic=False).activity()["commits"]
         self.assertEqual(sum(c["added"] for c in commits), len(memories))
         self.assertEqual({c["tool"] for c in commits}, {"claude-code", "codex"})
@@ -615,19 +618,43 @@ class DemoTest(unittest.TestCase):
         self.assertEqual(log.stdout, "")  # everything committed
 
     def test_demo_keeps_your_config_out_of_it(self):
-        from agent_memory import config, demo
+        from agent_memory import config, demo, profiles
 
+        saved = config.CONFIG_FILE.read_text() if config.CONFIG_FILE.exists() else None
         config.save({**config.load(), "keyword_stopwords": ["mine"], "embed_model_dir": "~/models/here"})
         before = dict(os.environ)
+        root = None
         try:
             root = demo.prepare()
             cfg = json.loads((root / "config" / "config.json").read_text())
-            self.assertEqual(cfg, {"data_dir": str(root / "agent-memory-data"), "embed_model_dir": "~/models/here"})
-            self.assertEqual(os.environ["AGENT_MEMORY_DATA"], str(root / "agent-memory-data"))
+            self.assertEqual(cfg["embed_model_dir"], "~/models/here")
+            self.assertNotIn("keyword_stopwords", cfg)
+            self.assertNotIn("AGENT_MEMORY_DATA", os.environ)  # the demo's own profiles pick the folder
+            self.assertEqual(os.environ["AGENT_MEMORY_CONFIG_DIR"], str(root / "config"))
+            self.assertEqual(
+                {k: (p["name"], p["data_dir"]) for k, p in cfg["profiles"].items()},
+                {
+                    "work": ("Quiet Harbor", str(root / "agent-memory-data")),
+                    "personal": ("Sunny Orchard", str(root / "agent-memory-personal")),
+                },
+            )
+            self.assertEqual((cfg["profile"], cfg["data_dir"]), ("work", str(root / "agent-memory-data")))
+            # new profiles stay in the demo's folder, which goes when it stops
+            with mock.patch.object(config, "CONFIG_FILE", root / "config" / "config.json"):
+                with self.assertRaises(profiles.ProfileError):
+                    profiles.add(ROOT / "demo-elsewhere")
+                self.assertFalse((ROOT / "demo-elsewhere").exists())
+                pid, _ = profiles.add(root / "agent-memory-side")
+                self.assertEqual(profiles.listing()[1], pid)
         finally:
             os.environ.clear()
             os.environ.update(before)
-            shutil.rmtree(root, ignore_errors=True)
+            if root:
+                shutil.rmtree(root, ignore_errors=True)
+            if saved is None:
+                config.CONFIG_FILE.unlink(missing_ok=True)
+            else:
+                config.CONFIG_FILE.write_text(saved)
 
     def test_demo_folder_goes_when_the_terminal_closes(self):
         import signal
@@ -653,14 +680,19 @@ class DemoTest(unittest.TestCase):
 
 class SiteTest(unittest.TestCase):
     def test_site_builds_with_a_demo_that_matches_the_demo_memories(self):
-        from agent_memory import demo
+        from agent_memory import demo, profiles
 
         site = Path(__file__).resolve().parent.parent / "site"
         snapshot = json.loads((site / "demo" / "snapshot.json").read_text("utf-8"))
         # saved by `scripts/site.py snapshot`; run it again after changing the demo memories
         self.assertEqual(snapshot["fingerprint"], demo.fingerprint())
-        self.assertEqual(len(snapshot["state"]["memories"]), len(list(demo.MEMORIES.rglob("*.md"))))
-        self.assertEqual(set(snapshot["search"]), set(snapshot["queries"]))
+        self.assertEqual(list(snapshot["profiles"]), list(demo.PROFILES))
+        self.assertEqual(snapshot["words"], [list(profiles.ADJECTIVES), list(profiles.NOUNS)])
+        self.assertTrue(all(profiles.generated(p["name"]) for p in demo.PROFILES.values()))  # named as mem would
+        for pid, p in snapshot["profiles"].items():
+            self.assertEqual(len(p["state"]["memories"]), len(list(demo.memories(pid).rglob("*.md"))), pid)
+            self.assertEqual(set(p["search"]), set(snapshot["queries"]))
+            self.assertIn(f"profile: {p['name']} ", p["previews"][""]["text"])
         out = ROOT / "site-build"
         script = site.parent / "scripts" / "site.py"
         subprocess.run([sys.executable, str(script), "build", str(out)], check=True, capture_output=True)
@@ -711,6 +743,7 @@ class PageTest(unittest.TestCase):
             "change": re.search(r"const CHANGES = \{(.*?)\n\};", main, re.S).group(1),
         }
         handled = {kind: set(re.findall(r"^\s+(\w+):", body, re.M)) for kind, body in tables.items()}
+        handled["input"] |= set(re.findall(r'name\.startsWith\("(\w+):"\)', main))  # data-input="draft:type" and such
         views = "\n".join(self.scripts().values())
         # names given straight to an element, or to the helpers in views/ui.js that pass them on
         helpers = {
@@ -728,9 +761,7 @@ class PageTest(unittest.TestCase):
             for pattern in helpers[kind]:
                 used |= set(re.findall(pattern, views))
             self.assertTrue(used, kind)
-            missing = sorted(
-                name for name in used if name not in handled[kind] and not (kind == "input" and name == "draft")
-            )
+            missing = sorted(name for name in used if name not in handled[kind])
             self.assertFalse(missing, f"data-{kind} with no handler: {missing}")
 
 
@@ -1130,6 +1161,212 @@ class InstallTest(unittest.TestCase):
                 self.assertEqual(after[path], text + '\n[projects."/new"]\ntrust_level = "trusted"\n')
             else:
                 self.assertEqual(after[path], text, path)
+
+
+class ProfilesTest(unittest.TestCase):
+    """Profiles: several data repositories, one active; new sessions use it, running ones keep theirs."""
+
+    def setUp(self):
+        from agent_memory import config
+
+        self.saved = config.CONFIG_FILE.read_text() if config.CONFIG_FILE.exists() else None
+        self.root = ROOT / f"profiles-{self._testMethodName}"
+        shutil.rmtree(self.root, ignore_errors=True)
+        env = mock.patch.dict(os.environ)
+        env.start()
+        self.addCleanup(env.stop)
+        os.environ.pop("AGENT_MEMORY_DATA", None)  # the tests elsewhere pin the folder; profiles need it free
+        self.personal, self.work = self.root / "personal", self.root / "work"
+        install.init_repo(self.personal)
+        config.save({"data_dir": str(self.personal)})
+
+    def tearDown(self):
+        from agent_memory import config
+
+        if self.saved is None:
+            config.CONFIG_FILE.unlink(missing_ok=True)
+        else:
+            config.CONFIG_FILE.write_text(self.saved)
+
+    def test_add_switch_and_remove(self):
+        from agent_memory import config, profiles
+
+        found, active = profiles.listing()
+        self.assertEqual((list(found), active), (["default"], "default"))  # from before profiles: one, implicit
+        home = found["default"]["name"]
+        self.assertTrue(profiles.generated(home))
+        self.assertEqual(profiles.listing()[0]["default"]["name"], home)  # its name comes from its folder
+        self.assertIsNone(profiles.active_name())
+
+        pid, note = profiles.add(self.work)
+        work = profiles.listing()[0][pid]["name"]
+        self.assertEqual(note, "Created a new memory repository.")
+        self.assertTrue(profiles.generated(work) and work != home)
+        self.assertEqual(pid, work.lower().replace(" ", "-"))
+        self.assertTrue((self.work / ".git").is_dir() and (self.work / "memories").is_dir())
+        self.assertEqual(config.data_dir(), self.work)
+        self.assertEqual(config.load()["data_dir"], str(self.work))  # what older versions and the hooks read
+        self.assertEqual(profiles.active_name(), work)
+        self.assertEqual(profiles.dirs(), [self.work, self.personal])
+
+        self.assertEqual(profiles.use(home.upper()), "default")  # by name, in any case, with a space or a dash
+        self.assertEqual(config.data_dir(), self.personal)
+        self.assertEqual(profiles.use(pid), pid)
+
+        self.assertEqual(profiles.remove(pid), "default")  # removing the active one switches to another
+        self.assertEqual(config.data_dir(), self.personal)
+        self.assertTrue((self.work / ".git").is_dir())  # the folder is left alone
+        with self.assertRaises(profiles.ProfileError):
+            profiles.remove("default")  # never the last one
+
+    def test_names_are_picked_not_given(self):
+        from agent_memory import profiles
+
+        taken = profiles.listing()[0]["default"]["name"]
+        pid, _ = profiles.add(self.work, name=taken)  # one a profile has: another is picked
+        self.assertNotEqual(profiles.listing()[0][pid]["name"], taken)
+        pid, _ = profiles.add(self.root / "other", name="Mr Work")  # not one of ours either
+        self.assertTrue(profiles.generated(profiles.listing()[0][pid]["name"]))
+        pid, _ = profiles.add(self.root / "third", name="Quiet Harbor")
+        self.assertEqual(profiles.listing()[0][pid]["name"], "Quiet Harbor")  # the one the page showed
+        self.assertEqual(len({p["name"] for p in profiles.listing()[0].values()}), 4)
+
+    def test_folders_it_takes_and_refuses(self):
+        from agent_memory import config, gitsync, profiles
+
+        bare = self.root / "work.git"
+        subprocess.run(["git", "init", "-q", "--bare", "-b", "main", str(bare)], check=True)
+        work, note = profiles.add(self.work, remote=str(bare))
+        self.assertIn("pushed it to the empty remote", note)
+        self.assertEqual(
+            gitsync.git(bare, "rev-parse", "main").stdout, gitsync.git(self.work, "rev-parse", "HEAD").stdout
+        )
+        laptop, note = profiles.add(self.root / "clone", remote=str(bare), switch=False)
+        self.assertEqual(note, "Cloned the remote.")
+        self.assertTrue((self.root / "clone" / "README.md").is_file())
+        self.assertEqual(profiles.listing()[1], work)  # switch=False
+
+        code = self.root / "code"
+        make_repo(code)
+        (code / "main.py").write_text("print()\n")
+        (self.root / "notes").mkdir()
+        (self.root / "notes" / "todo.txt").write_text("x\n")
+        before = config.load()
+        for name, folder, remote in [
+            ("Again", self.work, None),  # a folder a profile has
+            ("Rel", Path("relative/folder"), None),
+            ("Code", code, None),  # a git repository that is not a memory repository
+            ("Notes", self.root / "notes", None),  # files that are not a repository
+            ("Opt", self.root / "opt", "--upload-pack=touch x"),
+            ("Gone", self.root / "gone", str(self.root / "missing.git")),
+        ]:
+            with self.subTest(name), self.assertRaises(profiles.ProfileError):
+                profiles.add(folder, remote=remote)
+        self.assertEqual(config.load(), before)
+        for folder in ("opt", "gone"):
+            self.assertFalse((self.root / folder).exists(), folder)
+
+        shutil.rmtree(self.root / "clone")
+        with self.assertRaises(profiles.ProfileError):
+            profiles.use(laptop)  # its folder is gone
+
+    def test_running_sessions_keep_their_profile(self):
+        from agent_memory import profiles
+
+        pid, _ = profiles.add(self.work)
+        payload = {"session_id": "s-work", "cwd": str(self.root)}
+        text = json.loads(run_hook("session-start", "codex", payload))["hookSpecificOutput"]["additionalContext"]
+        self.assertIn(f"profile: {profiles.listing()[0][pid]['name']} ", text)
+        sdir = capture.session_dir(self.work, "codex", "s-work")
+        self.assertIn(str(sdir), text)
+        (sdir / "fact.md").write_text(
+            "---\nname: fact\ntype: project\nscope: global\ndescription: a work fact\n---\nFact.\n", "utf-8"
+        )
+        profiles.use("default")  # the user switches while the session runs
+        run_hook("stop", "codex", payload)
+        self.assertEqual([m["name"] for m in store.load_all(self.work)], ["fact"])
+        self.assertEqual(store.load_all(self.personal), [])
+
+        text = json.loads(run_hook("session-start", "codex", {"session_id": "s-new", "cwd": str(self.root)}))
+        self.assertIn(str(self.personal), text["hookSpecificOutput"]["additionalContext"])
+
+    def test_init_points_the_active_profile(self):
+        from agent_memory import config, profiles
+
+        profiles.add(self.work)
+        with mock.patch("sys.stdout", io.StringIO()):
+            install.init_data(self.personal)  # a folder a profile has: that profile becomes active
+            self.assertEqual(profiles.listing()[1], "default")
+            install.init_data(self.root / "moved")  # a new folder: the active profile moves there
+        self.assertEqual(profiles.listing()[0]["default"]["data_dir"], str(self.root / "moved"))
+        self.assertEqual(config.data_dir(), self.root / "moved")
+
+    def test_agents_can_reach_every_profile(self):
+        import tomllib
+
+        from agent_memory import profiles
+
+        for d in (install.CLAUDE_DIR, install.CODEX_DIR):
+            d.mkdir(parents=True, exist_ok=True)
+        (install.CLAUDE_DIR / "settings.json").write_text(json.dumps(SETTINGS, indent=2) + "\n")
+        (install.CODEX_DIR / "config.toml").write_text(CONFIG_TOML)
+        (install.CODEX_DIR / "hooks.json").write_text(json.dumps(HOOKS_JSON, indent=2) + "\n")
+        (install.CODEX_DIR / "AGENTS.md").write_text("")
+        install.STATE_FILE.unlink(missing_ok=True)
+        self.assertEqual(install.refresh_access(), [])  # nothing before `mem install`
+
+        def reach():
+            allow = json.loads((install.CLAUDE_DIR / "settings.json").read_text())["permissions"]["allow"]
+            roots = tomllib.loads((install.CODEX_DIR / "config.toml").read_text())["sandbox_workspace_write"]
+            return (
+                {d.name for d in (self.personal, self.work) if f"Edit({install._home_rel(d)}/**)" in allow},
+                {d.name for d in (self.personal, self.work) if str(d) in roots.get("writable_roots", [])},
+            )
+
+        with (
+            mock.patch.object(install, "_login_path", return_value=None),
+            mock.patch("sys.stdout", io.StringIO()),
+        ):
+            install.install()
+            self.assertEqual(reach(), ({"personal"}, {"personal"}))
+            profiles.add(self.work)
+            hooks_before = (install.CODEX_DIR / "hooks.json").read_text()
+            self.assertEqual(install.refresh_access(), ["Claude Code", "Codex"])
+            self.assertEqual(reach(), ({"personal", "work"}, {"personal", "work"}))
+            self.assertEqual((install.CODEX_DIR / "hooks.json").read_text(), hooks_before)  # no new trust prompt
+            profiles.remove("default")
+            install.refresh_access()
+            self.assertEqual(reach(), ({"work"}, {"work"}))
+
+            state = json.loads(install.STATE_FILE.read_text())  # as an install from before profiles recorded it
+            state["codex.writable_root"] = state.pop("codex.writable_roots")[0]
+            install.STATE_FILE.write_text(json.dumps(state))
+            install.uninstall()
+        settings = json.loads((install.CLAUDE_DIR / "settings.json").read_text())
+        self.assertEqual(settings.get("permissions", {}).get("allow", []), SETTINGS["permissions"]["allow"])
+        codex = tomllib.loads((install.CODEX_DIR / "config.toml").read_text())
+        self.assertNotIn("sandbox_workspace_write", codex)  # it had none before install
+
+    def test_page_switches_with_the_profile(self):
+        from agent_memory import profiles, ui_server
+
+        pid, _ = profiles.add(self.work, switch=False)
+        server = ui_server.make_server(self.personal, port=0, semantic=False)
+        try:
+            r = ui_server.profile_use(server, {"id": pid})
+            self.assertEqual(r["active"], pid)
+            self.assertEqual(server.app.data, self.work)
+            self.assertEqual([p["id"] for p in r["profiles"]], ["default", pid])
+            self.assertTrue(profiles.generated(r["next"]))
+            with self.assertRaises(ui_server.ApiError):
+                ui_server.profile_add(server, {"folder": "relative"})
+            os.environ["AGENT_MEMORY_DATA"] = str(self.personal)  # the demo: one folder, no profiles
+            self.assertEqual(profiles.summary()["profiles"], [])
+            with self.assertRaises(ui_server.ApiError) as e:
+                ui_server.profile_use(server, {"id": "default"})
+            self.assertEqual(e.exception.status, 409)
+        finally:
+            server.server_close()
 
 
 if __name__ == "__main__":

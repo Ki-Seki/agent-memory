@@ -1,1362 +1,1975 @@
 {
- "fingerprint": "0e08c0c39d50ca83",
- "state": {
-  "generated": "",
-  "dataDir": "~/agent-memory-data",
-  "memories": [
-   {
-    "id": "20260804-alex-profile-ujzd",
-    "rel": "2026/08/20260804-alex-profile-ujzd.md",
-    "path": "~/agent-memory-data/memories/2026/08/20260804-alex-profile-ujzd.md",
-    "hash": "24f650d0377e4cc5",
-    "raw": "---\nid: 20260804-alex-profile-ujzd\nname: alex-profile\ntype: user\nscope: global\ndescription: Alex is a backend engineer working mostly in Python and TypeScript; prefers short answers with the code first\ncreated: 2026-08-04T10:12:00+08:00\nsource:\n  tool: claude-code\n  session_id: 1818e811-892f-402b-923f-0824128b2f33\n  session_name: set-up-laptop\n  host: alex-laptop\n  cwd: /Users/alex/code/shop-web\n---\nAlex is a backend engineer. Most work is Python (data jobs) and TypeScript (the shop-web app).\n\nPrefers short answers that lead with the code or command, then one or two lines of explanation.\n",
-    "meta": {
-     "id": "20260804-alex-profile-ujzd",
-     "name": "alex-profile",
-     "type": "user",
-     "scope": "global",
-     "description": "Alex is a backend engineer working mostly in Python and TypeScript; prefers short answers with the code first",
-     "created": "2026-08-04T10:12:00+08:00",
-     "source": {
-      "tool": "claude-code",
-      "session_id": "1818e811-892f-402b-923f-0824128b2f33",
-      "session_name": "set-up-laptop",
-      "host": "alex-laptop",
-      "cwd": "/Users/alex/code/shop-web"
-     }
-    },
-    "body": "Alex is a backend engineer. Most work is Python (data jobs) and TypeScript (the shop-web app).\n\nPrefers short answers that lead with the code or command, then one or two lines of explanation.\n",
-    "description": "Alex is a backend engineer working mostly in Python and TypeScript; prefers short answers with the code first",
-    "type": "user",
-    "scope": "global",
-    "place": "",
-    "tool": "claude-code",
-    "host": "alex-laptop",
-    "created": "2026-08-04T10:12:00+08:00",
-    "updated": "",
-    "similar": [
-     {
-      "i": 1,
-      "s": 0.448
-     }
-    ],
-    "keywords": [
-     {
-      "k": "alex",
-      "t": "Alex"
-     },
-     {
-      "k": "data",
-      "t": "data"
-     },
-     {
-      "k": "shop-web",
-      "t": "shop-web"
-     }
-    ],
-    "terms": [
-     "alex",
-     "code",
-     "data",
-     "shop-web"
-    ],
-    "issues": []
-   },
-   {
-    "id": "20260804-reply-language-xdnc",
-    "rel": "2026/08/20260804-reply-language-xdnc.md",
-    "path": "~/agent-memory-data/memories/2026/08/20260804-reply-language-xdnc.md",
-    "hash": "7152cbafb72b9357",
-    "raw": "---\nid: 20260804-reply-language-xdnc\nname: reply-language\ntype: user\nscope: global\ndescription: Alex 在上海；对话默认用中文回复，代码、注释和提交信息用英文\ncreated: 2026-08-04T10:20:00+08:00\nsource:\n  tool: codex\n  session_id: 11e20b8f-6b0d-449b-af03-675a1600a35a\n  session_name: 整理开发环境\n  host: alex-laptop\n  cwd: /Users/alex/code/shop-web\n---\nAlex 在上海（UTC+8）。对话默认用中文回复；代码、注释、提交信息和 PR 描述用英文。\n",
-    "meta": {
-     "id": "20260804-reply-language-xdnc",
-     "name": "reply-language",
-     "type": "user",
-     "scope": "global",
-     "description": "Alex 在上海；对话默认用中文回复，代码、注释和提交信息用英文",
-     "created": "2026-08-04T10:20:00+08:00",
-     "source": {
-      "tool": "codex",
-      "session_id": "11e20b8f-6b0d-449b-af03-675a1600a35a",
-      "session_name": "整理开发环境",
-      "host": "alex-laptop",
-      "cwd": "/Users/alex/code/shop-web"
-     }
-    },
-    "body": "Alex 在上海（UTC+8）。对话默认用中文回复；代码、注释、提交信息和 PR 描述用英文。\n",
-    "description": "Alex 在上海；对话默认用中文回复，代码、注释和提交信息用英文",
-    "type": "user",
-    "scope": "global",
-    "place": "",
-    "tool": "codex",
-    "host": "alex-laptop",
-    "created": "2026-08-04T10:20:00+08:00",
-    "updated": "",
-    "similar": [
-     {
-      "i": 0,
-      "s": 0.448
-     },
-     {
-      "i": 6,
-      "s": 0.429
-     },
-     {
-      "i": 4,
-      "s": 0.074
-     }
-    ],
-    "keywords": [
-     {
-      "k": "alex",
-      "t": "Alex"
-     },
-     {
-      "k": "pr",
-      "t": "PR"
-     }
-    ],
-    "terms": [
-     "alex",
-     "pr"
-    ],
-    "issues": []
-   },
-   {
-    "id": "20260812-ask-before-push-pf3d",
-    "rel": "2026/08/20260812-ask-before-push-pf3d.md",
-    "path": "~/agent-memory-data/memories/2026/08/20260812-ask-before-push-pf3d.md",
-    "hash": "52641a66e912a68a",
-    "raw": "---\nid: 20260812-ask-before-push-pf3d\nname: ask-before-push\ntype: feedback\nscope: global\ndescription: Ask before every git push, and keep each commit to one change\ncreated: 2026-08-12T15:40:00+08:00\nsource:\n  tool: claude-code\n  session_id: f28c105d-1fb1-4c23-90c1-92cfd3ac94af\n  session_name: shop-web-checkout\n  host: alex-laptop\n  cwd: /Users/alex/code/shop-web\n  git_root: /Users/alex/code/shop-web\n  git_remote: git.example.com/shop-web\n  git_branch: main\n---\nAsk Alex before every `git push`, even when an earlier push in the same session was approved. Keep each commit to one change.\n\n**Why:** a force-push once overwrote a teammate's commit on a shared branch.\n\n**How to apply:** commit locally as you go, then list the commits and ask before pushing. Split unrelated edits into separate commits.\n",
-    "meta": {
-     "id": "20260812-ask-before-push-pf3d",
-     "name": "ask-before-push",
-     "type": "feedback",
-     "scope": "global",
-     "description": "Ask before every git push, and keep each commit to one change",
-     "created": "2026-08-12T15:40:00+08:00",
-     "source": {
-      "tool": "claude-code",
-      "session_id": "f28c105d-1fb1-4c23-90c1-92cfd3ac94af",
-      "session_name": "shop-web-checkout",
-      "host": "alex-laptop",
-      "cwd": "/Users/alex/code/shop-web",
-      "git_root": "/Users/alex/code/shop-web",
-      "git_remote": "git.example.com/shop-web",
-      "git_branch": "main"
-     }
-    },
-    "body": "Ask Alex before every `git push`, even when an earlier push in the same session was approved. Keep each commit to one change.\n\n**Why:** a force-push once overwrote a teammate's commit on a shared branch.\n\n**How to apply:** commit locally as you go, then list the commits and ask before pushing. Split unrelated edits into separate commits.\n",
-    "description": "Ask before every git push, and keep each commit to one change",
-    "type": "feedback",
-    "scope": "global",
-    "place": "",
-    "tool": "claude-code",
-    "host": "alex-laptop",
-    "created": "2026-08-12T15:40:00+08:00",
-    "updated": "",
-    "similar": [
-     {
-      "i": 3,
-      "s": 0.131
-     },
-     {
-      "i": 10,
-      "s": 0.075
-     },
-     {
-      "i": 8,
-      "s": 0.065
-     }
-    ],
-    "keywords": [
-     {
-      "k": "git",
-      "t": "git"
-     },
-     {
-      "k": "approved",
-      "t": "approved"
-     },
-     {
-      "k": "branch",
-      "t": "branch"
-     },
-     {
-      "k": "alex",
-      "t": "Alex"
-     }
-    ],
-    "terms": [
-     "alex",
-     "approved",
-     "branch",
-     "change",
-     "edits",
-     "git",
-     "separate"
-    ],
-    "issues": []
-   },
-   {
-    "id": "20260820-tests-before-done-odzd",
-    "rel": "2026/08/20260820-tests-before-done-odzd.md",
-    "path": "~/agent-memory-data/memories/2026/08/20260820-tests-before-done-odzd.md",
-    "hash": "083f06d4843171ec",
-    "raw": "---\nid: 20260820-tests-before-done-odzd\nname: tests-before-done\ntype: feedback\nscope: global\ndescription: Run the tests before saying a change works, and quote the failing output when they fail\ncreated: 2026-08-20T09:05:00+08:00\nsource:\n  tool: codex\n  session_id: 8e81973e-0bec-47b0-b898-d190f9ebdacc\n  session_name: etl-nightly-export\n  host: alex-laptop\n  cwd: /Users/alex/code/etl-jobs\n  git_root: /Users/alex/code/etl-jobs\n  git_remote: git.example.com/etl-jobs\n  git_branch: main\n---\nBefore saying a change works, run the project's tests (`pytest -q` in etl-jobs, `pnpm test` in shop-web).\n\n**Why:** twice a fix was reported as done while the suite was red.\n\n**How to apply:** paste the summary line; if anything fails, show the failing output instead of paraphrasing it.\n",
-    "meta": {
-     "id": "20260820-tests-before-done-odzd",
-     "name": "tests-before-done",
-     "type": "feedback",
-     "scope": "global",
-     "description": "Run the tests before saying a change works, and quote the failing output when they fail",
-     "created": "2026-08-20T09:05:00+08:00",
-     "source": {
-      "tool": "codex",
-      "session_id": "8e81973e-0bec-47b0-b898-d190f9ebdacc",
-      "session_name": "etl-nightly-export",
-      "host": "alex-laptop",
-      "cwd": "/Users/alex/code/etl-jobs",
-      "git_root": "/Users/alex/code/etl-jobs",
-      "git_remote": "git.example.com/etl-jobs",
-      "git_branch": "main"
-     }
-    },
-    "body": "Before saying a change works, run the project's tests (`pytest -q` in etl-jobs, `pnpm test` in shop-web).\n\n**Why:** twice a fix was reported as done while the suite was red.\n\n**How to apply:** paste the summary line; if anything fails, show the failing output instead of paraphrasing it.\n",
-    "description": "Run the tests before saying a change works, and quote the failing output when they fail",
-    "type": "feedback",
-    "scope": "global",
-    "place": "",
-    "tool": "codex",
-    "host": "alex-laptop",
-    "created": "2026-08-20T09:05:00+08:00",
-    "updated": "",
-    "similar": [
-     {
-      "i": 13,
-      "s": 0.317
-     },
-     {
-      "i": 10,
-      "s": 0.258
-     },
-     {
-      "i": 6,
-      "s": 0.244
-     },
-     {
-      "i": 8,
-      "s": 0.217
-     },
-     {
-      "i": 5,
-      "s": 0.206
-     },
-     {
-      "i": 11,
-      "s": 0.195
-     }
-    ],
-    "keywords": [
-     {
-      "k": "etl-jobs",
-      "t": "etl-jobs"
-     },
-     {
-      "k": "project",
-      "t": "project"
-     },
-     {
-      "k": "fix",
-      "t": "fix"
-     },
-     {
-      "k": "shop-web",
-      "t": "shop-web"
-     }
-    ],
-    "terms": [
-     "anything",
-     "change",
-     "etl-jobs",
-     "fail",
-     "fix",
-     "project",
-     "shop-web"
-    ],
-    "issues": []
-   },
-   {
-    "id": "20260827-etl-orders-export-deadline-pft7",
-    "rel": "2026/08/20260827-etl-orders-export-deadline-pft7.md",
-    "path": "~/agent-memory-data/memories/2026/08/20260827-etl-orders-export-deadline-pft7.md",
-    "hash": "d9acd9c689b9550f",
-    "raw": "---\nid: 20260827-etl-orders-export-deadline-pft7\nname: etl-orders-export-deadline\ntype: project\nscope: here\ndescription: \"etl-jobs: the nightly orders export must finish before 06:00 because finance reads it at 06:30\"\ncreated: 2026-08-27T08:30:00+08:00\nsource:\n  tool: codex\n  session_id: 72e6cc3a-babc-4d20-97ee-05cde00902c7\n  session_name: etl-nightly-export\n  host: alex-laptop\n  cwd: /Users/alex/code/etl-jobs\n  git_root: /Users/alex/code/etl-jobs\n  git_remote: git.example.com/etl-jobs\n  git_branch: main\n---\nThe `orders_export` job in etl-jobs runs at 01:00 and must finish before 06:00 (Shanghai time); finance pulls the file at 06:30.\n\n**Why:** the daily revenue report is built from it; a late file delays that report for everyone.\n\n**How to apply:** do not add heavy steps to `orders_export`; anything slow goes in a separate job after 06:30.\n",
-    "meta": {
-     "id": "20260827-etl-orders-export-deadline-pft7",
-     "name": "etl-orders-export-deadline",
-     "type": "project",
-     "scope": "here",
-     "description": "etl-jobs: the nightly orders export must finish before 06:00 because finance reads it at 06:30",
-     "created": "2026-08-27T08:30:00+08:00",
-     "source": {
-      "tool": "codex",
-      "session_id": "72e6cc3a-babc-4d20-97ee-05cde00902c7",
-      "session_name": "etl-nightly-export",
-      "host": "alex-laptop",
-      "cwd": "/Users/alex/code/etl-jobs",
-      "git_root": "/Users/alex/code/etl-jobs",
-      "git_remote": "git.example.com/etl-jobs",
-      "git_branch": "main"
-     }
-    },
-    "body": "The `orders_export` job in etl-jobs runs at 01:00 and must finish before 06:00 (Shanghai time); finance pulls the file at 06:30.\n\n**Why:** the daily revenue report is built from it; a late file delays that report for everyone.\n\n**How to apply:** do not add heavy steps to `orders_export`; anything slow goes in a separate job after 06:30.\n",
-    "description": "etl-jobs: the nightly orders export must finish before 06:00 because finance reads it at 06:30",
-    "type": "project",
-    "scope": "here",
-    "place": "git.example.com/etl-jobs",
-    "tool": "codex",
-    "host": "alex-laptop",
-    "created": "2026-08-27T08:30:00+08:00",
-    "updated": "",
-    "similar": [
-     {
-      "i": 5,
-      "s": 0.895
-     },
-     {
-      "i": 6,
-      "s": 0.818
-     },
-     {
-      "i": 9,
-      "s": 0.55
-     },
-     {
-      "i": 3,
-      "s": 0.146
-     },
-     {
-      "i": 12,
-      "s": 0.109
-     },
-     {
-      "i": 1,
-      "s": 0.074
-     }
-    ],
-    "keywords": [
-     {
-      "k": "orders_export",
-      "t": "orders_export"
-     },
-     {
-      "k": "etl-jobs",
-      "t": "etl-jobs"
-     },
-     {
-      "k": "deadline",
-      "t": "deadline"
-     },
-     {
-      "k": "etl",
-      "t": "etl"
-     }
-    ],
-    "terms": [
-     "anything",
-     "deadline",
-     "etl",
-     "etl-jobs",
-     "job",
-     "orders_export",
-     "report",
-     "separate"
-    ],
-    "issues": []
-   },
-   {
-    "id": "20260828-etl-dashboard-72ce",
-    "rel": "2026/08/20260828-etl-dashboard-72ce.md",
-    "path": "~/agent-memory-data/memories/2026/08/20260828-etl-dashboard-72ce.md",
-    "hash": "1375abc95dba2364",
-    "raw": "---\nid: 20260828-etl-dashboard-72ce\nname: etl-dashboard\ntype: reference\nscope: global\ndescription: \"etl-jobs run history and alerts: the Grafana dashboard at grafana.example.com/d/etl-runs\"\ncreated: 2026-08-28T10:00:00+08:00\nsource:\n  tool: codex\n  session_id: ca02135e-92b1-43f2-8ede-0d7ac3baea9e\n  session_name: etl-nightly-export\n  host: alex-laptop\n  cwd: /Users/alex/code/etl-jobs\n  git_root: /Users/alex/code/etl-jobs\n  git_remote: git.example.com/etl-jobs\n  git_branch: main\n---\nRun history, durations and failure alerts for every etl-jobs job are on the Grafana dashboard `grafana.example.com/d/etl-runs`. The `orders_export` panel shows how close each night came to the 06:00 deadline ([[etl-orders-export-deadline]]).\n",
-    "meta": {
-     "id": "20260828-etl-dashboard-72ce",
-     "name": "etl-dashboard",
-     "type": "reference",
-     "scope": "global",
-     "description": "etl-jobs run history and alerts: the Grafana dashboard at grafana.example.com/d/etl-runs",
-     "created": "2026-08-28T10:00:00+08:00",
-     "source": {
-      "tool": "codex",
-      "session_id": "ca02135e-92b1-43f2-8ede-0d7ac3baea9e",
-      "session_name": "etl-nightly-export",
-      "host": "alex-laptop",
-      "cwd": "/Users/alex/code/etl-jobs",
-      "git_root": "/Users/alex/code/etl-jobs",
-      "git_remote": "git.example.com/etl-jobs",
-      "git_branch": "main"
-     }
-    },
-    "body": "Run history, durations and failure alerts for every etl-jobs job are on the Grafana dashboard `grafana.example.com/d/etl-runs`. The `orders_export` panel shows how close each night came to the 06:00 deadline ([[etl-orders-export-deadline]]).\n",
-    "description": "etl-jobs run history and alerts: the Grafana dashboard at grafana.example.com/d/etl-runs",
-    "type": "reference",
-    "scope": "global",
-    "place": "",
-    "tool": "codex",
-    "host": "alex-laptop",
-    "created": "2026-08-28T10:00:00+08:00",
-    "updated": "",
-    "similar": [
-     {
-      "i": 4,
-      "s": 0.895
-     },
-     {
-      "i": 6,
-      "s": 0.723
-     },
-     {
-      "i": 9,
-      "s": 0.578
-     },
-     {
-      "i": 13,
-      "s": 0.449
-     },
-     {
-      "i": 3,
-      "s": 0.206
-     },
-     {
-      "i": 10,
-      "s": 0.164
-     }
-    ],
-    "keywords": [
-     {
-      "k": "etl-jobs",
-      "t": "etl-jobs"
-     },
-     {
-      "k": "etl",
-      "t": "etl"
-     },
-     {
-      "k": "orders_export",
-      "t": "orders_export"
-     },
-     {
-      "k": "job",
-      "t": "job"
-     }
-    ],
-    "terms": [
-     "deadline",
-     "etl",
-     "etl-jobs",
-     "example",
-     "job",
-     "orders_export"
-    ],
-    "issues": []
-   },
-   {
-    "id": "20260902-report-eta-is2j",
-    "rel": "2026/09/20260902-report-eta-is2j.md",
-    "path": "~/agent-memory-data/memories/2026/09/20260902-report-eta-is2j.md",
-    "hash": "d541addecbcbcb3f",
-    "raw": "---\nid: 20260902-report-eta-is2j\nname: report-eta\ntype: feedback\nscope: global\ndescription: 长任务开跑时要报预计完成时间，用上海时间\ncreated: 2026-09-02T21:30:00+08:00\nsource:\n  tool: claude-code\n  session_id: 4ef8aa38-9227-4658-9e27-a1c08a6a63ec\n  session_name: etl-backfill\n  host: alex-laptop\n  cwd: /Users/alex/code/etl-jobs\n  git_root: /Users/alex/code/etl-jobs\n  git_remote: git.example.com/etl-jobs\n  git_branch: main\n---\n启动任何超过几分钟的任务（回填、训练、批量导出）时，先说还要多久、预计上海时间几点完成。\n\n**Why:** Alex 需要据此安排什么时候回来看结果。\n\n**How to apply:** 开跑时报一次，进度明显偏离时再更新一次。\n",
-    "meta": {
-     "id": "20260902-report-eta-is2j",
-     "name": "report-eta",
-     "type": "feedback",
-     "scope": "global",
-     "description": "长任务开跑时要报预计完成时间，用上海时间",
-     "created": "2026-09-02T21:30:00+08:00",
-     "source": {
-      "tool": "claude-code",
-      "session_id": "4ef8aa38-9227-4658-9e27-a1c08a6a63ec",
-      "session_name": "etl-backfill",
-      "host": "alex-laptop",
-      "cwd": "/Users/alex/code/etl-jobs",
-      "git_root": "/Users/alex/code/etl-jobs",
-      "git_remote": "git.example.com/etl-jobs",
-      "git_branch": "main"
-     }
-    },
-    "body": "启动任何超过几分钟的任务（回填、训练、批量导出）时，先说还要多久、预计上海时间几点完成。\n\n**Why:** Alex 需要据此安排什么时候回来看结果。\n\n**How to apply:** 开跑时报一次，进度明显偏离时再更新一次。\n",
-    "description": "长任务开跑时要报预计完成时间，用上海时间",
-    "type": "feedback",
-    "scope": "global",
-    "place": "",
-    "tool": "claude-code",
-    "host": "alex-laptop",
-    "created": "2026-09-02T21:30:00+08:00",
-    "updated": "",
-    "similar": [
-     {
-      "i": 4,
-      "s": 0.818
-     },
-     {
-      "i": 5,
-      "s": 0.723
-     },
-     {
-      "i": 1,
-      "s": 0.429
-     },
-     {
-      "i": 12,
-      "s": 0.331
-     },
-     {
-      "i": 9,
-      "s": 0.291
-     },
-     {
-      "i": 3,
-      "s": 0.244
-     }
-    ],
-    "keywords": [
-     {
-      "k": "report",
-      "t": "report"
-     },
-     {
-      "k": "alex",
-      "t": "Alex"
-     }
-    ],
-    "terms": [
-     "alex",
-     "report"
-    ],
-    "issues": []
-   },
-   {
-    "id": "20260908-shop-web-stripe-checkout-lgmx",
-    "rel": "2026/09/20260908-shop-web-stripe-checkout-lgmx.md",
-    "path": "~/agent-memory-data/memories/2026/09/20260908-shop-web-stripe-checkout-lgmx.md",
-    "hash": "21ffbba93ff1ddd8",
-    "raw": "---\nid: 20260908-shop-web-stripe-checkout-lgmx\nname: shop-web-stripe-checkout\ntype: project\nscope: here\ndescription: shop-web checkout moved to the Stripe Payment Element in September; the old Charges API code path is dead\ncreated: 2026-09-08T14:10:00+08:00\nsource:\n  tool: claude-code\n  session_id: 1012f037-b64c-4422-8c38-fb2918f135d2\n  session_name: shop-web-checkout\n  host: alex-laptop\n  cwd: /Users/alex/code/shop-web\n  git_root: /Users/alex/code/shop-web\n  git_remote: git.example.com/shop-web\n  git_branch: main\n---\nCheckout in shop-web now uses the Stripe Payment Element (`src/checkout/PaymentForm.tsx`). The old Charges API path in `src/legacy/charge.ts` is no longer called and is kept only until the v3 cleanup.\n\n**Why:** Charges API is deprecated, and 3-D Secure needed the Payment Element.\n\n**How to apply:** do not fix bugs in `src/legacy/`; change the Payment Element flow instead. See [[shop-web-deploys]] before shipping.\n",
-    "meta": {
-     "id": "20260908-shop-web-stripe-checkout-lgmx",
-     "name": "shop-web-stripe-checkout",
-     "type": "project",
-     "scope": "here",
-     "description": "shop-web checkout moved to the Stripe Payment Element in September; the old Charges API code path is dead",
-     "created": "2026-09-08T14:10:00+08:00",
-     "source": {
-      "tool": "claude-code",
-      "session_id": "1012f037-b64c-4422-8c38-fb2918f135d2",
-      "session_name": "shop-web-checkout",
-      "host": "alex-laptop",
-      "cwd": "/Users/alex/code/shop-web",
-      "git_root": "/Users/alex/code/shop-web",
-      "git_remote": "git.example.com/shop-web",
-      "git_branch": "main"
-     }
-    },
-    "body": "Checkout in shop-web now uses the Stripe Payment Element (`src/checkout/PaymentForm.tsx`). The old Charges API path in `src/legacy/charge.ts` is no longer called and is kept only until the v3 cleanup.\n\n**Why:** Charges API is deprecated, and 3-D Secure needed the Payment Element.\n\n**How to apply:** do not fix bugs in `src/legacy/`; change the Payment Element flow instead. See [[shop-web-deploys]] before shipping.\n",
-    "description": "shop-web checkout moved to the Stripe Payment Element in September; the old Charges API code path is dead",
-    "type": "project",
-    "scope": "here",
-    "place": "git.example.com/shop-web",
-    "tool": "claude-code",
-    "host": "alex-laptop",
-    "created": "2026-09-08T14:10:00+08:00",
-    "updated": "",
-    "similar": [
-     {
-      "i": 13,
-      "s": 1.0
-     },
-     {
-      "i": 11,
-      "s": 0.659
-     },
-     {
-      "i": 8,
-      "s": 0.475
-     },
-     {
-      "i": 10,
-      "s": 0.242
-     },
-     {
-      "i": 3,
-      "s": 0.102
-     },
-     {
-      "i": 9,
-      "s": 0.079
-     }
-    ],
-    "keywords": [
-     {
-      "k": "checkout",
-      "t": "checkout"
-     },
-     {
-      "k": "stripe",
-      "t": "Stripe"
-     },
-     {
-      "k": "payment",
-      "t": "Payment"
-     },
-     {
-      "k": "web",
-      "t": "web"
-     }
-    ],
-    "terms": [
-     "change",
-     "checkout",
-     "code",
-     "fix",
-     "flow",
-     "payment",
-     "shop",
-     "shop-web",
-     "shop-web-deploys",
-     "stripe",
-     "web"
-    ],
-    "issues": []
-   },
-   {
-    "id": "20260910-shop-web-deploys-dn73",
-    "rel": "2026/09/20260910-shop-web-deploys-dn73.md",
-    "path": "~/agent-memory-data/memories/2026/09/20260910-shop-web-deploys-dn73.md",
-    "hash": "e910ea312db27cee",
-    "raw": "---\nid: 20260910-shop-web-deploys-dn73\nname: shop-web-deploys\ntype: project\nscope: here\ndescription: \"shop-web: staging deploys from the release branch, production only from version tags\"\ncreated: 2026-09-10T11:00:00+08:00\nupdated: 2026-10-03T10:05:00+08:00\nsource:\n  tool: codex\n  session_id: 95e761d1-7731-4f10-906b-f2efc6f87718\n  session_name: shop-web-release\n  host: alex-laptop\n  cwd: /Users/alex/code/shop-web\n  git_root: /Users/alex/code/shop-web\n  git_remote: git.example.com/shop-web\n  git_branch: main\n---\nshop-web staging deploys automatically from the `release` branch. Production deploys only from tags like `v2.14.0`, cut from `release` after QA signs off.\n\n**Why:** QA signs off on what runs in staging, and a tag pins exactly the build they approved.\n\n**How to apply:** never tag from `main`; open the release PR into `release` first.\n",
-    "meta": {
-     "id": "20260910-shop-web-deploys-dn73",
-     "name": "shop-web-deploys",
-     "type": "project",
-     "scope": "here",
-     "description": "shop-web: staging deploys from the release branch, production only from version tags",
-     "created": "2026-09-10T11:00:00+08:00",
-     "updated": "2026-10-03T10:05:00+08:00",
-     "source": {
-      "tool": "codex",
-      "session_id": "95e761d1-7731-4f10-906b-f2efc6f87718",
-      "session_name": "shop-web-release",
-      "host": "alex-laptop",
-      "cwd": "/Users/alex/code/shop-web",
-      "git_root": "/Users/alex/code/shop-web",
-      "git_remote": "git.example.com/shop-web",
-      "git_branch": "main"
-     }
-    },
-    "body": "shop-web staging deploys automatically from the `release` branch. Production deploys only from tags like `v2.14.0`, cut from `release` after QA signs off.\n\n**Why:** QA signs off on what runs in staging, and a tag pins exactly the build they approved.\n\n**How to apply:** never tag from `main`; open the release PR into `release` first.\n",
-    "description": "shop-web: staging deploys from the release branch, production only from version tags",
-    "type": "project",
-    "scope": "here",
-    "place": "git.example.com/shop-web",
-    "tool": "codex",
-    "host": "alex-laptop",
-    "created": "2026-09-10T11:00:00+08:00",
-    "updated": "2026-10-03T10:05:00+08:00",
-    "similar": [
-     {
-      "i": 11,
-      "s": 0.663
-     },
-     {
-      "i": 7,
-      "s": 0.475
-     },
-     {
-      "i": 10,
-      "s": 0.294
-     },
-     {
-      "i": 3,
-      "s": 0.217
-     },
-     {
-      "i": 13,
-      "s": 0.178
-     },
-     {
-      "i": 2,
-      "s": 0.065
-     }
-    ],
-    "keywords": [
-     {
-      "k": "deploys",
-      "t": "deploys"
-     },
-     {
-      "k": "release",
-      "t": "release"
-     },
-     {
-      "k": "branch",
-      "t": "branch"
-     },
-     {
-      "k": "shop",
-      "t": "shop"
-     }
-    ],
-    "terms": [
-     "approved",
-     "branch",
-     "deploys",
-     "pr",
-     "release",
-     "shop",
-     "shop-web",
-     "web"
-    ],
-    "issues": []
-   },
-   {
-    "id": "20260915-etl-parquet-partitioning-seh2",
-    "rel": "2026/09/20260915-etl-parquet-partitioning-seh2.md",
-    "path": "~/agent-memory-data/memories/2026/09/20260915-etl-parquet-partitioning-seh2.md",
-    "hash": "39431188d006aed8",
-    "raw": "---\nid: 20260915-etl-parquet-partitioning-seh2\nname: etl-parquet-partitioning\ntype: project\nscope: here\ndescription: etl-jobs 的 Parquet 按日期分区而不是按客户；改分区前要先迁移历史数据\ncreated: 2026-09-15T19:20:00+08:00\nsource:\n  tool: claude-code\n  session_id: 26e87555-5790-482e-81d3-fcff2a3af4d4\n  session_name: etl-backfill\n  host: alex-laptop\n  cwd: /Users/alex/code/etl-jobs\n  git_root: /Users/alex/code/etl-jobs\n  git_remote: git.example.com/etl-jobs\n  git_branch: main\n---\netl-jobs 写出的 Parquet 按 `dt=YYYY-MM-DD` 分区，不按客户分区。下游报表都假设这个布局。\n\n**Why:** 按客户分区会产生上万个小文件，查询反而变慢。\n\n**How to apply:** 想改分区方式，先写迁移脚本处理历史数据，再改写入逻辑。\n",
-    "meta": {
-     "id": "20260915-etl-parquet-partitioning-seh2",
-     "name": "etl-parquet-partitioning",
-     "type": "project",
-     "scope": "here",
-     "description": "etl-jobs 的 Parquet 按日期分区而不是按客户；改分区前要先迁移历史数据",
-     "created": "2026-09-15T19:20:00+08:00",
-     "source": {
-      "tool": "claude-code",
-      "session_id": "26e87555-5790-482e-81d3-fcff2a3af4d4",
-      "session_name": "etl-backfill",
-      "host": "alex-laptop",
-      "cwd": "/Users/alex/code/etl-jobs",
-      "git_root": "/Users/alex/code/etl-jobs",
-      "git_remote": "git.example.com/etl-jobs",
-      "git_branch": "main"
-     }
-    },
-    "body": "etl-jobs 写出的 Parquet 按 `dt=YYYY-MM-DD` 分区，不按客户分区。下游报表都假设这个布局。\n\n**Why:** 按客户分区会产生上万个小文件，查询反而变慢。\n\n**How to apply:** 想改分区方式，先写迁移脚本处理历史数据，再改写入逻辑。\n",
-    "description": "etl-jobs 的 Parquet 按日期分区而不是按客户；改分区前要先迁移历史数据",
-    "type": "project",
-    "scope": "here",
-    "place": "git.example.com/etl-jobs",
-    "tool": "claude-code",
-    "host": "alex-laptop",
-    "created": "2026-09-15T19:20:00+08:00",
-    "updated": "",
-    "similar": [
-     {
-      "i": 5,
-      "s": 0.578
-     },
-     {
-      "i": 4,
-      "s": 0.55
-     },
-     {
-      "i": 6,
-      "s": 0.291
-     },
-     {
-      "i": 11,
-      "s": 0.124
-     },
-     {
-      "i": 7,
-      "s": 0.079
-     }
-    ],
-    "keywords": [
-     {
-      "k": "etl-jobs",
-      "t": "etl-jobs"
-     },
-     {
-      "k": "etl",
-      "t": "etl"
-     }
-    ],
-    "terms": [
-     "etl",
-     "etl-jobs"
-    ],
-    "issues": []
-   },
-   {
-    "id": "20260922-design-tokens-source-uvw7",
-    "rel": "2026/09/20260922-design-tokens-source-uvw7.md",
-    "path": "~/agent-memory-data/memories/2026/09/20260922-design-tokens-source-uvw7.md",
-    "hash": "36a11fa348f73d8f",
-    "raw": "---\nid: 20260922-design-tokens-source-uvw7\nname: design-tokens-source\ntype: reference\nscope: global\ndescription: Design tokens (colours, spacing, type) live in git.example.com/design-tokens and sync into shop-web weekly\ncreated: 2026-09-22T13:15:00+08:00\nsource:\n  tool: claude-code\n  session_id: 119a72d1-74c9-4f6a-8c01-1cdd9474031b\n  session_name: shop-web-theme\n  host: alex-laptop\n  cwd: /Users/alex/code/shop-web\n  git_root: /Users/alex/code/shop-web\n  git_remote: git.example.com/shop-web\n  git_branch: main\n---\nColours, spacing and type scales come from `git.example.com/design-tokens`. A weekly bot PR copies them into `shop-web/src/theme/tokens.ts`.\n\n**How to apply:** change tokens in design-tokens, not in shop-web; local edits are overwritten by the next sync.\n",
-    "meta": {
-     "id": "20260922-design-tokens-source-uvw7",
-     "name": "design-tokens-source",
-     "type": "reference",
-     "scope": "global",
-     "description": "Design tokens (colours, spacing, type) live in git.example.com/design-tokens and sync into shop-web weekly",
-     "created": "2026-09-22T13:15:00+08:00",
-     "source": {
-      "tool": "claude-code",
-      "session_id": "119a72d1-74c9-4f6a-8c01-1cdd9474031b",
-      "session_name": "shop-web-theme",
-      "host": "alex-laptop",
-      "cwd": "/Users/alex/code/shop-web",
-      "git_root": "/Users/alex/code/shop-web",
-      "git_remote": "git.example.com/shop-web",
-      "git_branch": "main"
-     }
-    },
-    "body": "Colours, spacing and type scales come from `git.example.com/design-tokens`. A weekly bot PR copies them into `shop-web/src/theme/tokens.ts`.\n\n**How to apply:** change tokens in design-tokens, not in shop-web; local edits are overwritten by the next sync.\n",
-    "description": "Design tokens (colours, spacing, type) live in git.example.com/design-tokens and sync into shop-web weekly",
-    "type": "reference",
-    "scope": "global",
-    "place": "",
-    "tool": "claude-code",
-    "host": "alex-laptop",
-    "created": "2026-09-22T13:15:00+08:00",
-    "updated": "",
-    "similar": [
-     {
-      "i": 13,
-      "s": 0.468
-     },
-     {
-      "i": 12,
-      "s": 0.405
-     },
-     {
-      "i": 11,
-      "s": 0.357
-     },
-     {
-      "i": 8,
-      "s": 0.294
-     },
-     {
-      "i": 3,
-      "s": 0.258
-     },
-     {
-      "i": 7,
-      "s": 0.242
-     }
-    ],
-    "keywords": [
-     {
-      "k": "git",
-      "t": "git"
-     },
-     {
-      "k": "shop-web",
-      "t": "shop-web"
-     },
-     {
-      "k": "pr",
-      "t": "PR"
-     }
-    ],
-    "terms": [
-     "change",
-     "come",
-     "edits",
-     "example",
-     "git",
-     "pr",
-     "shop-web"
-    ],
-    "issues": []
-   },
-   {
-    "id": "20261002-shop-web-v3-freeze-5xtp",
-    "rel": "2026/10/20261002-shop-web-v3-freeze-5xtp.md",
-    "path": "~/agent-memory-data/memories/2026/10/20261002-shop-web-v3-freeze-5xtp.md",
-    "hash": "f22668026954a585",
-    "raw": "---\nid: 20261002-shop-web-v3-freeze-5xtp\nname: shop-web-v3-freeze\ntype: project\nscope: here\ndescription: \"shop-web v3 feature freeze on 2026-11-01: no schema migrations after that date\"\ncreated: 2026-10-02T16:45:00+08:00\nsource:\n  tool: claude-code\n  session_id: c7a2ea20-b2f1-4c94-ae05-319acb5c7427\n  session_name: shop-web-v3-plan\n  host: alex-laptop\n  cwd: /Users/alex/code/shop-web\n  git_root: /Users/alex/code/shop-web\n  git_remote: git.example.com/shop-web\n  git_branch: main\n---\nFeature freeze for shop-web v3 is 2026-11-01. After that only bug fixes land; no database schema migrations until the v3 release.\n\n**Why:** the data team snapshots the schema for the Q4 reporting work.\n\n**How to apply:** if a change needs a migration, flag it before the freeze. Release flow: [[shop-web-deploys]].\n",
-    "meta": {
-     "id": "20261002-shop-web-v3-freeze-5xtp",
-     "name": "shop-web-v3-freeze",
-     "type": "project",
-     "scope": "here",
-     "description": "shop-web v3 feature freeze on 2026-11-01: no schema migrations after that date",
-     "created": "2026-10-02T16:45:00+08:00",
-     "source": {
-      "tool": "claude-code",
-      "session_id": "c7a2ea20-b2f1-4c94-ae05-319acb5c7427",
-      "session_name": "shop-web-v3-plan",
-      "host": "alex-laptop",
-      "cwd": "/Users/alex/code/shop-web",
-      "git_root": "/Users/alex/code/shop-web",
-      "git_remote": "git.example.com/shop-web",
-      "git_branch": "main"
-     }
-    },
-    "body": "Feature freeze for shop-web v3 is 2026-11-01. After that only bug fixes land; no database schema migrations until the v3 release.\n\n**Why:** the data team snapshots the schema for the Q4 reporting work.\n\n**How to apply:** if a change needs a migration, flag it before the freeze. Release flow: [[shop-web-deploys]].\n",
-    "description": "shop-web v3 feature freeze on 2026-11-01: no schema migrations after that date",
-    "type": "project",
-    "scope": "here",
-    "place": "git.example.com/shop-web",
-    "tool": "claude-code",
-    "host": "alex-laptop",
-    "created": "2026-10-02T16:45:00+08:00",
-    "updated": "",
-    "similar": [
-     {
-      "i": 8,
-      "s": 0.663
-     },
-     {
-      "i": 7,
-      "s": 0.659
-     },
-     {
-      "i": 10,
-      "s": 0.357
-     },
-     {
-      "i": 13,
-      "s": 0.355
-     },
-     {
-      "i": 3,
-      "s": 0.195
-     },
-     {
-      "i": 9,
-      "s": 0.124
-     }
-    ],
-    "keywords": [
-     {
-      "k": "web",
-      "t": "web"
-     },
-     {
-      "k": "shop",
-      "t": "shop"
-     },
-     {
-      "k": "release",
-      "t": "release"
-     },
-     {
-      "k": "shop-web-deploys",
-      "t": "shop-web-deploys"
-     }
-    ],
-    "terms": [
-     "change",
-     "data",
-     "flow",
-     "release",
-     "shop",
-     "shop-web",
-     "shop-web-deploys",
-     "web"
-    ],
-    "issues": []
-   },
-   {
-    "id": "20261009-thesis-setup-fr6e",
-    "rel": "2026/10/20261009-thesis-setup-fr6e.md",
-    "path": "~/agent-memory-data/memories/2026/10/20261009-thesis-setup-fr6e.md",
-    "hash": "7afcb4fd741d0c0b",
-    "raw": "---\nid: 20261009-thesis-setup-fr6e\nname: thesis-setup\ntype: project\nscope: here\ndescription: \"Thesis: LaTeX in ~/Documents/thesis, figures come from plots.py; chapter 3 is due to the advisor on Nov 15\"\ncreated: 2026-10-09T22:10:00+08:00\nsource:\n  tool: claude-code\n  session_id: 4f426dcb-b394-4b36-bb2d-420f0f88080b\n  session_name: thesis-figures\n  host: alex-laptop\n  cwd: /Users/alex/Documents/thesis\n---\nThe thesis is a LaTeX project in `~/Documents/thesis` (not a git repo; it syncs through iCloud), and chapter 3 is due to the advisor on 2026-11-15.\n\n**Why:** the figures change whenever the data does, so they are generated by `plots.py` into `figures/` rather than edited.\n\n**How to apply:** change `plots.py` and rerun it instead of touching the PDFs; plan chapter 3 work back from 2026-11-15.\n",
-    "meta": {
-     "id": "20261009-thesis-setup-fr6e",
-     "name": "thesis-setup",
-     "type": "project",
-     "scope": "here",
-     "description": "Thesis: LaTeX in ~/Documents/thesis, figures come from plots.py; chapter 3 is due to the advisor on Nov 15",
-     "created": "2026-10-09T22:10:00+08:00",
-     "source": {
-      "tool": "claude-code",
-      "session_id": "4f426dcb-b394-4b36-bb2d-420f0f88080b",
-      "session_name": "thesis-figures",
-      "host": "alex-laptop",
-      "cwd": "/Users/alex/Documents/thesis"
-     }
-    },
-    "body": "The thesis is a LaTeX project in `~/Documents/thesis` (not a git repo; it syncs through iCloud), and chapter 3 is due to the advisor on 2026-11-15.\n\n**Why:** the figures change whenever the data does, so they are generated by `plots.py` into `figures/` rather than edited.\n\n**How to apply:** change `plots.py` and rerun it instead of touching the PDFs; plan chapter 3 work back from 2026-11-15.\n",
-    "description": "Thesis: LaTeX in ~/Documents/thesis, figures come from plots.py; chapter 3 is due to the advisor on Nov 15",
-    "type": "project",
-    "scope": "here",
-    "place": "/Users/alex/Documents/thesis",
-    "tool": "claude-code",
-    "host": "alex-laptop",
-    "created": "2026-10-09T22:10:00+08:00",
-    "updated": "",
-    "similar": [
-     {
-      "i": 10,
-      "s": 0.405
-     },
-     {
-      "i": 6,
-      "s": 0.331
-     },
-     {
-      "i": 3,
-      "s": 0.172
-     },
-     {
-      "i": 4,
-      "s": 0.109
-     },
-     {
-      "i": 11,
-      "s": 0.084
-     },
-     {
-      "i": 5,
-      "s": 0.074
-     }
-    ],
-    "keywords": [
-     {
-      "k": "project",
-      "t": "project"
-     },
-     {
-      "k": "data",
-      "t": "data"
-     },
-     {
-      "k": "git",
-      "t": "git"
-     }
-    ],
-    "terms": [
-     "change",
-     "come",
-     "data",
-     "git",
-     "project"
-    ],
-    "issues": []
-   },
-   {
-    "id": "20261012-payments-runbook-4syw",
-    "rel": "2026/10/20261012-payments-runbook-4syw.md",
-    "path": "~/agent-memory-data/memories/2026/10/20261012-payments-runbook-4syw.md",
-    "hash": "803f1ee3254e5011",
-    "raw": "---\nid: 20261012-payments-runbook-4syw\nname: payments-runbook\ntype: reference\nscope: global\ndescription: \"On-call runbook for payment failures: docs.example.com/runbooks/payments\"\ncreated: 2026-10-12T09:40:00+08:00\nsource:\n  tool: codex\n  session_id: 5affb229-7631-4992-b0ce-583505c6af07\n  session_name: shop-web-oncall\n  host: alex-laptop\n  cwd: /Users/alex/code/shop-web\n  git_root: /Users/alex/code/shop-web\n  git_remote: git.example.com/shop-web\n  git_branch: main\n---\nWhen checkout payments fail, follow `docs.example.com/runbooks/payments`: check the Stripe status page, then the webhook queue, then recent shop-web deploys. Background: [[shop-web-stripe-checkout]].\n",
-    "meta": {
-     "id": "20261012-payments-runbook-4syw",
-     "name": "payments-runbook",
-     "type": "reference",
-     "scope": "global",
-     "description": "On-call runbook for payment failures: docs.example.com/runbooks/payments",
-     "created": "2026-10-12T09:40:00+08:00",
-     "source": {
-      "tool": "codex",
-      "session_id": "5affb229-7631-4992-b0ce-583505c6af07",
-      "session_name": "shop-web-oncall",
-      "host": "alex-laptop",
-      "cwd": "/Users/alex/code/shop-web",
-      "git_root": "/Users/alex/code/shop-web",
-      "git_remote": "git.example.com/shop-web",
-      "git_branch": "main"
-     }
-    },
-    "body": "When checkout payments fail, follow `docs.example.com/runbooks/payments`: check the Stripe status page, then the webhook queue, then recent shop-web deploys. Background: [[shop-web-stripe-checkout]].\n",
-    "description": "On-call runbook for payment failures: docs.example.com/runbooks/payments",
-    "type": "reference",
-    "scope": "global",
-    "place": "",
-    "tool": "codex",
-    "host": "alex-laptop",
-    "created": "2026-10-12T09:40:00+08:00",
-    "updated": "",
-    "similar": [
-     {
-      "i": 7,
-      "s": 1.0
-     },
-     {
-      "i": 10,
-      "s": 0.468
-     },
-     {
-      "i": 5,
-      "s": 0.449
-     },
-     {
-      "i": 11,
-      "s": 0.355
-     },
-     {
-      "i": 3,
-      "s": 0.317
-     },
-     {
-      "i": 8,
-      "s": 0.178
-     }
-    ],
-    "keywords": [
-     {
-      "k": "payment",
-      "t": "Payment"
-     },
-     {
-      "k": "checkout",
-      "t": "checkout"
-     },
-     {
-      "k": "deploys",
-      "t": "deploys"
-     },
-     {
-      "k": "stripe",
-      "t": "Stripe"
-     }
-    ],
-    "terms": [
-     "checkout",
-     "deploys",
-     "example",
-     "fail",
-     "payment",
-     "shop-web",
-     "stripe"
-    ],
-    "issues": []
-   }
+ "fingerprint": "299d076e10ce7e50",
+ "active": "work",
+ "words": [
+  [
+   "Amber",
+   "Brave",
+   "Breezy",
+   "Bright",
+   "Calm",
+   "Cheery",
+   "Cozy",
+   "Crisp",
+   "Dapper",
+   "Dewy",
+   "Gentle",
+   "Golden",
+   "Happy",
+   "Hazy",
+   "Jolly",
+   "Kind",
+   "Lucky",
+   "Mellow",
+   "Merry",
+   "Misty",
+   "Nimble",
+   "Peachy",
+   "Plucky",
+   "Quiet",
+   "Rosy",
+   "Silver",
+   "Sleepy",
+   "Snowy",
+   "Soft",
+   "Sunny",
+   "Swift",
+   "Tidy",
+   "Velvet",
+   "Warm",
+   "Wise",
+   "Witty"
   ],
-  "method": "Qwen3-Embedding-0.6B (int8 ONNX), local",
-  "semantic": true,
-  "places": [
-   {
-    "key": "git.example.com/shop-web",
-    "count": 3,
-    "ctx": {
-     "cwd": "/Users/alex/code/shop-web",
-     "git_root": "/Users/alex/code/shop-web",
-     "git_remote": "git.example.com/shop-web",
-     "git_branch": "main",
-     "host": "alex-laptop"
-    }
-   },
-   {
-    "key": "git.example.com/etl-jobs",
-    "count": 2,
-    "ctx": {
-     "cwd": "/Users/alex/code/etl-jobs",
-     "git_root": "/Users/alex/code/etl-jobs",
-     "git_remote": "git.example.com/etl-jobs",
-     "git_branch": "main",
-     "host": "alex-laptop"
-    }
-   },
-   {
-    "key": "/Users/alex/Documents/thesis",
-    "count": 1,
-    "ctx": {
-     "cwd": "/Users/alex/Documents/thesis",
-     "host": "alex-laptop"
-    }
-   }
-  ],
-  "stamp": "092eb30::14:1792219276360562419",
-  "sync": {
-   "remote": true,
-   "ahead": 0
-  }
- },
- "activity": {
-  "commits": [
-   {
-    "sha": "092eb30ff9",
-    "date": "2026-10-12T09:40:00+08:00",
-    "subject": "memory: +1 ~0 -0 (codex: shop-web-oncall)",
-    "tool": "codex",
-    "added": 1,
-    "changed": 0,
-    "deleted": 0
-   },
-   {
-    "sha": "b620c73143",
-    "date": "2026-10-09T22:10:00+08:00",
-    "subject": "memory: +1 ~0 -0 (claude-code: thesis-figures)",
-    "tool": "claude-code",
-    "added": 1,
-    "changed": 0,
-    "deleted": 0
-   },
-   {
-    "sha": "c9bc69194a",
-    "date": "2026-10-03T10:05:00+08:00",
-    "subject": "memory: +0 ~1 -0 (codex: shop-web-release)",
-    "tool": "codex",
-    "added": 0,
-    "changed": 1,
-    "deleted": 0
-   },
-   {
-    "sha": "1e841c158f",
-    "date": "2026-10-02T16:45:00+08:00",
-    "subject": "memory: +1 ~0 -0 (claude-code: shop-web-v3-plan)",
-    "tool": "claude-code",
-    "added": 1,
-    "changed": 0,
-    "deleted": 0
-   },
-   {
-    "sha": "7e3b43e966",
-    "date": "2026-09-22T13:15:00+08:00",
-    "subject": "memory: +1 ~0 -0 (claude-code: shop-web-theme)",
-    "tool": "claude-code",
-    "added": 1,
-    "changed": 0,
-    "deleted": 0
-   },
-   {
-    "sha": "58e1ce9297",
-    "date": "2026-09-15T19:20:00+08:00",
-    "subject": "memory: +1 ~0 -0 (claude-code: etl-backfill)",
-    "tool": "claude-code",
-    "added": 1,
-    "changed": 0,
-    "deleted": 0
-   },
-   {
-    "sha": "4e369c442d",
-    "date": "2026-09-10T11:00:00+08:00",
-    "subject": "memory: +1 ~0 -0 (codex: shop-web-release)",
-    "tool": "codex",
-    "added": 1,
-    "changed": 0,
-    "deleted": 0
-   },
-   {
-    "sha": "ad25c42a85",
-    "date": "2026-09-08T14:10:00+08:00",
-    "subject": "memory: +1 ~0 -0 (claude-code: shop-web-checkout)",
-    "tool": "claude-code",
-    "added": 1,
-    "changed": 0,
-    "deleted": 0
-   },
-   {
-    "sha": "1d17ad39c2",
-    "date": "2026-09-02T21:30:00+08:00",
-    "subject": "memory: +1 ~0 -0 (claude-code: etl-backfill)",
-    "tool": "claude-code",
-    "added": 1,
-    "changed": 0,
-    "deleted": 0
-   },
-   {
-    "sha": "d1b7c50bde",
-    "date": "2026-08-28T10:00:00+08:00",
-    "subject": "memory: +1 ~0 -0 (codex: etl-nightly-export)",
-    "tool": "codex",
-    "added": 1,
-    "changed": 0,
-    "deleted": 0
-   },
-   {
-    "sha": "1f26c0158a",
-    "date": "2026-08-27T08:30:00+08:00",
-    "subject": "memory: +1 ~0 -0 (codex: etl-nightly-export)",
-    "tool": "codex",
-    "added": 1,
-    "changed": 0,
-    "deleted": 0
-   },
-   {
-    "sha": "7655f45182",
-    "date": "2026-08-20T09:05:00+08:00",
-    "subject": "memory: +1 ~0 -0 (codex: etl-nightly-export)",
-    "tool": "codex",
-    "added": 1,
-    "changed": 0,
-    "deleted": 0
-   },
-   {
-    "sha": "9fc4370fd7",
-    "date": "2026-08-12T15:40:00+08:00",
-    "subject": "memory: +1 ~0 -0 (claude-code: shop-web-checkout)",
-    "tool": "claude-code",
-    "added": 1,
-    "changed": 0,
-    "deleted": 0
-   },
-   {
-    "sha": "c52633c60b",
-    "date": "2026-08-04T10:20:00+08:00",
-    "subject": "memory: +1 ~0 -0 (codex: 整理开发环境)",
-    "tool": "codex",
-    "added": 1,
-    "changed": 0,
-    "deleted": 0
-   },
-   {
-    "sha": "d4a02ca8b7",
-    "date": "2026-08-04T10:12:00+08:00",
-    "subject": "memory: +1 ~0 -0 (claude-code: set-up-laptop)",
-    "tool": "claude-code",
-    "added": 1,
-    "changed": 0,
-    "deleted": 0
-   }
+  [
+   "Acorn",
+   "Biscuit",
+   "Brook",
+   "Button",
+   "Clover",
+   "Cloud",
+   "Comet",
+   "Daisy",
+   "Dumpling",
+   "Ember",
+   "Feather",
+   "Fern",
+   "Harbor",
+   "Koala",
+   "Lantern",
+   "Maple",
+   "Meadow",
+   "Mochi",
+   "Muffin",
+   "Noodle",
+   "Orchard",
+   "Otter",
+   "Panda",
+   "Pebble",
+   "Pine",
+   "Pudding",
+   "Puffin",
+   "Robin",
+   "Sparrow",
+   "Sprout",
+   "Teapot",
+   "Tulip",
+   "Walnut",
+   "Willow",
+   "Wombat",
+   "Zephyr"
   ]
- },
- "previews": {
-  "": {
-   "text": "# Shared memory index\nmemories: ~/agent-memory-data/memories\nstaging (write new memories here): ~/agent-memory-data/staging/<session>\nmem: ~/.local/bin/mem\nlocation: cwd=?, host=?\n\n## Global (8)\n- [user] Alex 在上海；对话默认用中文回复，代码、注释和提交信息用英文 → 2026/08/20260804-reply-language-xdnc.md\n- [user] Alex is a backend engineer working mostly in Python and TypeScript; prefers short answers with the code first → 2026/08/20260804-alex-profile-ujzd.md\n- [feedback] 长任务开跑时要报预计完成时间，用上海时间 → 2026/09/20260902-report-eta-is2j.md\n- [feedback] Run the tests before saying a change works, and quote the failing output when they fail → 2026/08/20260820-tests-before-done-odzd.md\n- [feedback] Ask before every git push, and keep each commit to one change → 2026/08/20260812-ask-before-push-pf3d.md\n- [reference] On-call runbook for payment failures: docs.example.com/runbooks/payments → 2026/10/20261012-payments-runbook-4syw.md\n- [reference] Design tokens (colours, spacing, type) live in git.example.com/design-tokens and sync into shop-web weekly → 2026/09/20260922-design-tokens-source-uvw7.md\n- [reference] etl-jobs run history and alerts: the Grafana dashboard at grafana.example.com/d/etl-runs → 2026/08/20260828-etl-dashboard-72ce.md\n\n## This location (0)\n(none)\n",
-   "chars": 1378,
-   "limit": 10000,
-   "global": 8,
-   "here": 0
+ ],
+ "profiles": {
+  "work": {
+   "name": "Quiet Harbor",
+   "dataDir": "~/agent-memory-data",
+   "state": {
+    "generated": "",
+    "dataDir": "~/agent-memory-data",
+    "memories": [
+     {
+      "id": "20260804-alex-profile-ujzd",
+      "rel": "2026/08/20260804-alex-profile-ujzd.md",
+      "path": "~/agent-memory-data/memories/2026/08/20260804-alex-profile-ujzd.md",
+      "hash": "24f650d0377e4cc5",
+      "raw": "---\nid: 20260804-alex-profile-ujzd\nname: alex-profile\ntype: user\nscope: global\ndescription: Alex is a backend engineer working mostly in Python and TypeScript; prefers short answers with the code first\ncreated: 2026-08-04T10:12:00+08:00\nsource:\n  tool: claude-code\n  session_id: 1818e811-892f-402b-923f-0824128b2f33\n  session_name: set-up-laptop\n  host: alex-laptop\n  cwd: /Users/alex/code/shop-web\n---\nAlex is a backend engineer. Most work is Python (data jobs) and TypeScript (the shop-web app).\n\nPrefers short answers that lead with the code or command, then one or two lines of explanation.\n",
+      "meta": {
+       "id": "20260804-alex-profile-ujzd",
+       "name": "alex-profile",
+       "type": "user",
+       "scope": "global",
+       "description": "Alex is a backend engineer working mostly in Python and TypeScript; prefers short answers with the code first",
+       "created": "2026-08-04T10:12:00+08:00",
+       "source": {
+        "tool": "claude-code",
+        "session_id": "1818e811-892f-402b-923f-0824128b2f33",
+        "session_name": "set-up-laptop",
+        "host": "alex-laptop",
+        "cwd": "/Users/alex/code/shop-web"
+       }
+      },
+      "body": "Alex is a backend engineer. Most work is Python (data jobs) and TypeScript (the shop-web app).\n\nPrefers short answers that lead with the code or command, then one or two lines of explanation.\n",
+      "description": "Alex is a backend engineer working mostly in Python and TypeScript; prefers short answers with the code first",
+      "type": "user",
+      "scope": "global",
+      "place": "",
+      "tool": "claude-code",
+      "host": "alex-laptop",
+      "created": "2026-08-04T10:12:00+08:00",
+      "updated": "",
+      "similar": [
+       {
+        "i": 1,
+        "s": 0.449
+       }
+      ],
+      "keywords": [
+       {
+        "k": "alex",
+        "t": "Alex"
+       },
+       {
+        "k": "data",
+        "t": "data"
+       }
+      ],
+      "terms": [
+       "alex",
+       "code",
+       "data"
+      ],
+      "issues": []
+     },
+     {
+      "id": "20260804-reply-language-xdnc",
+      "rel": "2026/08/20260804-reply-language-xdnc.md",
+      "path": "~/agent-memory-data/memories/2026/08/20260804-reply-language-xdnc.md",
+      "hash": "7152cbafb72b9357",
+      "raw": "---\nid: 20260804-reply-language-xdnc\nname: reply-language\ntype: user\nscope: global\ndescription: Alex 在上海；对话默认用中文回复，代码、注释和提交信息用英文\ncreated: 2026-08-04T10:20:00+08:00\nsource:\n  tool: codex\n  session_id: 11e20b8f-6b0d-449b-af03-675a1600a35a\n  session_name: 整理开发环境\n  host: alex-laptop\n  cwd: /Users/alex/code/shop-web\n---\nAlex 在上海（UTC+8）。对话默认用中文回复；代码、注释、提交信息和 PR 描述用英文。\n",
+      "meta": {
+       "id": "20260804-reply-language-xdnc",
+       "name": "reply-language",
+       "type": "user",
+       "scope": "global",
+       "description": "Alex 在上海；对话默认用中文回复，代码、注释和提交信息用英文",
+       "created": "2026-08-04T10:20:00+08:00",
+       "source": {
+        "tool": "codex",
+        "session_id": "11e20b8f-6b0d-449b-af03-675a1600a35a",
+        "session_name": "整理开发环境",
+        "host": "alex-laptop",
+        "cwd": "/Users/alex/code/shop-web"
+       }
+      },
+      "body": "Alex 在上海（UTC+8）。对话默认用中文回复；代码、注释、提交信息和 PR 描述用英文。\n",
+      "description": "Alex 在上海；对话默认用中文回复，代码、注释和提交信息用英文",
+      "type": "user",
+      "scope": "global",
+      "place": "",
+      "tool": "codex",
+      "host": "alex-laptop",
+      "created": "2026-08-04T10:20:00+08:00",
+      "updated": "",
+      "similar": [
+       {
+        "i": 0,
+        "s": 0.449
+       },
+       {
+        "i": 6,
+        "s": 0.431
+       },
+       {
+        "i": 4,
+        "s": 0.076
+       }
+      ],
+      "keywords": [
+       {
+        "k": "alex",
+        "t": "Alex"
+       },
+       {
+        "k": "pr",
+        "t": "PR"
+       }
+      ],
+      "terms": [
+       "alex",
+       "pr"
+      ],
+      "issues": []
+     },
+     {
+      "id": "20260812-ask-before-push-pf3d",
+      "rel": "2026/08/20260812-ask-before-push-pf3d.md",
+      "path": "~/agent-memory-data/memories/2026/08/20260812-ask-before-push-pf3d.md",
+      "hash": "52641a66e912a68a",
+      "raw": "---\nid: 20260812-ask-before-push-pf3d\nname: ask-before-push\ntype: feedback\nscope: global\ndescription: Ask before every git push, and keep each commit to one change\ncreated: 2026-08-12T15:40:00+08:00\nsource:\n  tool: claude-code\n  session_id: f28c105d-1fb1-4c23-90c1-92cfd3ac94af\n  session_name: shop-web-checkout\n  host: alex-laptop\n  cwd: /Users/alex/code/shop-web\n  git_root: /Users/alex/code/shop-web\n  git_remote: git.example.com/shop-web\n  git_branch: main\n---\nAsk Alex before every `git push`, even when an earlier push in the same session was approved. Keep each commit to one change.\n\n**Why:** a force-push once overwrote a teammate's commit on a shared branch.\n\n**How to apply:** commit locally as you go, then list the commits and ask before pushing. Split unrelated edits into separate commits.\n",
+      "meta": {
+       "id": "20260812-ask-before-push-pf3d",
+       "name": "ask-before-push",
+       "type": "feedback",
+       "scope": "global",
+       "description": "Ask before every git push, and keep each commit to one change",
+       "created": "2026-08-12T15:40:00+08:00",
+       "source": {
+        "tool": "claude-code",
+        "session_id": "f28c105d-1fb1-4c23-90c1-92cfd3ac94af",
+        "session_name": "shop-web-checkout",
+        "host": "alex-laptop",
+        "cwd": "/Users/alex/code/shop-web",
+        "git_root": "/Users/alex/code/shop-web",
+        "git_remote": "git.example.com/shop-web",
+        "git_branch": "main"
+       }
+      },
+      "body": "Ask Alex before every `git push`, even when an earlier push in the same session was approved. Keep each commit to one change.\n\n**Why:** a force-push once overwrote a teammate's commit on a shared branch.\n\n**How to apply:** commit locally as you go, then list the commits and ask before pushing. Split unrelated edits into separate commits.\n",
+      "description": "Ask before every git push, and keep each commit to one change",
+      "type": "feedback",
+      "scope": "global",
+      "place": "",
+      "tool": "claude-code",
+      "host": "alex-laptop",
+      "created": "2026-08-12T15:40:00+08:00",
+      "updated": "",
+      "similar": [
+       {
+        "i": 3,
+        "s": 0.133
+       },
+       {
+        "i": 10,
+        "s": 0.078
+       },
+       {
+        "i": 8,
+        "s": 0.068
+       }
+      ],
+      "keywords": [
+       {
+        "k": "git",
+        "t": "git"
+       },
+       {
+        "k": "approved",
+        "t": "approved"
+       },
+       {
+        "k": "branch",
+        "t": "branch"
+       },
+       {
+        "k": "alex",
+        "t": "Alex"
+       }
+      ],
+      "terms": [
+       "alex",
+       "approved",
+       "branch",
+       "change",
+       "edits",
+       "git",
+       "separate"
+      ],
+      "issues": []
+     },
+     {
+      "id": "20260820-tests-before-done-odzd",
+      "rel": "2026/08/20260820-tests-before-done-odzd.md",
+      "path": "~/agent-memory-data/memories/2026/08/20260820-tests-before-done-odzd.md",
+      "hash": "083f06d4843171ec",
+      "raw": "---\nid: 20260820-tests-before-done-odzd\nname: tests-before-done\ntype: feedback\nscope: global\ndescription: Run the tests before saying a change works, and quote the failing output when they fail\ncreated: 2026-08-20T09:05:00+08:00\nsource:\n  tool: codex\n  session_id: 8e81973e-0bec-47b0-b898-d190f9ebdacc\n  session_name: etl-nightly-export\n  host: alex-laptop\n  cwd: /Users/alex/code/etl-jobs\n  git_root: /Users/alex/code/etl-jobs\n  git_remote: git.example.com/etl-jobs\n  git_branch: main\n---\nBefore saying a change works, run the project's tests (`pytest -q` in etl-jobs, `pnpm test` in shop-web).\n\n**Why:** twice a fix was reported as done while the suite was red.\n\n**How to apply:** paste the summary line; if anything fails, show the failing output instead of paraphrasing it.\n",
+      "meta": {
+       "id": "20260820-tests-before-done-odzd",
+       "name": "tests-before-done",
+       "type": "feedback",
+       "scope": "global",
+       "description": "Run the tests before saying a change works, and quote the failing output when they fail",
+       "created": "2026-08-20T09:05:00+08:00",
+       "source": {
+        "tool": "codex",
+        "session_id": "8e81973e-0bec-47b0-b898-d190f9ebdacc",
+        "session_name": "etl-nightly-export",
+        "host": "alex-laptop",
+        "cwd": "/Users/alex/code/etl-jobs",
+        "git_root": "/Users/alex/code/etl-jobs",
+        "git_remote": "git.example.com/etl-jobs",
+        "git_branch": "main"
+       }
+      },
+      "body": "Before saying a change works, run the project's tests (`pytest -q` in etl-jobs, `pnpm test` in shop-web).\n\n**Why:** twice a fix was reported as done while the suite was red.\n\n**How to apply:** paste the summary line; if anything fails, show the failing output instead of paraphrasing it.\n",
+      "description": "Run the tests before saying a change works, and quote the failing output when they fail",
+      "type": "feedback",
+      "scope": "global",
+      "place": "",
+      "tool": "codex",
+      "host": "alex-laptop",
+      "created": "2026-08-20T09:05:00+08:00",
+      "updated": "",
+      "similar": [
+       {
+        "i": 12,
+        "s": 0.319
+       },
+       {
+        "i": 10,
+        "s": 0.26
+       },
+       {
+        "i": 6,
+        "s": 0.246
+       },
+       {
+        "i": 8,
+        "s": 0.219
+       },
+       {
+        "i": 5,
+        "s": 0.208
+       },
+       {
+        "i": 11,
+        "s": 0.197
+       }
+      ],
+      "keywords": [
+       {
+        "k": "etl-jobs",
+        "t": "etl-jobs"
+       },
+       {
+        "k": "fix",
+        "t": "fix"
+       }
+      ],
+      "terms": [
+       "anything",
+       "change",
+       "etl-jobs",
+       "fail",
+       "fix"
+      ],
+      "issues": []
+     },
+     {
+      "id": "20260827-etl-orders-export-deadline-pft7",
+      "rel": "2026/08/20260827-etl-orders-export-deadline-pft7.md",
+      "path": "~/agent-memory-data/memories/2026/08/20260827-etl-orders-export-deadline-pft7.md",
+      "hash": "d9acd9c689b9550f",
+      "raw": "---\nid: 20260827-etl-orders-export-deadline-pft7\nname: etl-orders-export-deadline\ntype: project\nscope: here\ndescription: \"etl-jobs: the nightly orders export must finish before 06:00 because finance reads it at 06:30\"\ncreated: 2026-08-27T08:30:00+08:00\nsource:\n  tool: codex\n  session_id: 72e6cc3a-babc-4d20-97ee-05cde00902c7\n  session_name: etl-nightly-export\n  host: alex-laptop\n  cwd: /Users/alex/code/etl-jobs\n  git_root: /Users/alex/code/etl-jobs\n  git_remote: git.example.com/etl-jobs\n  git_branch: main\n---\nThe `orders_export` job in etl-jobs runs at 01:00 and must finish before 06:00 (Shanghai time); finance pulls the file at 06:30.\n\n**Why:** the daily revenue report is built from it; a late file delays that report for everyone.\n\n**How to apply:** do not add heavy steps to `orders_export`; anything slow goes in a separate job after 06:30.\n",
+      "meta": {
+       "id": "20260827-etl-orders-export-deadline-pft7",
+       "name": "etl-orders-export-deadline",
+       "type": "project",
+       "scope": "here",
+       "description": "etl-jobs: the nightly orders export must finish before 06:00 because finance reads it at 06:30",
+       "created": "2026-08-27T08:30:00+08:00",
+       "source": {
+        "tool": "codex",
+        "session_id": "72e6cc3a-babc-4d20-97ee-05cde00902c7",
+        "session_name": "etl-nightly-export",
+        "host": "alex-laptop",
+        "cwd": "/Users/alex/code/etl-jobs",
+        "git_root": "/Users/alex/code/etl-jobs",
+        "git_remote": "git.example.com/etl-jobs",
+        "git_branch": "main"
+       }
+      },
+      "body": "The `orders_export` job in etl-jobs runs at 01:00 and must finish before 06:00 (Shanghai time); finance pulls the file at 06:30.\n\n**Why:** the daily revenue report is built from it; a late file delays that report for everyone.\n\n**How to apply:** do not add heavy steps to `orders_export`; anything slow goes in a separate job after 06:30.\n",
+      "description": "etl-jobs: the nightly orders export must finish before 06:00 because finance reads it at 06:30",
+      "type": "project",
+      "scope": "here",
+      "place": "git.example.com/etl-jobs",
+      "tool": "codex",
+      "host": "alex-laptop",
+      "created": "2026-08-27T08:30:00+08:00",
+      "updated": "",
+      "similar": [
+       {
+        "i": 5,
+        "s": 0.895
+       },
+       {
+        "i": 6,
+        "s": 0.819
+       },
+       {
+        "i": 9,
+        "s": 0.551
+       },
+       {
+        "i": 3,
+        "s": 0.149
+       },
+       {
+        "i": 1,
+        "s": 0.076
+       },
+       {
+        "i": 12,
+        "s": 0.041
+       }
+      ],
+      "keywords": [
+       {
+        "k": "orders_export",
+        "t": "orders_export"
+       },
+       {
+        "k": "etl-jobs",
+        "t": "etl-jobs"
+       },
+       {
+        "k": "deadline",
+        "t": "deadline"
+       },
+       {
+        "k": "etl",
+        "t": "etl"
+       }
+      ],
+      "terms": [
+       "anything",
+       "deadline",
+       "etl",
+       "etl-jobs",
+       "job",
+       "orders_export",
+       "report",
+       "separate"
+      ],
+      "issues": []
+     },
+     {
+      "id": "20260828-etl-dashboard-72ce",
+      "rel": "2026/08/20260828-etl-dashboard-72ce.md",
+      "path": "~/agent-memory-data/memories/2026/08/20260828-etl-dashboard-72ce.md",
+      "hash": "1375abc95dba2364",
+      "raw": "---\nid: 20260828-etl-dashboard-72ce\nname: etl-dashboard\ntype: reference\nscope: global\ndescription: \"etl-jobs run history and alerts: the Grafana dashboard at grafana.example.com/d/etl-runs\"\ncreated: 2026-08-28T10:00:00+08:00\nsource:\n  tool: codex\n  session_id: ca02135e-92b1-43f2-8ede-0d7ac3baea9e\n  session_name: etl-nightly-export\n  host: alex-laptop\n  cwd: /Users/alex/code/etl-jobs\n  git_root: /Users/alex/code/etl-jobs\n  git_remote: git.example.com/etl-jobs\n  git_branch: main\n---\nRun history, durations and failure alerts for every etl-jobs job are on the Grafana dashboard `grafana.example.com/d/etl-runs`. The `orders_export` panel shows how close each night came to the 06:00 deadline ([[etl-orders-export-deadline]]).\n",
+      "meta": {
+       "id": "20260828-etl-dashboard-72ce",
+       "name": "etl-dashboard",
+       "type": "reference",
+       "scope": "global",
+       "description": "etl-jobs run history and alerts: the Grafana dashboard at grafana.example.com/d/etl-runs",
+       "created": "2026-08-28T10:00:00+08:00",
+       "source": {
+        "tool": "codex",
+        "session_id": "ca02135e-92b1-43f2-8ede-0d7ac3baea9e",
+        "session_name": "etl-nightly-export",
+        "host": "alex-laptop",
+        "cwd": "/Users/alex/code/etl-jobs",
+        "git_root": "/Users/alex/code/etl-jobs",
+        "git_remote": "git.example.com/etl-jobs",
+        "git_branch": "main"
+       }
+      },
+      "body": "Run history, durations and failure alerts for every etl-jobs job are on the Grafana dashboard `grafana.example.com/d/etl-runs`. The `orders_export` panel shows how close each night came to the 06:00 deadline ([[etl-orders-export-deadline]]).\n",
+      "description": "etl-jobs run history and alerts: the Grafana dashboard at grafana.example.com/d/etl-runs",
+      "type": "reference",
+      "scope": "global",
+      "place": "",
+      "tool": "codex",
+      "host": "alex-laptop",
+      "created": "2026-08-28T10:00:00+08:00",
+      "updated": "",
+      "similar": [
+       {
+        "i": 4,
+        "s": 0.895
+       },
+       {
+        "i": 6,
+        "s": 0.723
+       },
+       {
+        "i": 9,
+        "s": 0.58
+       },
+       {
+        "i": 12,
+        "s": 0.451
+       },
+       {
+        "i": 3,
+        "s": 0.208
+       },
+       {
+        "i": 10,
+        "s": 0.166
+       }
+      ],
+      "keywords": [
+       {
+        "k": "etl-jobs",
+        "t": "etl-jobs"
+       },
+       {
+        "k": "etl",
+        "t": "etl"
+       },
+       {
+        "k": "orders_export",
+        "t": "orders_export"
+       },
+       {
+        "k": "deadline",
+        "t": "deadline"
+       }
+      ],
+      "terms": [
+       "deadline",
+       "etl",
+       "etl-jobs",
+       "example",
+       "job",
+       "orders_export"
+      ],
+      "issues": []
+     },
+     {
+      "id": "20260902-report-eta-is2j",
+      "rel": "2026/09/20260902-report-eta-is2j.md",
+      "path": "~/agent-memory-data/memories/2026/09/20260902-report-eta-is2j.md",
+      "hash": "d541addecbcbcb3f",
+      "raw": "---\nid: 20260902-report-eta-is2j\nname: report-eta\ntype: feedback\nscope: global\ndescription: 长任务开跑时要报预计完成时间，用上海时间\ncreated: 2026-09-02T21:30:00+08:00\nsource:\n  tool: claude-code\n  session_id: 4ef8aa38-9227-4658-9e27-a1c08a6a63ec\n  session_name: etl-backfill\n  host: alex-laptop\n  cwd: /Users/alex/code/etl-jobs\n  git_root: /Users/alex/code/etl-jobs\n  git_remote: git.example.com/etl-jobs\n  git_branch: main\n---\n启动任何超过几分钟的任务（回填、训练、批量导出）时，先说还要多久、预计上海时间几点完成。\n\n**Why:** Alex 需要据此安排什么时候回来看结果。\n\n**How to apply:** 开跑时报一次，进度明显偏离时再更新一次。\n",
+      "meta": {
+       "id": "20260902-report-eta-is2j",
+       "name": "report-eta",
+       "type": "feedback",
+       "scope": "global",
+       "description": "长任务开跑时要报预计完成时间，用上海时间",
+       "created": "2026-09-02T21:30:00+08:00",
+       "source": {
+        "tool": "claude-code",
+        "session_id": "4ef8aa38-9227-4658-9e27-a1c08a6a63ec",
+        "session_name": "etl-backfill",
+        "host": "alex-laptop",
+        "cwd": "/Users/alex/code/etl-jobs",
+        "git_root": "/Users/alex/code/etl-jobs",
+        "git_remote": "git.example.com/etl-jobs",
+        "git_branch": "main"
+       }
+      },
+      "body": "启动任何超过几分钟的任务（回填、训练、批量导出）时，先说还要多久、预计上海时间几点完成。\n\n**Why:** Alex 需要据此安排什么时候回来看结果。\n\n**How to apply:** 开跑时报一次，进度明显偏离时再更新一次。\n",
+      "description": "长任务开跑时要报预计完成时间，用上海时间",
+      "type": "feedback",
+      "scope": "global",
+      "place": "",
+      "tool": "claude-code",
+      "host": "alex-laptop",
+      "created": "2026-09-02T21:30:00+08:00",
+      "updated": "",
+      "similar": [
+       {
+        "i": 4,
+        "s": 0.819
+       },
+       {
+        "i": 5,
+        "s": 0.723
+       },
+       {
+        "i": 1,
+        "s": 0.431
+       },
+       {
+        "i": 9,
+        "s": 0.293
+       },
+       {
+        "i": 3,
+        "s": 0.246
+       },
+       {
+        "i": 12,
+        "s": 0.139
+       }
+      ],
+      "keywords": [
+       {
+        "k": "report",
+        "t": "report"
+       },
+       {
+        "k": "alex",
+        "t": "Alex"
+       }
+      ],
+      "terms": [
+       "alex",
+       "report"
+      ],
+      "issues": []
+     },
+     {
+      "id": "20260908-shop-web-stripe-checkout-lgmx",
+      "rel": "2026/09/20260908-shop-web-stripe-checkout-lgmx.md",
+      "path": "~/agent-memory-data/memories/2026/09/20260908-shop-web-stripe-checkout-lgmx.md",
+      "hash": "21ffbba93ff1ddd8",
+      "raw": "---\nid: 20260908-shop-web-stripe-checkout-lgmx\nname: shop-web-stripe-checkout\ntype: project\nscope: here\ndescription: shop-web checkout moved to the Stripe Payment Element in September; the old Charges API code path is dead\ncreated: 2026-09-08T14:10:00+08:00\nsource:\n  tool: claude-code\n  session_id: 1012f037-b64c-4422-8c38-fb2918f135d2\n  session_name: shop-web-checkout\n  host: alex-laptop\n  cwd: /Users/alex/code/shop-web\n  git_root: /Users/alex/code/shop-web\n  git_remote: git.example.com/shop-web\n  git_branch: main\n---\nCheckout in shop-web now uses the Stripe Payment Element (`src/checkout/PaymentForm.tsx`). The old Charges API path in `src/legacy/charge.ts` is no longer called and is kept only until the v3 cleanup.\n\n**Why:** Charges API is deprecated, and 3-D Secure needed the Payment Element.\n\n**How to apply:** do not fix bugs in `src/legacy/`; change the Payment Element flow instead. See [[shop-web-deploys]] before shipping.\n",
+      "meta": {
+       "id": "20260908-shop-web-stripe-checkout-lgmx",
+       "name": "shop-web-stripe-checkout",
+       "type": "project",
+       "scope": "here",
+       "description": "shop-web checkout moved to the Stripe Payment Element in September; the old Charges API code path is dead",
+       "created": "2026-09-08T14:10:00+08:00",
+       "source": {
+        "tool": "claude-code",
+        "session_id": "1012f037-b64c-4422-8c38-fb2918f135d2",
+        "session_name": "shop-web-checkout",
+        "host": "alex-laptop",
+        "cwd": "/Users/alex/code/shop-web",
+        "git_root": "/Users/alex/code/shop-web",
+        "git_remote": "git.example.com/shop-web",
+        "git_branch": "main"
+       }
+      },
+      "body": "Checkout in shop-web now uses the Stripe Payment Element (`src/checkout/PaymentForm.tsx`). The old Charges API path in `src/legacy/charge.ts` is no longer called and is kept only until the v3 cleanup.\n\n**Why:** Charges API is deprecated, and 3-D Secure needed the Payment Element.\n\n**How to apply:** do not fix bugs in `src/legacy/`; change the Payment Element flow instead. See [[shop-web-deploys]] before shipping.\n",
+      "description": "shop-web checkout moved to the Stripe Payment Element in September; the old Charges API code path is dead",
+      "type": "project",
+      "scope": "here",
+      "place": "git.example.com/shop-web",
+      "tool": "claude-code",
+      "host": "alex-laptop",
+      "created": "2026-09-08T14:10:00+08:00",
+      "updated": "",
+      "similar": [
+       {
+        "i": 12,
+        "s": 1.0
+       },
+       {
+        "i": 11,
+        "s": 0.66
+       },
+       {
+        "i": 8,
+        "s": 0.477
+       },
+       {
+        "i": 10,
+        "s": 0.244
+       },
+       {
+        "i": 3,
+        "s": 0.105
+       },
+       {
+        "i": 9,
+        "s": 0.082
+       }
+      ],
+      "keywords": [
+       {
+        "k": "checkout",
+        "t": "checkout"
+       },
+       {
+        "k": "stripe",
+        "t": "Stripe"
+       },
+       {
+        "k": "payment",
+        "t": "Payment"
+       },
+       {
+        "k": "web",
+        "t": "web"
+       }
+      ],
+      "terms": [
+       "change",
+       "checkout",
+       "code",
+       "fix",
+       "flow",
+       "payment",
+       "shop",
+       "shop-web-deploys",
+       "stripe",
+       "web"
+      ],
+      "issues": []
+     },
+     {
+      "id": "20260910-shop-web-deploys-dn73",
+      "rel": "2026/09/20260910-shop-web-deploys-dn73.md",
+      "path": "~/agent-memory-data/memories/2026/09/20260910-shop-web-deploys-dn73.md",
+      "hash": "e910ea312db27cee",
+      "raw": "---\nid: 20260910-shop-web-deploys-dn73\nname: shop-web-deploys\ntype: project\nscope: here\ndescription: \"shop-web: staging deploys from the release branch, production only from version tags\"\ncreated: 2026-09-10T11:00:00+08:00\nupdated: 2026-10-03T10:05:00+08:00\nsource:\n  tool: codex\n  session_id: 95e761d1-7731-4f10-906b-f2efc6f87718\n  session_name: shop-web-release\n  host: alex-laptop\n  cwd: /Users/alex/code/shop-web\n  git_root: /Users/alex/code/shop-web\n  git_remote: git.example.com/shop-web\n  git_branch: main\n---\nshop-web staging deploys automatically from the `release` branch. Production deploys only from tags like `v2.14.0`, cut from `release` after QA signs off.\n\n**Why:** QA signs off on what runs in staging, and a tag pins exactly the build they approved.\n\n**How to apply:** never tag from `main`; open the release PR into `release` first.\n",
+      "meta": {
+       "id": "20260910-shop-web-deploys-dn73",
+       "name": "shop-web-deploys",
+       "type": "project",
+       "scope": "here",
+       "description": "shop-web: staging deploys from the release branch, production only from version tags",
+       "created": "2026-09-10T11:00:00+08:00",
+       "updated": "2026-10-03T10:05:00+08:00",
+       "source": {
+        "tool": "codex",
+        "session_id": "95e761d1-7731-4f10-906b-f2efc6f87718",
+        "session_name": "shop-web-release",
+        "host": "alex-laptop",
+        "cwd": "/Users/alex/code/shop-web",
+        "git_root": "/Users/alex/code/shop-web",
+        "git_remote": "git.example.com/shop-web",
+        "git_branch": "main"
+       }
+      },
+      "body": "shop-web staging deploys automatically from the `release` branch. Production deploys only from tags like `v2.14.0`, cut from `release` after QA signs off.\n\n**Why:** QA signs off on what runs in staging, and a tag pins exactly the build they approved.\n\n**How to apply:** never tag from `main`; open the release PR into `release` first.\n",
+      "description": "shop-web: staging deploys from the release branch, production only from version tags",
+      "type": "project",
+      "scope": "here",
+      "place": "git.example.com/shop-web",
+      "tool": "codex",
+      "host": "alex-laptop",
+      "created": "2026-09-10T11:00:00+08:00",
+      "updated": "2026-10-03T10:05:00+08:00",
+      "similar": [
+       {
+        "i": 11,
+        "s": 0.664
+       },
+       {
+        "i": 7,
+        "s": 0.477
+       },
+       {
+        "i": 10,
+        "s": 0.296
+       },
+       {
+        "i": 3,
+        "s": 0.219
+       },
+       {
+        "i": 12,
+        "s": 0.181
+       },
+       {
+        "i": 2,
+        "s": 0.068
+       }
+      ],
+      "keywords": [
+       {
+        "k": "deploys",
+        "t": "deploys"
+       },
+       {
+        "k": "release",
+        "t": "release"
+       },
+       {
+        "k": "branch",
+        "t": "branch"
+       },
+       {
+        "k": "web",
+        "t": "web"
+       }
+      ],
+      "terms": [
+       "approved",
+       "branch",
+       "deploys",
+       "pr",
+       "release",
+       "shop",
+       "web"
+      ],
+      "issues": []
+     },
+     {
+      "id": "20260915-etl-parquet-partitioning-seh2",
+      "rel": "2026/09/20260915-etl-parquet-partitioning-seh2.md",
+      "path": "~/agent-memory-data/memories/2026/09/20260915-etl-parquet-partitioning-seh2.md",
+      "hash": "39431188d006aed8",
+      "raw": "---\nid: 20260915-etl-parquet-partitioning-seh2\nname: etl-parquet-partitioning\ntype: project\nscope: here\ndescription: etl-jobs 的 Parquet 按日期分区而不是按客户；改分区前要先迁移历史数据\ncreated: 2026-09-15T19:20:00+08:00\nsource:\n  tool: claude-code\n  session_id: 26e87555-5790-482e-81d3-fcff2a3af4d4\n  session_name: etl-backfill\n  host: alex-laptop\n  cwd: /Users/alex/code/etl-jobs\n  git_root: /Users/alex/code/etl-jobs\n  git_remote: git.example.com/etl-jobs\n  git_branch: main\n---\netl-jobs 写出的 Parquet 按 `dt=YYYY-MM-DD` 分区，不按客户分区。下游报表都假设这个布局。\n\n**Why:** 按客户分区会产生上万个小文件，查询反而变慢。\n\n**How to apply:** 想改分区方式，先写迁移脚本处理历史数据，再改写入逻辑。\n",
+      "meta": {
+       "id": "20260915-etl-parquet-partitioning-seh2",
+       "name": "etl-parquet-partitioning",
+       "type": "project",
+       "scope": "here",
+       "description": "etl-jobs 的 Parquet 按日期分区而不是按客户；改分区前要先迁移历史数据",
+       "created": "2026-09-15T19:20:00+08:00",
+       "source": {
+        "tool": "claude-code",
+        "session_id": "26e87555-5790-482e-81d3-fcff2a3af4d4",
+        "session_name": "etl-backfill",
+        "host": "alex-laptop",
+        "cwd": "/Users/alex/code/etl-jobs",
+        "git_root": "/Users/alex/code/etl-jobs",
+        "git_remote": "git.example.com/etl-jobs",
+        "git_branch": "main"
+       }
+      },
+      "body": "etl-jobs 写出的 Parquet 按 `dt=YYYY-MM-DD` 分区，不按客户分区。下游报表都假设这个布局。\n\n**Why:** 按客户分区会产生上万个小文件，查询反而变慢。\n\n**How to apply:** 想改分区方式，先写迁移脚本处理历史数据，再改写入逻辑。\n",
+      "description": "etl-jobs 的 Parquet 按日期分区而不是按客户；改分区前要先迁移历史数据",
+      "type": "project",
+      "scope": "here",
+      "place": "git.example.com/etl-jobs",
+      "tool": "claude-code",
+      "host": "alex-laptop",
+      "created": "2026-09-15T19:20:00+08:00",
+      "updated": "",
+      "similar": [
+       {
+        "i": 5,
+        "s": 0.58
+       },
+       {
+        "i": 4,
+        "s": 0.551
+       },
+       {
+        "i": 6,
+        "s": 0.293
+       },
+       {
+        "i": 11,
+        "s": 0.127
+       },
+       {
+        "i": 7,
+        "s": 0.082
+       }
+      ],
+      "keywords": [
+       {
+        "k": "etl-jobs",
+        "t": "etl-jobs"
+       },
+       {
+        "k": "etl",
+        "t": "etl"
+       }
+      ],
+      "terms": [
+       "etl",
+       "etl-jobs"
+      ],
+      "issues": []
+     },
+     {
+      "id": "20260922-design-tokens-source-uvw7",
+      "rel": "2026/09/20260922-design-tokens-source-uvw7.md",
+      "path": "~/agent-memory-data/memories/2026/09/20260922-design-tokens-source-uvw7.md",
+      "hash": "36a11fa348f73d8f",
+      "raw": "---\nid: 20260922-design-tokens-source-uvw7\nname: design-tokens-source\ntype: reference\nscope: global\ndescription: Design tokens (colours, spacing, type) live in git.example.com/design-tokens and sync into shop-web weekly\ncreated: 2026-09-22T13:15:00+08:00\nsource:\n  tool: claude-code\n  session_id: 119a72d1-74c9-4f6a-8c01-1cdd9474031b\n  session_name: shop-web-theme\n  host: alex-laptop\n  cwd: /Users/alex/code/shop-web\n  git_root: /Users/alex/code/shop-web\n  git_remote: git.example.com/shop-web\n  git_branch: main\n---\nColours, spacing and type scales come from `git.example.com/design-tokens`. A weekly bot PR copies them into `shop-web/src/theme/tokens.ts`.\n\n**How to apply:** change tokens in design-tokens, not in shop-web; local edits are overwritten by the next sync.\n",
+      "meta": {
+       "id": "20260922-design-tokens-source-uvw7",
+       "name": "design-tokens-source",
+       "type": "reference",
+       "scope": "global",
+       "description": "Design tokens (colours, spacing, type) live in git.example.com/design-tokens and sync into shop-web weekly",
+       "created": "2026-09-22T13:15:00+08:00",
+       "source": {
+        "tool": "claude-code",
+        "session_id": "119a72d1-74c9-4f6a-8c01-1cdd9474031b",
+        "session_name": "shop-web-theme",
+        "host": "alex-laptop",
+        "cwd": "/Users/alex/code/shop-web",
+        "git_root": "/Users/alex/code/shop-web",
+        "git_remote": "git.example.com/shop-web",
+        "git_branch": "main"
+       }
+      },
+      "body": "Colours, spacing and type scales come from `git.example.com/design-tokens`. A weekly bot PR copies them into `shop-web/src/theme/tokens.ts`.\n\n**How to apply:** change tokens in design-tokens, not in shop-web; local edits are overwritten by the next sync.\n",
+      "description": "Design tokens (colours, spacing, type) live in git.example.com/design-tokens and sync into shop-web weekly",
+      "type": "reference",
+      "scope": "global",
+      "place": "",
+      "tool": "claude-code",
+      "host": "alex-laptop",
+      "created": "2026-09-22T13:15:00+08:00",
+      "updated": "",
+      "similar": [
+       {
+        "i": 12,
+        "s": 0.47
+       },
+       {
+        "i": 11,
+        "s": 0.359
+       },
+       {
+        "i": 8,
+        "s": 0.296
+       },
+       {
+        "i": 3,
+        "s": 0.26
+       },
+       {
+        "i": 7,
+        "s": 0.244
+       },
+       {
+        "i": 5,
+        "s": 0.166
+       }
+      ],
+      "keywords": [
+       {
+        "k": "git",
+        "t": "git"
+       },
+       {
+        "k": "pr",
+        "t": "PR"
+       }
+      ],
+      "terms": [
+       "change",
+       "edits",
+       "example",
+       "git",
+       "pr"
+      ],
+      "issues": []
+     },
+     {
+      "id": "20261002-shop-web-v3-freeze-5xtp",
+      "rel": "2026/10/20261002-shop-web-v3-freeze-5xtp.md",
+      "path": "~/agent-memory-data/memories/2026/10/20261002-shop-web-v3-freeze-5xtp.md",
+      "hash": "f22668026954a585",
+      "raw": "---\nid: 20261002-shop-web-v3-freeze-5xtp\nname: shop-web-v3-freeze\ntype: project\nscope: here\ndescription: \"shop-web v3 feature freeze on 2026-11-01: no schema migrations after that date\"\ncreated: 2026-10-02T16:45:00+08:00\nsource:\n  tool: claude-code\n  session_id: c7a2ea20-b2f1-4c94-ae05-319acb5c7427\n  session_name: shop-web-v3-plan\n  host: alex-laptop\n  cwd: /Users/alex/code/shop-web\n  git_root: /Users/alex/code/shop-web\n  git_remote: git.example.com/shop-web\n  git_branch: main\n---\nFeature freeze for shop-web v3 is 2026-11-01. After that only bug fixes land; no database schema migrations until the v3 release.\n\n**Why:** the data team snapshots the schema for the Q4 reporting work.\n\n**How to apply:** if a change needs a migration, flag it before the freeze. Release flow: [[shop-web-deploys]].\n",
+      "meta": {
+       "id": "20261002-shop-web-v3-freeze-5xtp",
+       "name": "shop-web-v3-freeze",
+       "type": "project",
+       "scope": "here",
+       "description": "shop-web v3 feature freeze on 2026-11-01: no schema migrations after that date",
+       "created": "2026-10-02T16:45:00+08:00",
+       "source": {
+        "tool": "claude-code",
+        "session_id": "c7a2ea20-b2f1-4c94-ae05-319acb5c7427",
+        "session_name": "shop-web-v3-plan",
+        "host": "alex-laptop",
+        "cwd": "/Users/alex/code/shop-web",
+        "git_root": "/Users/alex/code/shop-web",
+        "git_remote": "git.example.com/shop-web",
+        "git_branch": "main"
+       }
+      },
+      "body": "Feature freeze for shop-web v3 is 2026-11-01. After that only bug fixes land; no database schema migrations until the v3 release.\n\n**Why:** the data team snapshots the schema for the Q4 reporting work.\n\n**How to apply:** if a change needs a migration, flag it before the freeze. Release flow: [[shop-web-deploys]].\n",
+      "description": "shop-web v3 feature freeze on 2026-11-01: no schema migrations after that date",
+      "type": "project",
+      "scope": "here",
+      "place": "git.example.com/shop-web",
+      "tool": "claude-code",
+      "host": "alex-laptop",
+      "created": "2026-10-02T16:45:00+08:00",
+      "updated": "",
+      "similar": [
+       {
+        "i": 8,
+        "s": 0.664
+       },
+       {
+        "i": 7,
+        "s": 0.66
+       },
+       {
+        "i": 10,
+        "s": 0.359
+       },
+       {
+        "i": 12,
+        "s": 0.357
+       },
+       {
+        "i": 3,
+        "s": 0.197
+       },
+       {
+        "i": 9,
+        "s": 0.127
+       }
+      ],
+      "keywords": [
+       {
+        "k": "web",
+        "t": "web"
+       },
+       {
+        "k": "shop",
+        "t": "shop"
+       },
+       {
+        "k": "release",
+        "t": "release"
+       },
+       {
+        "k": "shop-web-deploys",
+        "t": "shop-web-deploys"
+       }
+      ],
+      "terms": [
+       "change",
+       "data",
+       "flow",
+       "release",
+       "shop",
+       "shop-web-deploys",
+       "web"
+      ],
+      "issues": []
+     },
+     {
+      "id": "20261012-payments-runbook-4syw",
+      "rel": "2026/10/20261012-payments-runbook-4syw.md",
+      "path": "~/agent-memory-data/memories/2026/10/20261012-payments-runbook-4syw.md",
+      "hash": "803f1ee3254e5011",
+      "raw": "---\nid: 20261012-payments-runbook-4syw\nname: payments-runbook\ntype: reference\nscope: global\ndescription: \"On-call runbook for payment failures: docs.example.com/runbooks/payments\"\ncreated: 2026-10-12T09:40:00+08:00\nsource:\n  tool: codex\n  session_id: 5affb229-7631-4992-b0ce-583505c6af07\n  session_name: shop-web-oncall\n  host: alex-laptop\n  cwd: /Users/alex/code/shop-web\n  git_root: /Users/alex/code/shop-web\n  git_remote: git.example.com/shop-web\n  git_branch: main\n---\nWhen checkout payments fail, follow `docs.example.com/runbooks/payments`: check the Stripe status page, then the webhook queue, then recent shop-web deploys. Background: [[shop-web-stripe-checkout]].\n",
+      "meta": {
+       "id": "20261012-payments-runbook-4syw",
+       "name": "payments-runbook",
+       "type": "reference",
+       "scope": "global",
+       "description": "On-call runbook for payment failures: docs.example.com/runbooks/payments",
+       "created": "2026-10-12T09:40:00+08:00",
+       "source": {
+        "tool": "codex",
+        "session_id": "5affb229-7631-4992-b0ce-583505c6af07",
+        "session_name": "shop-web-oncall",
+        "host": "alex-laptop",
+        "cwd": "/Users/alex/code/shop-web",
+        "git_root": "/Users/alex/code/shop-web",
+        "git_remote": "git.example.com/shop-web",
+        "git_branch": "main"
+       }
+      },
+      "body": "When checkout payments fail, follow `docs.example.com/runbooks/payments`: check the Stripe status page, then the webhook queue, then recent shop-web deploys. Background: [[shop-web-stripe-checkout]].\n",
+      "description": "On-call runbook for payment failures: docs.example.com/runbooks/payments",
+      "type": "reference",
+      "scope": "global",
+      "place": "",
+      "tool": "codex",
+      "host": "alex-laptop",
+      "created": "2026-10-12T09:40:00+08:00",
+      "updated": "",
+      "similar": [
+       {
+        "i": 7,
+        "s": 1.0
+       },
+       {
+        "i": 10,
+        "s": 0.47
+       },
+       {
+        "i": 5,
+        "s": 0.451
+       },
+       {
+        "i": 11,
+        "s": 0.357
+       },
+       {
+        "i": 3,
+        "s": 0.319
+       },
+       {
+        "i": 8,
+        "s": 0.181
+       }
+      ],
+      "keywords": [
+       {
+        "k": "payment",
+        "t": "Payment"
+       },
+       {
+        "k": "checkout",
+        "t": "checkout"
+       },
+       {
+        "k": "deploys",
+        "t": "deploys"
+       },
+       {
+        "k": "stripe",
+        "t": "Stripe"
+       }
+      ],
+      "terms": [
+       "checkout",
+       "deploys",
+       "example",
+       "fail",
+       "payment",
+       "stripe"
+      ],
+      "issues": []
+     }
+    ],
+    "method": "Qwen3-Embedding-0.6B (int8 ONNX), local",
+    "semantic": true,
+    "places": [
+     {
+      "key": "git.example.com/shop-web",
+      "count": 3,
+      "ctx": {
+       "cwd": "/Users/alex/code/shop-web",
+       "git_root": "/Users/alex/code/shop-web",
+       "git_remote": "git.example.com/shop-web",
+       "git_branch": "main",
+       "host": "alex-laptop"
+      }
+     },
+     {
+      "key": "git.example.com/etl-jobs",
+      "count": 2,
+      "ctx": {
+       "cwd": "/Users/alex/code/etl-jobs",
+       "git_root": "/Users/alex/code/etl-jobs",
+       "git_remote": "git.example.com/etl-jobs",
+       "git_branch": "main",
+       "host": "alex-laptop"
+      }
+     }
+    ],
+    "stamp": "a248460::13:1792226757972187690",
+    "sync": {
+     "remote": true,
+     "ahead": 0
+    }
+   },
+   "activity": {
+    "commits": [
+     {
+      "sha": "a248460357",
+      "date": "2026-10-12T09:40:00+08:00",
+      "subject": "memory: +1 ~0 -0 (codex: shop-web-oncall)",
+      "tool": "codex",
+      "added": 1,
+      "changed": 0,
+      "deleted": 0
+     },
+     {
+      "sha": "c9bc69194a",
+      "date": "2026-10-03T10:05:00+08:00",
+      "subject": "memory: +0 ~1 -0 (codex: shop-web-release)",
+      "tool": "codex",
+      "added": 0,
+      "changed": 1,
+      "deleted": 0
+     },
+     {
+      "sha": "1e841c158f",
+      "date": "2026-10-02T16:45:00+08:00",
+      "subject": "memory: +1 ~0 -0 (claude-code: shop-web-v3-plan)",
+      "tool": "claude-code",
+      "added": 1,
+      "changed": 0,
+      "deleted": 0
+     },
+     {
+      "sha": "7e3b43e966",
+      "date": "2026-09-22T13:15:00+08:00",
+      "subject": "memory: +1 ~0 -0 (claude-code: shop-web-theme)",
+      "tool": "claude-code",
+      "added": 1,
+      "changed": 0,
+      "deleted": 0
+     },
+     {
+      "sha": "58e1ce9297",
+      "date": "2026-09-15T19:20:00+08:00",
+      "subject": "memory: +1 ~0 -0 (claude-code: etl-backfill)",
+      "tool": "claude-code",
+      "added": 1,
+      "changed": 0,
+      "deleted": 0
+     },
+     {
+      "sha": "4e369c442d",
+      "date": "2026-09-10T11:00:00+08:00",
+      "subject": "memory: +1 ~0 -0 (codex: shop-web-release)",
+      "tool": "codex",
+      "added": 1,
+      "changed": 0,
+      "deleted": 0
+     },
+     {
+      "sha": "ad25c42a85",
+      "date": "2026-09-08T14:10:00+08:00",
+      "subject": "memory: +1 ~0 -0 (claude-code: shop-web-checkout)",
+      "tool": "claude-code",
+      "added": 1,
+      "changed": 0,
+      "deleted": 0
+     },
+     {
+      "sha": "1d17ad39c2",
+      "date": "2026-09-02T21:30:00+08:00",
+      "subject": "memory: +1 ~0 -0 (claude-code: etl-backfill)",
+      "tool": "claude-code",
+      "added": 1,
+      "changed": 0,
+      "deleted": 0
+     },
+     {
+      "sha": "d1b7c50bde",
+      "date": "2026-08-28T10:00:00+08:00",
+      "subject": "memory: +1 ~0 -0 (codex: etl-nightly-export)",
+      "tool": "codex",
+      "added": 1,
+      "changed": 0,
+      "deleted": 0
+     },
+     {
+      "sha": "1f26c0158a",
+      "date": "2026-08-27T08:30:00+08:00",
+      "subject": "memory: +1 ~0 -0 (codex: etl-nightly-export)",
+      "tool": "codex",
+      "added": 1,
+      "changed": 0,
+      "deleted": 0
+     },
+     {
+      "sha": "7655f45182",
+      "date": "2026-08-20T09:05:00+08:00",
+      "subject": "memory: +1 ~0 -0 (codex: etl-nightly-export)",
+      "tool": "codex",
+      "added": 1,
+      "changed": 0,
+      "deleted": 0
+     },
+     {
+      "sha": "9fc4370fd7",
+      "date": "2026-08-12T15:40:00+08:00",
+      "subject": "memory: +1 ~0 -0 (claude-code: shop-web-checkout)",
+      "tool": "claude-code",
+      "added": 1,
+      "changed": 0,
+      "deleted": 0
+     },
+     {
+      "sha": "c52633c60b",
+      "date": "2026-08-04T10:20:00+08:00",
+      "subject": "memory: +1 ~0 -0 (codex: 整理开发环境)",
+      "tool": "codex",
+      "added": 1,
+      "changed": 0,
+      "deleted": 0
+     },
+     {
+      "sha": "d4a02ca8b7",
+      "date": "2026-08-04T10:12:00+08:00",
+      "subject": "memory: +1 ~0 -0 (claude-code: set-up-laptop)",
+      "tool": "claude-code",
+      "added": 1,
+      "changed": 0,
+      "deleted": 0
+     }
+    ]
+   },
+   "previews": {
+    "": {
+     "text": "# Shared memory index\nprofile: Quiet Harbor (other profiles' memories are kept apart and not listed here)\nmemories: ~/agent-memory-data/memories\nstaging (write new memories here): ~/agent-memory-data/staging/<session>\nmem: ~/.local/bin/mem\nlocation: cwd=?, host=?\n\n## Global (8)\n- [user] Alex 在上海；对话默认用中文回复，代码、注释和提交信息用英文 → 2026/08/20260804-reply-language-xdnc.md\n- [user] Alex is a backend engineer working mostly in Python and TypeScript; prefers short answers with the code first → 2026/08/20260804-alex-profile-ujzd.md\n- [feedback] 长任务开跑时要报预计完成时间，用上海时间 → 2026/09/20260902-report-eta-is2j.md\n- [feedback] Run the tests before saying a change works, and quote the failing output when they fail → 2026/08/20260820-tests-before-done-odzd.md\n- [feedback] Ask before every git push, and keep each commit to one change → 2026/08/20260812-ask-before-push-pf3d.md\n- [reference] On-call runbook for payment failures: docs.example.com/runbooks/payments → 2026/10/20261012-payments-runbook-4syw.md\n- [reference] Design tokens (colours, spacing, type) live in git.example.com/design-tokens and sync into shop-web weekly → 2026/09/20260922-design-tokens-source-uvw7.md\n- [reference] etl-jobs run history and alerts: the Grafana dashboard at grafana.example.com/d/etl-runs → 2026/08/20260828-etl-dashboard-72ce.md\n\n## This location (0)\n(none)\n",
+     "chars": 1492,
+     "limit": 10000,
+     "global": 8,
+     "here": 0
+    },
+    "git.example.com/shop-web": {
+     "text": "# Shared memory index\nprofile: Quiet Harbor (other profiles' memories are kept apart and not listed here)\nmemories: ~/agent-memory-data/memories\nstaging (write new memories here): ~/agent-memory-data/staging/<session>\nmem: ~/.local/bin/mem\nlocation: cwd=/Users/alex/code/shop-web, remote=git.example.com/shop-web, host=alex-laptop\n\n## Global (8)\n- [user] Alex 在上海；对话默认用中文回复，代码、注释和提交信息用英文 → 2026/08/20260804-reply-language-xdnc.md\n- [user] Alex is a backend engineer working mostly in Python and TypeScript; prefers short answers with the code first → 2026/08/20260804-alex-profile-ujzd.md\n- [feedback] 长任务开跑时要报预计完成时间，用上海时间 → 2026/09/20260902-report-eta-is2j.md\n- [feedback] Run the tests before saying a change works, and quote the failing output when they fail → 2026/08/20260820-tests-before-done-odzd.md\n- [feedback] Ask before every git push, and keep each commit to one change → 2026/08/20260812-ask-before-push-pf3d.md\n- [reference] On-call runbook for payment failures: docs.example.com/runbooks/payments → 2026/10/20261012-payments-runbook-4syw.md\n- [reference] Design tokens (colours, spacing, type) live in git.example.com/design-tokens and sync into shop-web weekly → 2026/09/20260922-design-tokens-source-uvw7.md\n- [reference] etl-jobs run history and alerts: the Grafana dashboard at grafana.example.com/d/etl-runs → 2026/08/20260828-etl-dashboard-72ce.md\n\n## This location (3)\n- [project] shop-web: staging deploys from the release branch, production only from version tags → 2026/09/20260910-shop-web-deploys-dn73.md\n- [project] shop-web v3 feature freeze on 2026-11-01: no schema migrations after that date → 2026/10/20261002-shop-web-v3-freeze-5xtp.md\n- [project] shop-web checkout moved to the Stripe Payment Element in September; the old Charges API code path is dead → 2026/09/20260908-shop-web-stripe-checkout-lgmx.md\n",
+     "chars": 2000,
+     "limit": 10000,
+     "global": 8,
+     "here": 3
+    },
+    "git.example.com/etl-jobs": {
+     "text": "# Shared memory index\nprofile: Quiet Harbor (other profiles' memories are kept apart and not listed here)\nmemories: ~/agent-memory-data/memories\nstaging (write new memories here): ~/agent-memory-data/staging/<session>\nmem: ~/.local/bin/mem\nlocation: cwd=/Users/alex/code/etl-jobs, remote=git.example.com/etl-jobs, host=alex-laptop\n\n## Global (8)\n- [user] Alex 在上海；对话默认用中文回复，代码、注释和提交信息用英文 → 2026/08/20260804-reply-language-xdnc.md\n- [user] Alex is a backend engineer working mostly in Python and TypeScript; prefers short answers with the code first → 2026/08/20260804-alex-profile-ujzd.md\n- [feedback] 长任务开跑时要报预计完成时间，用上海时间 → 2026/09/20260902-report-eta-is2j.md\n- [feedback] Run the tests before saying a change works, and quote the failing output when they fail → 2026/08/20260820-tests-before-done-odzd.md\n- [feedback] Ask before every git push, and keep each commit to one change → 2026/08/20260812-ask-before-push-pf3d.md\n- [reference] On-call runbook for payment failures: docs.example.com/runbooks/payments → 2026/10/20261012-payments-runbook-4syw.md\n- [reference] Design tokens (colours, spacing, type) live in git.example.com/design-tokens and sync into shop-web weekly → 2026/09/20260922-design-tokens-source-uvw7.md\n- [reference] etl-jobs run history and alerts: the Grafana dashboard at grafana.example.com/d/etl-runs → 2026/08/20260828-etl-dashboard-72ce.md\n\n## This location (2)\n- [project] etl-jobs 的 Parquet 按日期分区而不是按客户；改分区前要先迁移历史数据 → 2026/09/20260915-etl-parquet-partitioning-seh2.md\n- [project] etl-jobs: the nightly orders export must finish before 06:00 because finance reads it at 06:30 → 2026/08/20260827-etl-orders-export-deadline-pft7.md\n",
+     "chars": 1821,
+     "limit": 10000,
+     "global": 8,
+     "here": 2
+    }
+   },
+   "settings": {
+    "version": "0.1.7",
+    "dataDir": "~/agent-memory-data",
+    "name": "agent-memory-data",
+    "lastCommit": "2026-10-12T09:40:00+08:00",
+    "remote": "git.example.com/agent-memory-data",
+    "remoteUrl": null,
+    "sync": {
+     "remote": true,
+     "ahead": 0
+    },
+    "keywordStopwords": [],
+    "model": {
+     "name": "Qwen3-Embedding-0.6B (int8 ONNX)",
+     "ready": true,
+     "dir": "~/.cache/agent-memory/models/qwen3-embedding-0.6b-int8",
+     "fetch": "mem ui --fetch-model",
+     "size": "about 625 MB"
+    },
+    "semantic": true
+   },
+   "search": {
+    "payments are failing": {
+     "hits": [
+      {
+       "id": "20261012-payments-runbook-4syw",
+       "s": 0.6
+      },
+      {
+       "id": "20260908-shop-web-stripe-checkout-lgmx",
+       "s": 0.475
+      },
+      {
+       "id": "20260827-etl-orders-export-deadline-pft7",
+       "s": 0.36
+      },
+      {
+       "id": "20261002-shop-web-v3-freeze-5xtp",
+       "s": 0.356
+      },
+      {
+       "id": "20260820-tests-before-done-odzd",
+       "s": 0.355
+      },
+      {
+       "id": "20260828-etl-dashboard-72ce",
+       "s": 0.337
+      },
+      {
+       "id": "20260915-etl-parquet-partitioning-seh2",
+       "s": 0.331
+      },
+      {
+       "id": "20260902-report-eta-is2j",
+       "s": 0.312
+      }
+     ],
+     "semantic": true
+    },
+    "partition the data": {
+     "hits": [
+      {
+       "id": "20260915-etl-parquet-partitioning-seh2",
+       "s": 0.571
+      },
+      {
+       "id": "20260828-etl-dashboard-72ce",
+       "s": 0.311
+      },
+      {
+       "id": "20261002-shop-web-v3-freeze-5xtp",
+       "s": 0.304
+      },
+      {
+       "id": "20260902-report-eta-is2j",
+       "s": 0.289
+      },
+      {
+       "id": "20260922-design-tokens-source-uvw7",
+       "s": 0.275
+      },
+      {
+       "id": "20260804-alex-profile-ujzd",
+       "s": 0.268
+      },
+      {
+       "id": "20260908-shop-web-stripe-checkout-lgmx",
+       "s": 0.259
+      },
+      {
+       "id": "20260910-shop-web-deploys-dn73",
+       "s": 0.255
+      }
+     ],
+     "semantic": true
+    },
+    "部署": {
+     "hits": [
+      {
+       "id": "20260910-shop-web-deploys-dn73",
+       "s": 0.363
+      },
+      {
+       "id": "20260902-report-eta-is2j",
+       "s": 0.318
+      },
+      {
+       "id": "20260828-etl-dashboard-72ce",
+       "s": 0.312
+      },
+      {
+       "id": "20260804-reply-language-xdnc",
+       "s": 0.31
+      },
+      {
+       "id": "20260922-design-tokens-source-uvw7",
+       "s": 0.303
+      },
+      {
+       "id": "20260915-etl-parquet-partitioning-seh2",
+       "s": 0.295
+      },
+      {
+       "id": "20261002-shop-web-v3-freeze-5xtp",
+       "s": 0.29
+      },
+      {
+       "id": "20260804-alex-profile-ujzd",
+       "s": 0.278
+      }
+     ],
+     "semantic": true
+    },
+    "数据库迁移": {
+     "hits": [
+      {
+       "id": "20260915-etl-parquet-partitioning-seh2",
+       "s": 0.473
+      },
+      {
+       "id": "20261002-shop-web-v3-freeze-5xtp",
+       "s": 0.444
+      },
+      {
+       "id": "20260828-etl-dashboard-72ce",
+       "s": 0.325
+      },
+      {
+       "id": "20260804-alex-profile-ujzd",
+       "s": 0.323
+      },
+      {
+       "id": "20260922-design-tokens-source-uvw7",
+       "s": 0.3
+      },
+      {
+       "id": "20260902-report-eta-is2j",
+       "s": 0.296
+      },
+      {
+       "id": "20260910-shop-web-deploys-dn73",
+       "s": 0.292
+      },
+      {
+       "id": "20260908-shop-web-stripe-checkout-lgmx",
+       "s": 0.288
+      }
+     ],
+     "semantic": true
+    }
+   }
   },
-  "git.example.com/shop-web": {
-   "text": "# Shared memory index\nmemories: ~/agent-memory-data/memories\nstaging (write new memories here): ~/agent-memory-data/staging/<session>\nmem: ~/.local/bin/mem\nlocation: cwd=/Users/alex/code/shop-web, remote=git.example.com/shop-web, host=alex-laptop\n\n## Global (8)\n- [user] Alex 在上海；对话默认用中文回复，代码、注释和提交信息用英文 → 2026/08/20260804-reply-language-xdnc.md\n- [user] Alex is a backend engineer working mostly in Python and TypeScript; prefers short answers with the code first → 2026/08/20260804-alex-profile-ujzd.md\n- [feedback] 长任务开跑时要报预计完成时间，用上海时间 → 2026/09/20260902-report-eta-is2j.md\n- [feedback] Run the tests before saying a change works, and quote the failing output when they fail → 2026/08/20260820-tests-before-done-odzd.md\n- [feedback] Ask before every git push, and keep each commit to one change → 2026/08/20260812-ask-before-push-pf3d.md\n- [reference] On-call runbook for payment failures: docs.example.com/runbooks/payments → 2026/10/20261012-payments-runbook-4syw.md\n- [reference] Design tokens (colours, spacing, type) live in git.example.com/design-tokens and sync into shop-web weekly → 2026/09/20260922-design-tokens-source-uvw7.md\n- [reference] etl-jobs run history and alerts: the Grafana dashboard at grafana.example.com/d/etl-runs → 2026/08/20260828-etl-dashboard-72ce.md\n\n## This location (3)\n- [project] shop-web: staging deploys from the release branch, production only from version tags → 2026/09/20260910-shop-web-deploys-dn73.md\n- [project] shop-web v3 feature freeze on 2026-11-01: no schema migrations after that date → 2026/10/20261002-shop-web-v3-freeze-5xtp.md\n- [project] shop-web checkout moved to the Stripe Payment Element in September; the old Charges API code path is dead → 2026/09/20260908-shop-web-stripe-checkout-lgmx.md\n",
-   "chars": 1886,
-   "limit": 10000,
-   "global": 8,
-   "here": 3
-  },
-  "git.example.com/etl-jobs": {
-   "text": "# Shared memory index\nmemories: ~/agent-memory-data/memories\nstaging (write new memories here): ~/agent-memory-data/staging/<session>\nmem: ~/.local/bin/mem\nlocation: cwd=/Users/alex/code/etl-jobs, remote=git.example.com/etl-jobs, host=alex-laptop\n\n## Global (8)\n- [user] Alex 在上海；对话默认用中文回复，代码、注释和提交信息用英文 → 2026/08/20260804-reply-language-xdnc.md\n- [user] Alex is a backend engineer working mostly in Python and TypeScript; prefers short answers with the code first → 2026/08/20260804-alex-profile-ujzd.md\n- [feedback] 长任务开跑时要报预计完成时间，用上海时间 → 2026/09/20260902-report-eta-is2j.md\n- [feedback] Run the tests before saying a change works, and quote the failing output when they fail → 2026/08/20260820-tests-before-done-odzd.md\n- [feedback] Ask before every git push, and keep each commit to one change → 2026/08/20260812-ask-before-push-pf3d.md\n- [reference] On-call runbook for payment failures: docs.example.com/runbooks/payments → 2026/10/20261012-payments-runbook-4syw.md\n- [reference] Design tokens (colours, spacing, type) live in git.example.com/design-tokens and sync into shop-web weekly → 2026/09/20260922-design-tokens-source-uvw7.md\n- [reference] etl-jobs run history and alerts: the Grafana dashboard at grafana.example.com/d/etl-runs → 2026/08/20260828-etl-dashboard-72ce.md\n\n## This location (2)\n- [project] etl-jobs 的 Parquet 按日期分区而不是按客户；改分区前要先迁移历史数据 → 2026/09/20260915-etl-parquet-partitioning-seh2.md\n- [project] etl-jobs: the nightly orders export must finish before 06:00 because finance reads it at 06:30 → 2026/08/20260827-etl-orders-export-deadline-pft7.md\n",
-   "chars": 1707,
-   "limit": 10000,
-   "global": 8,
-   "here": 2
-  },
-  "/Users/alex/Documents/thesis": {
-   "text": "# Shared memory index\nmemories: ~/agent-memory-data/memories\nstaging (write new memories here): ~/agent-memory-data/staging/<session>\nmem: ~/.local/bin/mem\nlocation: cwd=/Users/alex/Documents/thesis, host=alex-laptop\n\n## Global (8)\n- [user] Alex 在上海；对话默认用中文回复，代码、注释和提交信息用英文 → 2026/08/20260804-reply-language-xdnc.md\n- [user] Alex is a backend engineer working mostly in Python and TypeScript; prefers short answers with the code first → 2026/08/20260804-alex-profile-ujzd.md\n- [feedback] 长任务开跑时要报预计完成时间，用上海时间 → 2026/09/20260902-report-eta-is2j.md\n- [feedback] Run the tests before saying a change works, and quote the failing output when they fail → 2026/08/20260820-tests-before-done-odzd.md\n- [feedback] Ask before every git push, and keep each commit to one change → 2026/08/20260812-ask-before-push-pf3d.md\n- [reference] On-call runbook for payment failures: docs.example.com/runbooks/payments → 2026/10/20261012-payments-runbook-4syw.md\n- [reference] Design tokens (colours, spacing, type) live in git.example.com/design-tokens and sync into shop-web weekly → 2026/09/20260922-design-tokens-source-uvw7.md\n- [reference] etl-jobs run history and alerts: the Grafana dashboard at grafana.example.com/d/etl-runs → 2026/08/20260828-etl-dashboard-72ce.md\n\n## This location (1)\n- [project] Thesis: LaTeX in ~/Documents/thesis, figures come from plots.py; chapter 3 is due to the advisor on Nov 15 → 2026/10/20261009-thesis-setup-fr6e.md\n",
-   "chars": 1567,
-   "limit": 10000,
-   "global": 8,
-   "here": 1
+  "personal": {
+   "name": "Sunny Orchard",
+   "dataDir": "~/agent-memory-personal",
+   "state": {
+    "generated": "",
+    "dataDir": "~/agent-memory-personal",
+    "memories": [
+     {
+      "id": "20260816-blog-publishing-k3qm",
+      "rel": "2026/08/20260816-blog-publishing-k3qm.md",
+      "path": "~/agent-memory-personal/memories/2026/08/20260816-blog-publishing-k3qm.md",
+      "hash": "f9d8dd03be9f2afe",
+      "raw": "---\nid: 20260816-blog-publishing-k3qm\nname: blog-publishing\ntype: project\nscope: here\ndescription: \"blog: posts are Markdown in content/posts and a push to main publishes them; drafts stay in content/drafts\"\ncreated: 2026-08-16T20:40:00+08:00\nsource:\n  tool: codex\n  session_id: 58653a77-5fdc-4a8c-91e3-2a91b3a7875d\n  session_name: blog-rss-feed\n  host: alex-laptop\n  cwd: /Users/alex/code/blog\n  git_root: /Users/alex/code/blog\n  git_remote: git.example.com/blog\n  git_branch: main\n---\nThe blog is a static site: posts are Markdown files in `content/posts`, and every push to `main` builds and publishes it. Unfinished posts go in `content/drafts`, which is never built.\n\n**Why:** there is no review step, so anything on `main` is live within a minute.\n\n**How to apply:** start new posts in `content/drafts`, and move one to `content/posts` only when Alex says to publish it.\n",
+      "meta": {
+       "id": "20260816-blog-publishing-k3qm",
+       "name": "blog-publishing",
+       "type": "project",
+       "scope": "here",
+       "description": "blog: posts are Markdown in content/posts and a push to main publishes them; drafts stay in content/drafts",
+       "created": "2026-08-16T20:40:00+08:00",
+       "source": {
+        "tool": "codex",
+        "session_id": "58653a77-5fdc-4a8c-91e3-2a91b3a7875d",
+        "session_name": "blog-rss-feed",
+        "host": "alex-laptop",
+        "cwd": "/Users/alex/code/blog",
+        "git_root": "/Users/alex/code/blog",
+        "git_remote": "git.example.com/blog",
+        "git_branch": "main"
+       }
+      },
+      "body": "The blog is a static site: posts are Markdown files in `content/posts`, and every push to `main` builds and publishes it. Unfinished posts go in `content/drafts`, which is never built.\n\n**Why:** there is no review step, so anything on `main` is live within a minute.\n\n**How to apply:** start new posts in `content/drafts`, and move one to `content/posts` only when Alex says to publish it.\n",
+      "description": "blog: posts are Markdown in content/posts and a push to main publishes them; drafts stay in content/drafts",
+      "type": "project",
+      "scope": "here",
+      "place": "git.example.com/blog",
+      "tool": "codex",
+      "host": "alex-laptop",
+      "created": "2026-08-16T20:40:00+08:00",
+      "updated": "",
+      "similar": [
+       {
+        "i": 1,
+        "s": 1.0
+       },
+       {
+        "i": 4,
+        "s": 0.456
+       }
+      ],
+      "keywords": [
+       {
+        "k": "blog",
+        "t": "blog"
+       },
+       {
+        "k": "push",
+        "t": "push"
+       }
+      ],
+      "terms": [
+       "blog",
+       "push"
+      ],
+      "issues": []
+     },
+     {
+      "id": "20260906-push-personal-repos-w8re",
+      "rel": "2026/09/20260906-push-personal-repos-w8re.md",
+      "path": "~/agent-memory-personal/memories/2026/09/20260906-push-personal-repos-w8re.md",
+      "hash": "4a2b749589f7d86e",
+      "raw": "---\nid: 20260906-push-personal-repos-w8re\nname: push-personal-repos\ntype: feedback\nscope: global\ndescription: In personal repositories such as the blog and homelab, commit and push without asking first\ncreated: 2026-09-06T11:15:00+08:00\nsource:\n  tool: claude-code\n  session_id: 7bbe96a3-54ec-4718-b2b4-2b0158b7d571\n  session_name: blog-typo-fixes\n  host: alex-laptop\n  cwd: /Users/alex/code/blog\n  git_root: /Users/alex/code/blog\n  git_remote: git.example.com/blog\n  git_branch: main\n---\nIn Alex's personal repositories, such as the blog and homelab, commit and push directly; there is no need to ask before each push.\n\n**Why:** they are repositories only Alex works in, with no shared branches, and asking every time slowed down small fixes.\n\n**How to apply:** still keep each commit to one change, and say afterwards what was pushed.\n",
+      "meta": {
+       "id": "20260906-push-personal-repos-w8re",
+       "name": "push-personal-repos",
+       "type": "feedback",
+       "scope": "global",
+       "description": "In personal repositories such as the blog and homelab, commit and push without asking first",
+       "created": "2026-09-06T11:15:00+08:00",
+       "source": {
+        "tool": "claude-code",
+        "session_id": "7bbe96a3-54ec-4718-b2b4-2b0158b7d571",
+        "session_name": "blog-typo-fixes",
+        "host": "alex-laptop",
+        "cwd": "/Users/alex/code/blog",
+        "git_root": "/Users/alex/code/blog",
+        "git_remote": "git.example.com/blog",
+        "git_branch": "main"
+       }
+      },
+      "body": "In Alex's personal repositories, such as the blog and homelab, commit and push directly; there is no need to ask before each push.\n\n**Why:** they are repositories only Alex works in, with no shared branches, and asking every time slowed down small fixes.\n\n**How to apply:** still keep each commit to one change, and say afterwards what was pushed.\n",
+      "description": "In personal repositories such as the blog and homelab, commit and push without asking first",
+      "type": "feedback",
+      "scope": "global",
+      "place": "",
+      "tool": "claude-code",
+      "host": "alex-laptop",
+      "created": "2026-09-06T11:15:00+08:00",
+      "updated": "",
+      "similar": [
+       {
+        "i": 0,
+        "s": 1.0
+       },
+       {
+        "i": 3,
+        "s": 0.869
+       },
+       {
+        "i": 4,
+        "s": 0.187
+       }
+      ],
+      "keywords": [
+       {
+        "k": "push",
+        "t": "push"
+       },
+       {
+        "k": "blog",
+        "t": "blog"
+       },
+       {
+        "k": "homelab",
+        "t": "homelab"
+       }
+      ],
+      "terms": [
+       "blog",
+       "change",
+       "homelab",
+       "push"
+      ],
+      "issues": []
+     },
+     {
+      "id": "20260921-home-server-n2vb",
+      "rel": "2026/09/20260921-home-server-n2vb.md",
+      "path": "~/agent-memory-personal/memories/2026/09/20260921-home-server-n2vb.md",
+      "hash": "10dd17702fd26d93",
+      "raw": "---\nid: 20260921-home-server-n2vb\nname: home-server\ntype: reference\nscope: global\ndescription: \"Home server nas.home.arpa: Jellyfin on port 8096, nightly backups of /srv to the USB drive at 03:00\"\ncreated: 2026-09-21T16:30:00+08:00\nsource:\n  tool: codex\n  session_id: de0fd804-e67d-4793-9580-dd285f8f7eda\n  session_name: homelab-backups\n  host: alex-laptop\n  cwd: /Users/alex/code/homelab\n  git_root: /Users/alex/code/homelab\n  git_remote: git.example.com/homelab\n  git_branch: main\n---\nThe home server is `nas.home.arpa` on the home network. Jellyfin runs on port 8096, configured from `jellyfin/` in the homelab repository. `/srv` is backed up every night at 03:00 to the USB drive mounted at `/mnt/backup`.\n",
+      "meta": {
+       "id": "20260921-home-server-n2vb",
+       "name": "home-server",
+       "type": "reference",
+       "scope": "global",
+       "description": "Home server nas.home.arpa: Jellyfin on port 8096, nightly backups of /srv to the USB drive at 03:00",
+       "created": "2026-09-21T16:30:00+08:00",
+       "source": {
+        "tool": "codex",
+        "session_id": "de0fd804-e67d-4793-9580-dd285f8f7eda",
+        "session_name": "homelab-backups",
+        "host": "alex-laptop",
+        "cwd": "/Users/alex/code/homelab",
+        "git_root": "/Users/alex/code/homelab",
+        "git_remote": "git.example.com/homelab",
+        "git_branch": "main"
+       }
+      },
+      "body": "The home server is `nas.home.arpa` on the home network. Jellyfin runs on port 8096, configured from `jellyfin/` in the homelab repository. `/srv` is backed up every night at 03:00 to the USB drive mounted at `/mnt/backup`.\n",
+      "description": "Home server nas.home.arpa: Jellyfin on port 8096, nightly backups of /srv to the USB drive at 03:00",
+      "type": "reference",
+      "scope": "global",
+      "place": "",
+      "tool": "codex",
+      "host": "alex-laptop",
+      "created": "2026-09-21T16:30:00+08:00",
+      "updated": "",
+      "similar": [],
+      "keywords": [
+       {
+        "k": "homelab",
+        "t": "homelab"
+       }
+      ],
+      "terms": [
+       "homelab"
+      ],
+      "issues": []
+     },
+     {
+      "id": "20261004-options-first-7hcx",
+      "rel": "2026/10/20261004-options-first-7hcx.md",
+      "path": "~/agent-memory-personal/memories/2026/10/20261004-options-first-7hcx.md",
+      "hash": "0252532434b43a46",
+      "raw": "---\nid: 20261004-options-first-7hcx\nname: options-first\ntype: user\nscope: global\ndescription: 个人项目里先给两三个方案和各自的取舍，Alex 选定后再动手写\ncreated: 2026-10-04T15:05:00+08:00\nsource:\n  tool: claude-code\n  session_id: f190571a-9a40-42f5-be8d-2a49882c84b4\n  session_name: 博客评论功能\n  host: alex-laptop\n  cwd: /Users/alex/code/blog\n  git_root: /Users/alex/code/blog\n  git_remote: git.example.com/blog\n  git_branch: main\n---\n做个人项目时，Alex 喜欢先看两三个可选方案和各自的取舍，自己挑一个，再开始写代码。\n\n个人项目主要是为了学东西，选方案的过程本身就是目的；工作项目里则直接按团队惯例做。\n",
+      "meta": {
+       "id": "20261004-options-first-7hcx",
+       "name": "options-first",
+       "type": "user",
+       "scope": "global",
+       "description": "个人项目里先给两三个方案和各自的取舍，Alex 选定后再动手写",
+       "created": "2026-10-04T15:05:00+08:00",
+       "source": {
+        "tool": "claude-code",
+        "session_id": "f190571a-9a40-42f5-be8d-2a49882c84b4",
+        "session_name": "博客评论功能",
+        "host": "alex-laptop",
+        "cwd": "/Users/alex/code/blog",
+        "git_root": "/Users/alex/code/blog",
+        "git_remote": "git.example.com/blog",
+        "git_branch": "main"
+       }
+      },
+      "body": "做个人项目时，Alex 喜欢先看两三个可选方案和各自的取舍，自己挑一个，再开始写代码。\n\n个人项目主要是为了学东西，选方案的过程本身就是目的；工作项目里则直接按团队惯例做。\n",
+      "description": "个人项目里先给两三个方案和各自的取舍，Alex 选定后再动手写",
+      "type": "user",
+      "scope": "global",
+      "place": "",
+      "tool": "claude-code",
+      "host": "alex-laptop",
+      "created": "2026-10-04T15:05:00+08:00",
+      "updated": "",
+      "similar": [
+       {
+        "i": 1,
+        "s": 0.869
+       },
+       {
+        "i": 4,
+        "s": 0.716
+       }
+      ],
+      "keywords": [],
+      "terms": [],
+      "issues": []
+     },
+     {
+      "id": "20261009-thesis-setup-fr6e",
+      "rel": "2026/10/20261009-thesis-setup-fr6e.md",
+      "path": "~/agent-memory-personal/memories/2026/10/20261009-thesis-setup-fr6e.md",
+      "hash": "7afcb4fd741d0c0b",
+      "raw": "---\nid: 20261009-thesis-setup-fr6e\nname: thesis-setup\ntype: project\nscope: here\ndescription: \"Thesis: LaTeX in ~/Documents/thesis, figures come from plots.py; chapter 3 is due to the advisor on Nov 15\"\ncreated: 2026-10-09T22:10:00+08:00\nsource:\n  tool: claude-code\n  session_id: 4f426dcb-b394-4b36-bb2d-420f0f88080b\n  session_name: thesis-figures\n  host: alex-laptop\n  cwd: /Users/alex/Documents/thesis\n---\nThe thesis is a LaTeX project in `~/Documents/thesis` (not a git repo; it syncs through iCloud), and chapter 3 is due to the advisor on 2026-11-15.\n\n**Why:** the figures change whenever the data does, so they are generated by `plots.py` into `figures/` rather than edited.\n\n**How to apply:** change `plots.py` and rerun it instead of touching the PDFs; plan chapter 3 work back from 2026-11-15.\n",
+      "meta": {
+       "id": "20261009-thesis-setup-fr6e",
+       "name": "thesis-setup",
+       "type": "project",
+       "scope": "here",
+       "description": "Thesis: LaTeX in ~/Documents/thesis, figures come from plots.py; chapter 3 is due to the advisor on Nov 15",
+       "created": "2026-10-09T22:10:00+08:00",
+       "source": {
+        "tool": "claude-code",
+        "session_id": "4f426dcb-b394-4b36-bb2d-420f0f88080b",
+        "session_name": "thesis-figures",
+        "host": "alex-laptop",
+        "cwd": "/Users/alex/Documents/thesis"
+       }
+      },
+      "body": "The thesis is a LaTeX project in `~/Documents/thesis` (not a git repo; it syncs through iCloud), and chapter 3 is due to the advisor on 2026-11-15.\n\n**Why:** the figures change whenever the data does, so they are generated by `plots.py` into `figures/` rather than edited.\n\n**How to apply:** change `plots.py` and rerun it instead of touching the PDFs; plan chapter 3 work back from 2026-11-15.\n",
+      "description": "Thesis: LaTeX in ~/Documents/thesis, figures come from plots.py; chapter 3 is due to the advisor on Nov 15",
+      "type": "project",
+      "scope": "here",
+      "place": "/Users/alex/Documents/thesis",
+      "tool": "claude-code",
+      "host": "alex-laptop",
+      "created": "2026-10-09T22:10:00+08:00",
+      "updated": "",
+      "similar": [
+       {
+        "i": 3,
+        "s": 0.716
+       },
+       {
+        "i": 0,
+        "s": 0.456
+       },
+       {
+        "i": 1,
+        "s": 0.187
+       }
+      ],
+      "keywords": [],
+      "terms": [
+       "change"
+      ],
+      "issues": []
+     }
+    ],
+    "method": "Qwen3-Embedding-0.6B (int8 ONNX), local",
+    "semantic": true,
+    "places": [
+     {
+      "key": "/Users/alex/Documents/thesis",
+      "count": 1,
+      "ctx": {
+       "cwd": "/Users/alex/Documents/thesis",
+       "host": "alex-laptop"
+      }
+     },
+     {
+      "key": "git.example.com/blog",
+      "count": 1,
+      "ctx": {
+       "cwd": "/Users/alex/code/blog",
+       "git_root": "/Users/alex/code/blog",
+       "git_remote": "git.example.com/blog",
+       "git_branch": "main",
+       "host": "alex-laptop"
+      }
+     }
+    ],
+    "stamp": "1923ed1::5:1792226762545142888",
+    "sync": {
+     "remote": true,
+     "ahead": 0
+    }
+   },
+   "activity": {
+    "commits": [
+     {
+      "sha": "1923ed1980",
+      "date": "2026-10-09T22:10:00+08:00",
+      "subject": "memory: +1 ~0 -0 (claude-code: thesis-figures)",
+      "tool": "claude-code",
+      "added": 1,
+      "changed": 0,
+      "deleted": 0
+     },
+     {
+      "sha": "02f8ef4c01",
+      "date": "2026-10-04T15:05:00+08:00",
+      "subject": "memory: +1 ~0 -0 (claude-code: 博客评论功能)",
+      "tool": "claude-code",
+      "added": 1,
+      "changed": 0,
+      "deleted": 0
+     },
+     {
+      "sha": "abf3135c89",
+      "date": "2026-09-21T16:30:00+08:00",
+      "subject": "memory: +1 ~0 -0 (codex: homelab-backups)",
+      "tool": "codex",
+      "added": 1,
+      "changed": 0,
+      "deleted": 0
+     },
+     {
+      "sha": "fabb64f8e2",
+      "date": "2026-09-06T11:15:00+08:00",
+      "subject": "memory: +1 ~0 -0 (claude-code: blog-typo-fixes)",
+      "tool": "claude-code",
+      "added": 1,
+      "changed": 0,
+      "deleted": 0
+     },
+     {
+      "sha": "330ff34dfc",
+      "date": "2026-08-16T20:40:00+08:00",
+      "subject": "memory: +1 ~0 -0 (codex: blog-rss-feed)",
+      "tool": "codex",
+      "added": 1,
+      "changed": 0,
+      "deleted": 0
+     }
+    ]
+   },
+   "previews": {
+    "": {
+     "text": "# Shared memory index\nprofile: Sunny Orchard (other profiles' memories are kept apart and not listed here)\nmemories: ~/agent-memory-personal/memories\nstaging (write new memories here): ~/agent-memory-personal/staging/<session>\nmem: ~/.local/bin/mem\nlocation: cwd=?, host=?\n\n## Global (3)\n- [user] 个人项目里先给两三个方案和各自的取舍，Alex 选定后再动手写 → 2026/10/20261004-options-first-7hcx.md\n- [feedback] In personal repositories such as the blog and homelab, commit and push without asking first → 2026/09/20260906-push-personal-repos-w8re.md\n- [reference] Home server nas.home.arpa: Jellyfin on port 8096, nightly backups of /srv to the USB drive at 03:00 → 2026/09/20260921-home-server-n2vb.md\n\n## This location (0)\n(none)\n",
+     "chars": 865,
+     "limit": 10000,
+     "global": 3,
+     "here": 0
+    },
+    "/Users/alex/Documents/thesis": {
+     "text": "# Shared memory index\nprofile: Sunny Orchard (other profiles' memories are kept apart and not listed here)\nmemories: ~/agent-memory-personal/memories\nstaging (write new memories here): ~/agent-memory-personal/staging/<session>\nmem: ~/.local/bin/mem\nlocation: cwd=/Users/alex/Documents/thesis, host=alex-laptop\n\n## Global (3)\n- [user] 个人项目里先给两三个方案和各自的取舍，Alex 选定后再动手写 → 2026/10/20261004-options-first-7hcx.md\n- [feedback] In personal repositories such as the blog and homelab, commit and push without asking first → 2026/09/20260906-push-personal-repos-w8re.md\n- [reference] Home server nas.home.arpa: Jellyfin on port 8096, nightly backups of /srv to the USB drive at 03:00 → 2026/09/20260921-home-server-n2vb.md\n\n## This location (1)\n- [project] Thesis: LaTeX in ~/Documents/thesis, figures come from plots.py; chapter 3 is due to the advisor on Nov 15 → 2026/10/20261009-thesis-setup-fr6e.md\n",
+     "chars": 1054,
+     "limit": 10000,
+     "global": 3,
+     "here": 1
+    },
+    "git.example.com/blog": {
+     "text": "# Shared memory index\nprofile: Sunny Orchard (other profiles' memories are kept apart and not listed here)\nmemories: ~/agent-memory-personal/memories\nstaging (write new memories here): ~/agent-memory-personal/staging/<session>\nmem: ~/.local/bin/mem\nlocation: cwd=/Users/alex/code/blog, remote=git.example.com/blog, host=alex-laptop\n\n## Global (3)\n- [user] 个人项目里先给两三个方案和各自的取舍，Alex 选定后再动手写 → 2026/10/20261004-options-first-7hcx.md\n- [feedback] In personal repositories such as the blog and homelab, commit and push without asking first → 2026/09/20260906-push-personal-repos-w8re.md\n- [reference] Home server nas.home.arpa: Jellyfin on port 8096, nightly backups of /srv to the USB drive at 03:00 → 2026/09/20260921-home-server-n2vb.md\n\n## This location (1)\n- [project] blog: posts are Markdown in content/posts and a push to main publishes them; drafts stay in content/drafts → 2026/08/20260816-blog-publishing-k3qm.md\n",
+     "chars": 1079,
+     "limit": 10000,
+     "global": 3,
+     "here": 1
+    }
+   },
+   "settings": {
+    "version": "0.1.7",
+    "dataDir": "~/agent-memory-personal",
+    "name": "agent-memory-personal",
+    "lastCommit": "2026-10-09T22:10:00+08:00",
+    "remote": "git.example.com/agent-memory-personal",
+    "remoteUrl": null,
+    "sync": {
+     "remote": true,
+     "ahead": 0
+    },
+    "keywordStopwords": [],
+    "model": {
+     "name": "Qwen3-Embedding-0.6B (int8 ONNX)",
+     "ready": true,
+     "dir": "~/.cache/agent-memory/models/qwen3-embedding-0.6b-int8",
+     "fetch": "mem ui --fetch-model",
+     "size": "about 625 MB"
+    },
+    "semantic": true
+   },
+   "search": {
+    "payments are failing": {
+     "hits": [
+      {
+       "id": "20260921-home-server-n2vb",
+       "s": 0.306
+      },
+      {
+       "id": "20261009-thesis-setup-fr6e",
+       "s": 0.302
+      },
+      {
+       "id": "20260906-push-personal-repos-w8re",
+       "s": 0.269
+      },
+      {
+       "id": "20261004-options-first-7hcx",
+       "s": 0.255
+      },
+      {
+       "id": "20260816-blog-publishing-k3qm",
+       "s": 0.23
+      }
+     ],
+     "semantic": true
+    },
+    "partition the data": {
+     "hits": [
+      {
+       "id": "20261009-thesis-setup-fr6e",
+       "s": 0.333
+      },
+      {
+       "id": "20260921-home-server-n2vb",
+       "s": 0.284
+      },
+      {
+       "id": "20261004-options-first-7hcx",
+       "s": 0.277
+      },
+      {
+       "id": "20260816-blog-publishing-k3qm",
+       "s": 0.266
+      },
+      {
+       "id": "20260906-push-personal-repos-w8re",
+       "s": 0.251
+      }
+     ],
+     "semantic": true
+    },
+    "部署": {
+     "hits": [
+      {
+       "id": "20261004-options-first-7hcx",
+       "s": 0.341
+      },
+      {
+       "id": "20261009-thesis-setup-fr6e",
+       "s": 0.335
+      },
+      {
+       "id": "20260921-home-server-n2vb",
+       "s": 0.32
+      },
+      {
+       "id": "20260906-push-personal-repos-w8re",
+       "s": 0.302
+      },
+      {
+       "id": "20260816-blog-publishing-k3qm",
+       "s": 0.274
+      }
+     ],
+     "semantic": true
+    },
+    "数据库迁移": {
+     "hits": [
+      {
+       "id": "20260921-home-server-n2vb",
+       "s": 0.314
+      },
+      {
+       "id": "20261009-thesis-setup-fr6e",
+       "s": 0.306
+      },
+      {
+       "id": "20260906-push-personal-repos-w8re",
+       "s": 0.29
+      },
+      {
+       "id": "20261004-options-first-7hcx",
+       "s": 0.267
+      },
+      {
+       "id": "20260816-blog-publishing-k3qm",
+       "s": 0.26
+      }
+     ],
+     "semantic": true
+    }
+   }
   }
- },
- "settings": {
-  "version": "0.1.5",
-  "dataDir": "~/agent-memory-data",
-  "remote": "git.example.com/agent-memory-data",
-  "sync": {
-   "remote": true,
-   "ahead": 0
-  },
-  "keywordStopwords": [],
-  "model": {
-   "name": "Qwen3-Embedding-0.6B (int8 ONNX)",
-   "ready": true,
-   "dir": "~/.cache/agent-memory/models/qwen3-embedding-0.6b-int8",
-   "fetch": "mem ui --fetch-model",
-   "size": "about 625 MB"
-  },
-  "semantic": true
  },
  "doctor": {
   "checks": [
@@ -1435,155 +2048,5 @@
   "partition the data",
   "部署",
   "数据库迁移"
- ],
- "search": {
-  "payments are failing": {
-   "hits": [
-    {
-     "id": "20261012-payments-runbook-4syw",
-     "s": 0.6
-    },
-    {
-     "id": "20260908-shop-web-stripe-checkout-lgmx",
-     "s": 0.475
-    },
-    {
-     "id": "20260827-etl-orders-export-deadline-pft7",
-     "s": 0.36
-    },
-    {
-     "id": "20261002-shop-web-v3-freeze-5xtp",
-     "s": 0.356
-    },
-    {
-     "id": "20260820-tests-before-done-odzd",
-     "s": 0.355
-    },
-    {
-     "id": "20260828-etl-dashboard-72ce",
-     "s": 0.337
-    },
-    {
-     "id": "20260915-etl-parquet-partitioning-seh2",
-     "s": 0.331
-    },
-    {
-     "id": "20260902-report-eta-is2j",
-     "s": 0.312
-    }
-   ],
-   "semantic": true
-  },
-  "partition the data": {
-   "hits": [
-    {
-     "id": "20260915-etl-parquet-partitioning-seh2",
-     "s": 0.571
-    },
-    {
-     "id": "20261009-thesis-setup-fr6e",
-     "s": 0.333
-    },
-    {
-     "id": "20260828-etl-dashboard-72ce",
-     "s": 0.311
-    },
-    {
-     "id": "20261002-shop-web-v3-freeze-5xtp",
-     "s": 0.304
-    },
-    {
-     "id": "20260902-report-eta-is2j",
-     "s": 0.289
-    },
-    {
-     "id": "20260922-design-tokens-source-uvw7",
-     "s": 0.275
-    },
-    {
-     "id": "20260804-alex-profile-ujzd",
-     "s": 0.268
-    },
-    {
-     "id": "20260908-shop-web-stripe-checkout-lgmx",
-     "s": 0.259
-    }
-   ],
-   "semantic": true
-  },
-  "部署": {
-   "hits": [
-    {
-     "id": "20260910-shop-web-deploys-dn73",
-     "s": 0.363
-    },
-    {
-     "id": "20261009-thesis-setup-fr6e",
-     "s": 0.335
-    },
-    {
-     "id": "20260902-report-eta-is2j",
-     "s": 0.318
-    },
-    {
-     "id": "20260828-etl-dashboard-72ce",
-     "s": 0.312
-    },
-    {
-     "id": "20260804-reply-language-xdnc",
-     "s": 0.31
-    },
-    {
-     "id": "20260922-design-tokens-source-uvw7",
-     "s": 0.303
-    },
-    {
-     "id": "20260915-etl-parquet-partitioning-seh2",
-     "s": 0.295
-    },
-    {
-     "id": "20261002-shop-web-v3-freeze-5xtp",
-     "s": 0.29
-    }
-   ],
-   "semantic": true
-  },
-  "数据库迁移": {
-   "hits": [
-    {
-     "id": "20260915-etl-parquet-partitioning-seh2",
-     "s": 0.473
-    },
-    {
-     "id": "20261002-shop-web-v3-freeze-5xtp",
-     "s": 0.444
-    },
-    {
-     "id": "20260828-etl-dashboard-72ce",
-     "s": 0.325
-    },
-    {
-     "id": "20260804-alex-profile-ujzd",
-     "s": 0.323
-    },
-    {
-     "id": "20261009-thesis-setup-fr6e",
-     "s": 0.306
-    },
-    {
-     "id": "20260922-design-tokens-source-uvw7",
-     "s": 0.3
-    },
-    {
-     "id": "20260902-report-eta-is2j",
-     "s": 0.296
-    },
-    {
-     "id": "20260910-shop-web-deploys-dn73",
-     "s": 0.292
-    }
-   ],
-   "semantic": true
-  }
- }
+ ]
 }

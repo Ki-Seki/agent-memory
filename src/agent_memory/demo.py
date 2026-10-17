@@ -1,8 +1,9 @@
 """Made-up memories to try agent-memory with, without installing it or touching your own.
 
-`mem ui --demo` copies them into a temporary data repository whose history has one commit per
-memory, the way the hooks write them, and opens the page on it with its own config folder. The
-project site's live demo is built from the same memories (scripts/site.py).
+There are two profiles of them, one for work and one for home. `mem ui --demo` copies each into a temporary data
+repository whose history has one commit per memory, the way the hooks write them, and opens the page on
+them with a config folder of its own. The project site's live demo is built from the same memories
+(scripts/site.py).
 """
 
 import datetime as _dt
@@ -16,9 +17,18 @@ from pathlib import Path
 
 from . import config, frontmatter, gitsync, install, store
 
-MEMORIES = Path(__file__).with_name("demo") / "memories"
+DEMO = Path(__file__).with_name("demo")
+# the demo's profiles, the active one first, named as profiles.new_name would; each one's memories are in demo/<id>
+PROFILES = {
+    "work": {"name": "Quiet Harbor", "folder": "agent-memory-data"},
+    "personal": {"name": "Sunny Orchard", "folder": "agent-memory-personal"},
+}
 ENV = "AGENT_MEMORY_DEMO"  # set to the demo's temporary folder while a demo runs
 DATES = ("created", "updated")
+
+
+def memories(profile):
+    return DEMO / profile
 
 
 def _when(value):
@@ -35,23 +45,31 @@ def _shift(meta, days):
             meta[key] = (when + _dt.timedelta(days=days)).isoformat()
 
 
-def make(dest, today=None):
-    """A data repository at dest holding the demo memories.
+def _newest():
+    """When the newest demo memory, in any profile, was written or changed."""
+    stamps = []
+    for path in DEMO.rglob("*.md"):
+        meta, _ = frontmatter.split(path.read_text("utf-8"))
+        stamps += [_when(meta.get(k)) for k in DATES if _when(meta.get(k))]
+    return max(stamps)
+
+
+def make(dest, today=None, profile="work"):
+    """A data repository at dest holding one profile's demo memories.
 
     Each memory is committed on its own at the time it was created (and again when it was changed),
     with the subject and trailers the Stop hook writes, so Insights has a history to show. With `today`, every date
-    moves by the same number of days so the newest memory is a day old.
+    moves by the same number of days so the newest memory of all the profiles is a day old.
     """
     dest = Path(dest)
     mdir = store.memories_dir(dest)
-    shutil.copytree(MEMORIES, mdir)
+    shutil.copytree(memories(profile), mdir)
     (dest / ".gitignore").write_text("staging/\n.cache/\n", "utf-8")
     (dest / "README.md").write_text(install.DATA_README, "utf-8")
     files = sorted(mdir.rglob("*.md"))
     docs = {path: frontmatter.split(path.read_text("utf-8")) for path in files}
     if today:
-        newest = max(_when(meta.get(k)) for meta, _ in docs.values() for k in DATES if _when(meta.get(k)))
-        days = (today - newest.date()).days - 1
+        days = (today - _newest().date()).days - 1
         for meta, _ in docs.values():
             _shift(meta, days)
 
@@ -93,20 +111,30 @@ def make(dest, today=None):
 
 
 def prepare():
-    """A temporary demo: data repository and config folder, named in the environment for `mem ui`."""
+    """A temporary demo: a data repository per profile and a config folder, named in the environment for `mem ui`.
+
+    Profiles work in it as they do in yours, except that new ones have to stay in its temporary folder.
+    """
     root = Path(tempfile.mkdtemp(prefix="agent-memory-demo-"))
-    data, cfg_dir = root / "agent-memory-data", root / "config"
-    make(data, today=_dt.date.today())
+    cfg_dir = root / "config"
+    profiles = {}
+    for pid, p in PROFILES.items():
+        data = root / p["folder"]
+        make(data, today=_dt.date.today(), profile=pid)
+        profiles[pid] = {"name": p["name"], "data_dir": str(data)}
     cfg_dir.mkdir()
     keep = {k: v for k, v in config.load().items() if k == "embed_model_dir"}  # where the model already is
-    (cfg_dir / "config.json").write_text(json.dumps({"data_dir": str(data), **keep}), "utf-8")
-    os.environ.update({ENV: str(root), "AGENT_MEMORY_DATA": str(data), "AGENT_MEMORY_CONFIG_DIR": str(cfg_dir)})
+    active = next(iter(profiles))
+    cfg = {"data_dir": profiles[active]["data_dir"], "profiles": profiles, "profile": active, **keep}
+    (cfg_dir / "config.json").write_text(json.dumps(cfg, ensure_ascii=False), "utf-8")
+    os.environ.pop("AGENT_MEMORY_DATA", None)  # the profiles pick the folder
+    os.environ.update({ENV: str(root), "AGENT_MEMORY_CONFIG_DIR": str(cfg_dir)})
     return root
 
 
 def fingerprint():
     """A hash of the demo memories, so the site's saved demo data can tell when they change."""
     h = hashlib.sha256()
-    for path in sorted(MEMORIES.rglob("*.md")):
-        h.update(str(path.relative_to(MEMORIES)).encode() + b"\0" + path.read_bytes() + b"\0")
+    for path in sorted(DEMO.rglob("*.md")):
+        h.update(str(path.relative_to(DEMO)).encode() + b"\0" + path.read_bytes() + b"\0")
     return h.hexdigest()[:16]

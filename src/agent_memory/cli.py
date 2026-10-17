@@ -8,7 +8,7 @@ import signal
 import sys
 from pathlib import Path
 
-from . import capture, config, frontmatter, gitsync, hooks, select, store
+from . import capture, config, frontmatter, gitsync, hooks, profiles, select, store
 from .context import detect
 from .util import SCOPES, TYPES, atomic_write, slugify
 
@@ -79,7 +79,7 @@ def cmd_index(args):
     data = _data()
     ctx = detect(args.cwd)
     paths = {"memories": str(store.memories_dir(data)), "staging": "(per session)", "mem": str(config.BIN)}
-    text = select.render(store.load_all(data), ctx, paths)
+    text = select.render(store.load_all(data), ctx, paths, profile=profiles.active_name())
     print(text, end="")
     print(f"\n[{len(text)} characters]", file=sys.stderr)
 
@@ -195,7 +195,7 @@ def cmd_ui(args):
         )
         os.execv(sys.executable, [sys.executable, "-m", "agent_memory", *again])
     if os.environ.get(demo.ENV):
-        print("Demo: made-up memories in a temporary repository; nothing you change is kept.", flush=True)
+        print("Demo: made-up memories in temporary repositories; nothing you change is kept.", flush=True)
         atexit.register(shutil.rmtree, os.environ[demo.ENV], ignore_errors=True)
         # closing the terminal (SIGHUP) or `kill` (SIGTERM) would end the process without that clean-up
         for name in ("SIGHUP", "SIGTERM"):
@@ -239,6 +239,43 @@ def cmd_doctor(args):
     from .install import doctor
 
     return doctor()
+
+
+def _access_note():
+    from .install import refresh_access
+
+    tools = refresh_access()
+    if tools:
+        print(f"updated {' and '.join(tools)} so agents can reach every profile's folder")
+
+
+def cmd_profile(args):
+    if profiles.locked():
+        sys.exit("AGENT_MEMORY_DATA picks the data repository here, so profiles do not apply")
+    try:
+        if args.action == "use":
+            pid = profiles.use(args.profile)
+            print(f"new sessions now use {profiles.listing()[0][pid]['name']}")
+        elif args.action == "add":
+            pid, note = profiles.add(args.folder, remote=args.remote, switch=not args.keep)
+            found, active = profiles.listing()
+            print(note)
+            print(f"added {found[pid]['name']}" + ("; new sessions now use it" if active == pid else ""))
+            _access_note()
+        elif args.action == "remove":
+            found, _ = profiles.listing()
+            pid = profiles.find(args.profile, found)
+            active = profiles.remove(pid)
+            print(f"removed {found[pid]['name']}; {profiles.short(found[pid]['data_dir'])} is left as it is")
+            print(f"new sessions use {profiles.listing()[0][active]['name']}")
+            _access_note()
+        else:
+            for p in profiles.summary()["profiles"]:
+                where = p["remote"] or "this machine only"
+                mark = "*" if p["active"] else " "
+                print(f"{mark} {p['name']:<18} {p['dataDir']}  ({p['memories']} memories, {where})")
+    except profiles.ProfileError as e:
+        sys.exit(str(e))
 
 
 def cmd_hook(args):
@@ -335,6 +372,19 @@ def main(argv=None):
 
     sp = sub.add_parser("doctor", help="check the installation")
     sp.set_defaults(fn=cmd_doctor)
+
+    sp = sub.add_parser("profile", help="list, switch, add or remove profiles: separate memory repositories")
+    psub = sp.add_subparsers(dest="action")
+    psub.add_parser("list", help="list profiles; * marks the one new sessions use")
+    pp = psub.add_parser("use", help="make new sessions (and mem ui) use this profile")
+    pp.add_argument("profile", help="its name, such as quiet-harbor")
+    pp = psub.add_parser("add", help="add a profile for a new, empty or existing memory repository; it gets a name")
+    pp.add_argument("folder", help="its folder; a new or empty one becomes a repository, or a clone of --remote")
+    pp.add_argument("--remote", help="a private git remote of its own (optional)")
+    pp.add_argument("--keep", action="store_true", help="add it without switching to it")
+    pp = psub.add_parser("remove", help="forget a profile; its folder and remote are left as they are")
+    pp.add_argument("profile", help="its name, such as quiet-harbor")
+    sp.set_defaults(fn=cmd_profile)
 
     sp = sub.add_parser("hook", help=argparse.SUPPRESS)
     sp.add_argument("event", choices=["session-start", "stop", "session-end"])

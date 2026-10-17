@@ -1,18 +1,17 @@
 // The live demo: mem ui's own page, with this file answering its calls instead of a server. The answers
-// come from snapshot.json (scripts/site.py saves it from the demo memories); changes are kept in this tab
-// only, and every date moves so the newest memory is a day old, whenever the demo is opened.
+// come from snapshot.json (scripts/site.py saves it from the demo memories of each profile); changes are kept
+// in this tab only, and every date moves so the newest memory is a day old, whenever the demo is opened.
 import { ApiError, useTransport } from "./js/api.js";
 import { app } from "./js/store.js";
 
 const snap = await (await fetch("snapshot.json")).json();
-const DATA = "~/agent-memory-data";
 const DAY = 864e5;
 const clone = (v) => structuredClone(v);
 
 // ---------------------------------------------------------------- dates
 
 const stamps = (m) => [m.created, m.updated].filter(Boolean);
-const newest = Math.max(...snap.state.memories.flatMap(stamps).map(Date.parse));
+const newest = Math.max(...Object.values(snap.profiles).flatMap((p) => p.state.memories.flatMap(stamps)).map(Date.parse));
 const today = new Date(); today.setHours(0, 0, 0, 0);
 const days = Math.floor((+today - newest) / DAY);  // the newest lands on yesterday (its time of day kept)
 /** The same instant moved by whole days, written the way it was (date, time and offset). */
@@ -65,38 +64,78 @@ const hash = () => Math.random().toString(16).slice(2, 18).padEnd(16, "0");
 const PLACE_FIELDS = ["cwd", "git_root", "git_remote", "git_branch"];
 const placeKey = (src) => src.git_remote || src.git_root || src.cwd || "";
 
-let memories = snap.state.memories.map((m) => {
-  const meta = clone(m.meta);
-  for (const k of ["created", "updated"]) if (meta[k]) meta[k] = shift(meta[k]);
-  let raw = m.raw;
-  for (const k of ["created", "updated"]) if (m.meta[k]) raw = raw.replace(`${k}: ${m.meta[k]}`, `${k}: ${meta[k]}`);
+// ---------------------------------------------------------------- profiles, each with its own memories and history
+
+const [ADJECTIVES, NOUNS] = snap.words;
+/** One profile as the page changes it: its memories, its commits, its remote. */
+function book(id, p) {
+  const memories = p.state.memories.map((m) => {
+    const meta = clone(m.meta);
+    for (const k of ["created", "updated"]) if (meta[k]) meta[k] = shift(meta[k]);
+    let raw = m.raw;
+    for (const k of ["created", "updated"]) if (m.meta[k]) raw = raw.replace(`${k}: ${m.meta[k]}`, `${k}: ${meta[k]}`);
+    return {
+      ...m, meta, raw, created: shift(m.created), updated: shift(m.updated),
+      near: m.similar.map((s) => ({ id: p.state.memories[s.i].id, s: s.s })),  // by id, as memories come and go
+      allKeywords: m.keywords,
+    };
+  });
   return {
-    ...m, meta, raw, created: shift(m.created), updated: shift(m.updated),
-    near: m.similar.map((s) => ({ id: snap.state.memories[s.i].id, s: s.s })),  // by id, as memories come and go
-    allKeywords: m.keywords,
+    id, name: p.name, dataDir: p.dataDir, snap: p, memories,
+    commits: p.activity.commits.map((c) => ({ ...c, date: shift(c.date) })),
+    before: new Map(),  // commit → the memories as they were, for Undo
+    remoteUrl: `https://${p.settings.remote}.git`,
+    made: null,
   };
-});
-let commits = snap.activity.commits.map((c) => ({ ...c, date: shift(c.date) }));
-const before = new Map();  // commit → the memories as they were, for Undo
+}
+const books = new Map(Object.entries(snap.profiles).map(([id, p]) => [id, book(id, p)]));
+let cur = books.get(snap.active);
 let stopwords = [];
 let autoUpdates = true;
 let stamp = 0;
 
+const short = (url) => url.replace(/^[a-z]+:\/\/|^[\w.-]+@|\.git$/g, "").replace(":", "/");
+const pick = (words) => words[Math.floor(Math.random() * words.length)];
+const taken = () => new Set([...books.values()].map((b) => b.name));
+function newName() {
+  for (;;) { const name = `${pick(ADJECTIVES)} ${pick(NOUNS)}`; if (!taken().has(name)) return name; }
+}
+const generated = (name) => { const [a, n, ...rest] = String(name ?? "").split(" "); return !rest.length && ADJECTIVES.includes(a) && NOUNS.includes(n); };
+const slug = (name) => String(name).toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+const summary = () => ({
+  locked: false, demo: true, active: cur.id, next: newName(),
+  profiles: [...books.values()].map((b) => ({ id: b.id, name: b.name, dataDir: b.dataDir,
+    active: b === cur, ready: true, memories: b.memories.length, remote: b.remoteUrl ? short(b.remoteUrl) : null })),
+});
+function profileOf(id) {
+  const b = books.get(String(id ?? "")) ?? [...books.values()].find((x) => slug(x.name) === slug(id ?? ""));
+  if (!b) throw new ApiError(`There is no profile ${JSON.stringify(id)}.`, 400);
+  return b;
+}
+const REMOTE = /^(?:(?:https?|ssh|git|file):\/\/\S+|[\w.-]+@[\w.-]+:\S+|[~/]\S*)$/;
+const BAD_REMOTE = "That does not look like a git remote: use https://…, git@host:owner/repo.git, or a folder.";
+const PROFILE_LINE = (name) => `profile: ${name} (other profiles' memories are kept apart and not listed here)\n`;
+/** The index a new, empty profile gives a session. */
+const emptyIndex = (b) => [
+  "# Shared memory index", `memories: ${b.dataDir}/memories`, `staging (write new memories here): ${b.dataDir}/staging/<session>`,
+  "mem: ~/.local/bin/mem", "location: cwd=?, host=?", "", "## Global (0)", "(none)", "", "## This location (0)", "(none)", "",
+].join("\n");
+
 function refresh(m) {
   m.raw = file(m.meta, m.body);
   m.hash = hash();
-  m.issues = lint(m, new Set(memories.map((x) => String(x.meta.name ?? ""))));
+  m.issues = lint(m, new Set(cur.memories.map((x) => String(x.meta.name ?? ""))));
 }
 
 function state() {
-  const at = new Map(memories.map((m, i) => [m.id, i]));
-  const places = snap.state.places
-    .map((p) => ({ ...p, count: memories.filter((m) => m.scope === "here" && m.place === p.key).length }))
+  const at = new Map(cur.memories.map((m, i) => [m.id, i]));
+  const places = cur.snap.state.places
+    .map((p) => ({ ...p, count: cur.memories.filter((m) => m.scope === "here" && m.place === p.key).length }))
     .filter((p) => p.count);
   const words = new Set(stopwords);
   return {
-    ...snap.state, places, stamp: String(stamp), sync: { remote: !!remoteUrl, ahead: 0 },
-    memories: memories.map(({ near, allKeywords, ...m }) => ({
+    ...cur.snap.state, places, stamp: String(stamp), sync: { remote: !!cur.remoteUrl, ahead: 0 },
+    memories: cur.memories.map(({ near, allKeywords, ...m }) => ({
       ...m,
       similar: near.filter((x) => at.has(x.id)).map((x) => ({ i: at.get(x.id), s: x.s })),
       keywords: allKeywords.filter((k) => !words.has(k.k) && !words.has(k.t.toLowerCase())),
@@ -106,21 +145,21 @@ function state() {
 
 function record(subject, counts) {
   const sha = hash().slice(0, 10);
-  before.set(sha, clone(memories));
-  commits.unshift({ sha, date: nowIso(), subject, tool: "ui", added: 0, changed: 0, deleted: 0, ...counts });
+  cur.before.set(sha, clone(cur.memories));
+  cur.commits.unshift({ sha, date: nowIso(), subject, tool: "ui", added: 0, changed: 0, deleted: 0, ...counts });
   stamp++;
   return sha;
 }
 
 function placeCtx(place) {
   if (place?.path) throw new ApiError("The demo cannot see folders on your computer; pick one of the places listed.", 400);
-  const p = snap.state.places.find((x) => x.key === (place?.key ?? place));
+  const p = cur.snap.state.places.find((x) => x.key === (place?.key ?? place));
   if (!p) throw new ApiError("Pick a place from the list or type a folder path.", 400);
   return p.ctx;
 }
 
 function find(id, base) {
-  const m = memories.find((x) => x.id === id);
+  const m = cur.memories.find((x) => x.id === id);
   if (!m) throw new ApiError("That memory no longer exists; it may have been deleted elsewhere.", 404);
   if (base && m.hash !== base) throw new ApiError("This memory changed after you opened it. Close it and open it again to see the new version.", 409);
   return m;
@@ -128,32 +167,36 @@ function find(id, base) {
 
 // ---------------------------------------------------------------- the calls the page makes
 
-let remoteUrl = "https://git.example.com/agent-memory-data.git";
 const settings = () => ({
-  ...snap.settings, name: "agent-memory-data", keywordStopwords: stopwords, lastCommit: commits[0]?.date ?? null,
-  remote: remoteUrl ? remoteUrl.replace(/^[a-z]+:\/\/|^[\w.-]+@|\.git$/g, "").replace(":", "/") : null, remoteUrl,
-  sync: { remote: !!remoteUrl, ahead: 0 },
+  ...cur.snap.settings, dataDir: cur.dataDir, name: cur.dataDir.split("/").pop(), keywordStopwords: stopwords,
+  lastCommit: cur.commits[0]?.date ?? cur.made, remote: cur.remoteUrl ? short(cur.remoteUrl) : null, remoteUrl: cur.remoteUrl,
+  sync: { remote: !!cur.remoteUrl, ahead: 0 },
 });
 const update = () => {
-  const v = snap.settings.version;
+  const v = cur.snap.settings.version;
   return { current: v, latest: v, available: false, checked: nowIso(), auto: autoUpdates, method: "uv-tool", command: "uv tool upgrade agent-memory-git && mem install", oneClick: true };
 };
 
 const GET = {
   "/api/state": state,
   "/api/stamp": () => ({ stamp: String(stamp) }),
-  "/api/activity": () => ({ commits }),
+  "/api/activity": () => ({ commits: cur.commits }),
   "/api/index-preview": (q) => {
-    const preview = snap.previews[q.get("place") ?? ""];
+    const place = q.get("place") ?? "";
+    const preview = cur.snap.previews?.[place] ?? (place ? null : { text: emptyIndex(cur), global: 0, here: 0, limit: 10000 });
     if (!preview) throw new ApiError("unknown place", 404);
-    return preview;
+    // as profiles are added, renamed and removed here, the index names the one it is from, once there are several
+    let text = preview.text.replace(/^profile: .*\n/m, "");
+    if (books.size > 1) text = text.replace("# Shared memory index\n", `# Shared memory index\n${PROFILE_LINE(cur.name)}`);
+    return { ...preview, text, chars: text.length };
   },
   "/api/settings": settings,
-  "/api/doctor": () => snap.doctor,
+  "/api/doctor": () => ({ checks: snap.doctor.checks.map((c) => (c.text.startsWith("data repository:") ? { ...c, text: `data repository: ${cur.dataDir}` } : c)) }),
+  "/api/profiles": summary,
   "/api/update": update,
   "/api/search": async (q) => {
     await new Promise((ok) => setTimeout(ok, 250));  // about as long as the model takes
-    return snap.search[(q.get("q") ?? "").trim()] ?? { hits: [], semantic: true };
+    return cur.snap.search?.[(q.get("q") ?? "").trim()] ?? { hits: [], semantic: true };
   },
 };
 
@@ -173,10 +216,10 @@ const POST = {
     const id = `${created.slice(0, 10).replaceAll("-", "")}-${name}-${hash().slice(0, 4)}`;
     const meta = { id, name, type: p.type, scope: p.scope, description, created, source };
     const rel = `${id.slice(0, 4)}/${id.slice(4, 6)}/${id}.md`;
-    const m = { id, rel, path: `${DATA}/memories/${rel}`, meta, body: String(p.body ?? ""), description, type: p.type, scope: p.scope,
+    const m = { id, rel, path: `${cur.dataDir}/memories/${rel}`, meta, body: String(p.body ?? ""), description, type: p.type, scope: p.scope,
       place: p.scope === "here" ? placeKey(source) : "", tool: "ui", host: "demo", created, updated: "", near: [], allKeywords: [], terms: [] };
     const commit = record(`memory: add ${id} (ui)`, { added: 1 });
-    memories.push(m);
+    cur.memories.push(m);
     refresh(m);
     return { id, commit };
   },
@@ -212,14 +255,14 @@ const POST = {
     const items = Array.isArray(p.items) ? p.items : [p];
     const gone = items.map((it) => find(it.id, it.base));  // all or nothing
     const commit = record(gone.length === 1 ? `memory: delete ${gone[0].id} (ui)` : `memory: delete ${gone.length} memories (ui)`, { deleted: gone.length });
-    memories = memories.filter((m) => !gone.includes(m));
+    cur.memories = cur.memories.filter((m) => !gone.includes(m));
     return { commit };
   },
   "/api/undo": (p) => {
-    const was = before.get(p.commit);
+    const was = cur.before.get(p.commit);
     if (!was) throw new ApiError("Only changes made on this page can be undone here.", 400);
     record(`memory: undo ${p.commit} (ui)`, { changed: 1 });
-    memories = clone(was);
+    cur.memories = clone(was);
     return { ok: true };
   },
   "/api/settings": (p) => {
@@ -228,13 +271,40 @@ const POST = {
     stamp++;
     return settings();
   },
-  "/api/sync": () => ({ ok: true, sync: { remote: !!remoteUrl, ahead: 0 } }),
+  "/api/sync": () => ({ ok: true, sync: { remote: !!cur.remoteUrl, ahead: 0 } }),
   "/api/remote": (p) => {
-    if (p.url == null) { remoteUrl = null; stamp++; return { ok: true, message: "Disconnected; memories stay on this machine.", settings: settings() }; }
+    if (p.url == null) { cur.remoteUrl = null; stamp++; return { ok: true, message: "Disconnected; memories stay on this machine.", settings: settings() }; }
     const url = String(p.url).trim();
-    if (!/^(?:(?:https?|ssh|git|file):\/\/\S+|[\w.-]+@[\w.-]+:\S+|[~/]\S*)$/.test(url)) throw new ApiError("That does not look like a git remote: use https://…, git@host:owner/repo.git, or a folder.", 400);
-    remoteUrl = url; stamp++;
+    if (!REMOTE.test(url)) throw new ApiError(BAD_REMOTE, 400);
+    cur.remoteUrl = url; stamp++;
     return { ok: true, message: "Connected. (In the demo nothing is pushed.)", settings: settings() };
+  },
+  "/api/profiles/use": (p) => { cur = profileOf(p.id); stamp++; return summary(); },
+  "/api/profiles/add": (p) => {
+    const name = generated(p.name) && !taken().has(p.name) ? p.name : newName();
+    const folder = String(p.folder ?? "").trim().replace(/\/+$/, "");
+    if (!/^[~/]/.test(folder)) throw new ApiError("Give the folder as a full path, such as ~/agent-memory-work.", 400);
+    for (const b of books.values()) if (b.dataDir === folder) throw new ApiError(`The ${b.name} profile uses that folder already.`, 400);
+    const remote = String(p.remote ?? "").trim();
+    if (remote && !REMOTE.test(remote)) throw new ApiError(BAD_REMOTE, 400);
+    let id = slug(name) || "profile";
+    for (let n = 2, base = id; books.has(id); n++) id = `${base}-${n}`;
+    const first = books.values().next().value.snap;
+    const b = { id, name, dataDir: folder, memories: [], commits: [], before: new Map(), remoteUrl: remote || null, made: nowIso(),
+      snap: { state: { ...first.state, memories: [], places: [] }, settings: first.settings } };
+    books.set(id, b);
+    if (p.switch !== false) cur = b;
+    stamp++;
+    const message = remote ? "Created a new memory repository and pushed it to the empty remote." : "Created a new memory repository.";
+    return { ...summary(), id, message: `${message} (In the demo nothing is written.)`, access: [] };
+  },
+  "/api/profiles/remove": (p) => {
+    const b = profileOf(p.id);
+    if (books.size === 1) throw new ApiError("This is the only profile; add another before removing it.", 400);
+    books.delete(b.id);
+    if (cur === b) cur = books.values().next().value;
+    stamp++;
+    return { ...summary(), access: [] };
   },
   "/api/update/check": update,
   "/api/update": () => ({ ok: true, changed: false }),

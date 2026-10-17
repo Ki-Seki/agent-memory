@@ -2,6 +2,7 @@
 
 import fcntl
 import os
+import re
 import subprocess
 import time
 from pathlib import Path
@@ -10,6 +11,9 @@ from .config import mem_command
 from .util import log
 
 _ENV = {**os.environ, "GIT_TERMINAL_PROMPT": "0"}
+# what a remote may look like: a URL, scp-style user@host:path, or a folder; never something git reads as an option
+REMOTE_URL = re.compile(r"^(?:(?:https?|ssh|git|file)://\S+|[\w.-]+@[\w.-]+:\S+|[~/]\S*)$")
+BAD_REMOTE = "That does not look like a git remote: use https://…, git@host:owner/repo.git, or a folder."
 
 
 class Lock:
@@ -123,3 +127,42 @@ def spawn_sync(data_dir, push):
             )
     except OSError as e:
         log(data_dir, f"spawn sync failed: {e}")
+
+
+def remote_url(url):
+    """The remote as git should get it, or ValueError when it does not look like one."""
+    url = str(url).strip()
+    if not REMOTE_URL.match(url):
+        raise ValueError(BAD_REMOTE)
+    return os.path.expanduser(url) if url.startswith("~") else url  # git takes a folder as given
+
+
+def connect(data_dir, url):
+    """Make `url` the data repository's origin: (ok, message).
+
+    A remote that already has this branch is pulled from first; an empty one gets this branch pushed to it,
+    so the hooks' pull and push work from then on. ValueError for something that is not a remote.
+    """
+    url = remote_url(url)
+    verb = "set-url" if git(data_dir, "remote", "get-url", "origin").returncode == 0 else "add"
+    r = git(data_dir, "remote", verb, "origin", url)
+    if r.returncode != 0:
+        raise ValueError(f"git remote {verb} failed: {(r.stderr or r.stdout).strip()}")
+    branch = git(data_dir, "branch", "--show-current").stdout.strip() or "main"
+    fetch = git(data_dir, "fetch", "-q", "origin", timeout=60)
+    if fetch.returncode != 0:
+        why = fetch.stderr.strip().splitlines()[-1] if fetch.stderr.strip() else "no answer"
+        return False, f"Saved, but the remote could not be reached: {why}"
+    if git(data_dir, "rev-parse", "--verify", "-q", f"origin/{branch}").returncode == 0:
+        git(data_dir, "branch", f"--set-upstream-to=origin/{branch}")
+        ok = sync(data_dir)
+        return ok, "Connected and synced." if ok else "Connected, but syncing failed; see .cache/agent-memory.log."
+    push = git(data_dir, "push", "-q", "-u", "origin", branch, timeout=60)
+    if push.returncode != 0:
+        return False, f"Saved, but the push failed: {push.stderr.strip()}"
+    return True, "Connected; this repository is pushed to it."
+
+
+def disconnect(data_dir):
+    if has_remote(data_dir):
+        git(data_dir, "remote", "remove", "origin")

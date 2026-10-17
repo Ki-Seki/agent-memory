@@ -1,9 +1,11 @@
-// Settings: the data repository first (where it is, its remote, sync), then search, general settings, and
-// health as one line that opens when asked or when something fails.
+// Settings: the profiles and the data repository first (where it is, its remote, sync), then search, general
+// settings, and health as one line that opens when asked or when something fails.
 import { plural, since } from "../format.js";
 import { attrs, cx, html } from "../h.js";
 import { icon } from "../icons.js";
 import { app } from "../store.js";
+import { avatar } from "../avatar.js";
+import { active, profileNewCard, profileStrip, shown } from "./profiles.js";
 import { segmented, status, toggle } from "./ui.js";
 
 /** A setting: its name and help on the left, the control on the right. */
@@ -57,21 +59,23 @@ function remote(s) {
 }
 
 function repository() {
-  const s = app.settings.s;
+  if (app.pform) return profileNewCard();
+  const s = app.settings.s, p = active();
   const facts = [
     ["Memories", String(app.M.length)],
     ["Last change", s?.lastCommit ? since(s.lastCommit) : "never"],
   ];
-  return html`<section class="repo-card">
-    <header class="repo-card-head">
-      <span class="repo-mark">${icon("git-branch")}</span>
+  const head = html`<header class="repo-card-head">
+      ${p ? avatar(p.name, "lg") : html`<span class="repo-mark">${icon("git-branch")}</span>`}
       <div class="grow">
-        <h2>${s?.name ?? "Data repository"}</h2>
+        <h2 class="repo-title">${p?.name ?? s?.name ?? "Data repository"}${p && shown().length > 1 ? html`<button type="button" class="btn ghost icon" aria-label="Remove this profile" data-tip="Remove this profile" data-act="profileRemove">${icon("trash")}</button>` : ""}</h2>
         <button type="button" class="path-copy" title="Copy the path" data-act="copy" data-arg="${s?.dataDir ?? ""}">${s?.dataDir ?? app.data?.dataDir}${icon("copy")}</button>
       </div>
       ${syncState(s)}
       ${s?.remote ? html`<button type="button" class="btn sm" data-act="syncNow"${attrs({ disabled: app.settings.syncing })}>${icon("refresh-cw", app.settings.syncing ? "spin" : "")}Sync now</button>` : ""}
-    </header>
+    </header>`;
+  return html`<section class="repo-card" data-key="repo-card">
+    ${head}
     <dl class="repo-facts">${facts.map(([k, v]) => html`<div><dt>${k}</dt><dd>${v}</dd></div>`)}</dl>
     ${remote(s)}
   </section>`;
@@ -130,5 +134,5 @@ function health() {
 }
 
 export function settingsPage() {
-  return html`<div class="settings">${repository()}${search()}${general()}${health()}</div>`;
+  return html`<div class="settings"><div class="repo-stack">${profileStrip()}${repository()}</div>${search()}${general()}${health()}</div>`;
 }

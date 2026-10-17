@@ -136,6 +136,11 @@ const ACTIONS = {
     if (ok) setRemote(null);
   },
   toggleHealth: () => { settings.healthOpen = !settings.healthOpen; app.changed(); },
+  useProfile: (id) => { closeMenus(); app.useProfile(id); },
+  manageProfiles: () => { closeMenus(); app.go("settings"); },
+  profileNew: async () => { await app.newProfile(); setTimeout(() => document.getElementById("pf-folder")?.focus()); },
+  profileCancel: () => app.cancelProfile(),
+  profileRemove: () => app.removeProfile(),
   runChecks: () => app.runChecks(),
 };
 
@@ -162,10 +167,14 @@ document.addEventListener("input", (e) => {
   const el = e.target, name = el.dataset?.input;
   if (!name) return;
   if (name.startsWith("draft:")) app.setDraft(name.slice(6), el.value);
+  else if (name.startsWith("pform:")) app.setProfileField(name.slice(6), el.value);
   else INPUTS[name]?.(el.value);
 });
 document.addEventListener("change", (e) => { const name = e.target.dataset?.change; if (name) CHANGES[name]?.(e.target.value); });
-document.addEventListener("submit", (e) => { if (e.target.matches("[data-memory-form]")) { e.preventDefault(); app.save(); } });
+document.addEventListener("submit", (e) => {
+  if (e.target.matches("[data-memory-form]")) { e.preventDefault(); app.save(); }
+  else if (e.target.matches("[data-profile-form]")) { e.preventDefault(); app.saveProfile(); }
+});
 
 // ---------------------------------------------------------------- menus
 
@@ -176,9 +185,14 @@ document.addEventListener("beforetoggle", (e) => {
   const trigger = document.querySelector(`[popovertarget="${menu.id}"]`);
   if (!trigger) return;
   const r = trigger.getBoundingClientRect(), w = parseFloat(getComputedStyle(menu).width) || 288;
-  const left = menu.dataset.align === "end" ? r.right - w : r.left;
+  if (menu.dataset.align === "side" && innerWidth >= 640) {  // beside a trigger low in the rail, growing upwards
+    Object.assign(menu.style, { left: `${r.right + 8}px`, top: "auto", bottom: `${Math.max(8, innerHeight - r.bottom)}px`, maxHeight: `${Math.max(160, r.bottom - 16)}px` });
+    return;
+  }
+  const left = menu.dataset.align === "end" || menu.dataset.align === "side" ? r.right - w : r.left;
   menu.style.left = `${Math.max(8, Math.min(innerWidth - w - 8, left))}px`;
   menu.style.top = `${r.bottom + 4}px`;
+  menu.style.bottom = "auto";
   menu.style.maxHeight = `${Math.max(160, innerHeight - r.bottom - 16)}px`;
   if (menu.querySelector(".menu-find")) { app.menuQuery = ""; app.changed(); }
 }, true);
@@ -260,6 +274,10 @@ addEventListener("keydown", (e) => {
   if (el?.id === "remote-url" && (e.key === "Enter" || e.key === "Escape")) {
     e.preventDefault();
     return e.key === "Enter" ? setRemote(settings.remoteDraft.trim()) : ACTIONS.remoteCancel();
+  }
+  if (app.pform && e.key === "Escape" && el?.closest?.("[data-profile-form]")) {
+    e.preventDefault();
+    return app.pform.busy ? undefined : app.cancelProfile();
   }
   if (el?.id === "add-word" && e.key === "Enter") {
     e.preventDefault();

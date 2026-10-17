@@ -52,6 +52,10 @@ def save(cfg):
 
 
 def data_dir():
-    """The data repository, or None when not configured."""
-    value = os.environ.get("AGENT_MEMORY_DATA") or load().get("data_dir")
+    """The data repository: AGENT_MEMORY_DATA when set, else the active profile's folder; None when not configured."""
+    value = os.environ.get("AGENT_MEMORY_DATA")
+    if not value:
+        cfg = load()
+        profiles = cfg.get("profiles") if isinstance(cfg.get("profiles"), dict) else {}
+        value = (profiles.get(cfg.get("profile")) or {}).get("data_dir") or cfg.get("data_dir")
     return Path(value).expanduser() if value else None

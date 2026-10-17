@@ -10,6 +10,11 @@
 </head>
 <body>
 <div id="app"></div>
+<svg class="svg-defs" width="0" height="0" aria-hidden="true">
+  <!-- for profile pictures (js/avatar.js): defined once, out of the page that is redrawn, so every picture can use them -->
+  <filter id="pav-blur" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB"><feGaussianBlur stdDeviation="7"/></filter>
+  <clipPath id="pav-clip"><rect width="80" height="80" rx="22.4"/></clipPath>
+</svg>
 <dialog id="confirm" class="dialog" aria-labelledby="confirm-title"></dialog>
 <dialog id="compare" class="dialog wide"></dialog>
 </body>

@@ -75,11 +75,12 @@ def _take(items, budget):
 THROWAWAY_NOTE = "throwaway folder: `here` memories will be filed under the project this session works in"
 
 
-def render(memories, ctx, paths, budget=DEFAULT_BUDGET, throwaway=False):
+def render(memories, ctx, paths, budget=DEFAULT_BUDGET, throwaway=False, profile=None):
     globals_, here = visible(memories, ctx)
     location = describe(ctx) + (f" ({THROWAWAY_NOTE})" if throwaway else "")
     header = [
         "# Shared memory index",
+        *([f"profile: {profile} (other profiles' memories are kept apart and not listed here)"] if profile else []),
         f"memories: {paths['memories']}",
         f"staging (write new memories here): {paths['staging']}",
         f"mem: {paths['mem']}",
