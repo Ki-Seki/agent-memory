@@ -387,7 +387,7 @@ def main(argv=None):
     sp.set_defaults(fn=cmd_profile)
 
     sp = sub.add_parser("hook", help=argparse.SUPPRESS)
-    sp.add_argument("event", choices=["session-start", "stop", "session-end"])
+    sp.add_argument("event")  # any name: an event from a newer install is logged and ignored, never refused
     sp.add_argument("--tool", required=True, choices=["claude-code", "codex"])
     sp.set_defaults(fn=cmd_hook)
 

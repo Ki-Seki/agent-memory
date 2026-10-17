@@ -92,9 +92,9 @@ mem install</code></pre>
     <table>
       <thead><tr><th>File</th><th>Change</th></tr></thead>
       <tbody>
-        <tr><td><code>~/.claude/settings.json</code></td><td>SessionStart, Stop and SessionEnd hooks; <code>autoMemoryEnabled: false</code>; read and edit permission on the data repository; <code>mem search/list/show</code> allowed</td></tr>
+        <tr><td><code>~/.claude/settings.json</code></td><td>SessionStart, UserPromptSubmit, Stop and SessionEnd hooks; <code>autoMemoryEnabled: false</code>; read and edit permission on the data repository; <code>mem search/list/show</code> allowed</td></tr>
         <tr><td><code>~/.claude/CLAUDE.md</code></td><td>a marked block importing <code>~/.config/agent-memory/PROTOCOL.md</code>, a copy of the protocol</td></tr>
-        <tr><td><code>~/.codex/hooks.json</code></td><td>the same three hooks</td></tr>
+        <tr><td><code>~/.codex/hooks.json</code></td><td>the same four hooks</td></tr>
         <tr><td><code>~/.codex/config.toml</code></td><td>Codex's own memories off; the data repository added to the writable roots</td></tr>
         <tr><td><code>~/.codex/AGENTS.md</code></td><td>a marked block with the protocol</td></tr>
         <tr><td><code>~/.zshrc</code> or <code>~/.bashrc</code></td><td>a marked block putting <code>~/.local/bin</code> on PATH, only if a new login shell lacks it</td></tr>
@@ -112,11 +112,11 @@ mem install</code></pre>
 
   <section id="profiles">
     <h2>Profiles</h2>
-    <p>A profile is a separate set of memories: its own data repository, with its own remote or none. Keep work and personal memories apart, or a client's away from both. New sessions of either tool load and save memories in the active profile; a session that is running when you switch keeps saving to the one it started in. When there is more than one, the index says which profile it is from.</p>
+    <p>A profile is a separate set of memories: its own data repository, with its own remote or none. Keep one area's memories from shaping another's: work and personal, or one client and the next. Both tools load and save memories in the active profile, sessions already running included: after a switch, a running session gets the new profile's index with its next message and saves there from then on. A reply already under way finishes in the profile before, and memories a session has already read stay in its context, so start a new session for a clean slate. When there is more than one profile, the index says which one it is from.</p>
     <p>Each profile gets a name of two words, such as Quiet Harbor, picked when it is made, and a picture drawn from that name; neither changes. In <code>mem ui</code>, Settings opens on the active profile, and its picture at the bottom of the rail leads there: switch, add and remove profiles at its foot. Switching there also changes the profile the page shows; the <a href="demo/#/settings">live demo</a> has two to try. From a terminal, use <code>mem profile</code>:</p>
 <pre><code>mem profile                                   list them; * marks the active one
 mem profile add ~/repos/agent-memory-work [--remote URL]   prints the name it got
-mem profile use quiet-harbor                  new sessions use Quiet Harbor from now on
+mem profile use quiet-harbor                  sessions use Quiet Harbor from their next message
 mem profile remove quiet-harbor               forget it; the folder and remote stay</code></pre>
     <p>A new or empty folder becomes a fresh repository, or a clone of the remote when that already has memories; an existing memory repository is used as it is. Folders holding anything else are refused. Adding or removing a profile also updates the folders Claude Code and Codex may read and write, without touching the hooks.</p>
   </section>

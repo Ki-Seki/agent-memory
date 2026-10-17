@@ -35,6 +35,7 @@ PATH_LINE = 'export PATH="$HOME/.local/bin:$PATH"'
 
 HOOK_EVENTS = [
     ("SessionStart", "session-start", 15),
+    ("UserPromptSubmit", "prompt", 10),
     ("Stop", "stop", 15),
     ("SessionEnd", "session-end", 3),
 ]  # Codex clamps SessionEnd to 3s
@@ -44,7 +45,9 @@ HOOK_EVENTS = [
 
 
 def hook_command(event, tool):
-    return " ".join(shlex.quote(a) for a in config.mem_command()) + f" hook {event} --tool {tool}"
+    command = " ".join(shlex.quote(a) for a in config.mem_command()) + f" hook {event} --tool {tool}"
+    # a mem from before this event exits 2 on it, and exit 2 from UserPromptSubmit blocks the prompt
+    return command + " || true" if event == "prompt" else command
 
 
 def _is_ours(group):
@@ -318,6 +321,7 @@ def _codex_plan(plan, data_dirs, state):
         handler = {"type": "command", "command": hook_command(name, "codex"), "timeout": timeout}
         if event == "SessionStart":
             handler["statusMessage"] = "Loading shared memory"
+        if event in ("SessionStart", "UserPromptSubmit"):
             handler["additionalContextLimit"] = 0  # keep the index inline, never spill to disk
         groups.append({"hooks": [handler]})
         hooks[event] = groups
