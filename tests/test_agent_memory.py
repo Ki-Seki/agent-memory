@@ -460,6 +460,30 @@ class UiServerTest(unittest.TestCase):
         cls.server.server_close()
         cls.patch.stop()
 
+    def test_many_requests_at_once_all_get_answered(self):
+        """The page loads some twenty modules at once; none may be turned away while the server is busy."""
+        import socket
+        import threading
+
+        from agent_memory import ui_server
+
+        server = ui_server.make_server(self.data, port=0, semantic=False)
+        host, port = server.server_address
+        socks = []
+        try:
+            for _ in range(40):  # all waiting before the server accepts any, as when it is busy
+                sock = socket.create_connection((host, port), timeout=3)  # one turned away times out here
+                sock.sendall(f"GET /app.css HTTP/1.1\r\nHost: {host}:{port}\r\nConnection: close\r\n\r\n".encode())
+                socks.append(sock)
+            threading.Thread(target=server.serve_forever, daemon=True).start()
+            for sock in socks:
+                self.assertTrue(sock.recv(64).startswith(b"HTTP/1.0 200"))
+        finally:
+            for sock in socks:
+                sock.close()
+            server.shutdown()
+            server.server_close()
+
     def call(self, path, body=None, token=None, host=None, origin=None):
         import urllib.error
         import urllib.request

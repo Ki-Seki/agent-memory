@@ -614,12 +614,18 @@ class Handler(BaseHTTPRequestHandler):
         self._run(lambda: getattr(self.server.app, method)(payload))
 
 
+class Server(ThreadingHTTPServer):
+    # The page is some twenty modules the browser asks for at once; with socketserver's backlog of 5 the
+    # kernel resets the overflow, a module fails to load, and the page stays blank.
+    request_queue_size = 128
+
+
 def make_server(data_dir, port=8790, semantic=True):
     app = UiApp(data_dir, semantic=semantic)
     try:
-        server = ThreadingHTTPServer(("127.0.0.1", port), Handler)
+        server = Server(("127.0.0.1", port), Handler)
     except OSError:
-        server = ThreadingHTTPServer(("127.0.0.1", 0), Handler)
+        server = Server(("127.0.0.1", 0), Handler)
     port = server.server_address[1]
     server.hosts = {f"127.0.0.1:{port}", f"localhost:{port}"}
     # a restart after an update keeps the token, so the open page carries on
