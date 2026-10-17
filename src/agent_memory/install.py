@@ -520,7 +520,9 @@ def doctor_checks():
             f"`mem` on a new terminal's PATH ({LOCAL_BIN.parent})",
         )
     if data:
-        check(gitsync.has_remote(data), "data repository has a remote (optional)")
+        # a remote is optional: without one, memories are still committed and simply stay on this machine
+        remote = gitsync.has_remote(data)
+        check(True, "data repository has a remote" if remote else "no remote: memories stay on this machine")
         staged = list((data / "staging").glob("*/*.md")) if (data / "staging").exists() else []
         check(not staged, f"no stuck staged files ({len(staged)})")
         logf = data / ".cache" / "agent-memory.log"

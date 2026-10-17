@@ -791,6 +791,25 @@ class DoctorTest(unittest.TestCase):
         )
         self.assertEqual(install.recent_hook_errors(log, now + dt.timedelta(days=30)), [])
 
+    def test_a_data_repository_without_a_remote_is_fine(self):
+        from agent_memory import config
+
+        data = ROOT / "doctor-no-remote"
+        install.init_data(data)
+        with mock.patch.object(config, "data_dir", return_value=data):
+            checks = dict((text, ok) for ok, text in install.doctor_checks())
+        self.assertIs(checks.get("no remote: memories stay on this machine"), True)
+
+    def test_doctor_exits_non_zero_when_a_check_fails(self):
+        from agent_memory import cli
+
+        for checks, code in (([(True, "a"), (True, "b")], 0), ([(True, "a"), (False, "b")], 1)):
+            with (
+                mock.patch.object(install, "doctor_checks", return_value=checks),
+                mock.patch("sys.stdout", io.StringIO()),
+            ):
+                self.assertEqual(cli.main(["doctor"]), code)
+
 
 class PackagingTest(unittest.TestCase):
     def test_hooks_run_the_package_with_python_m(self):
