@@ -113,7 +113,7 @@ mem install</code></pre>
   <section id="profiles">
     <h2>Profiles</h2>
     <p>A profile is a separate set of memories: its own data repository, with its own remote or none. Keep one area's memories from shaping another's: work and personal, or one client and the next. Both tools load and save memories in the active profile, sessions already running included: after a switch, a running session gets the new profile's index with its next message and saves there from then on. A reply already under way finishes in the profile before, and memories a session has already read stay in its context, so start a new session for a clean slate. When there is more than one profile, the index says which one it is from.</p>
-    <p>Each profile gets a name of two words, such as Quiet Harbor, picked when it is made, and a picture drawn from that name; neither changes. In <code>mem ui</code>, Settings opens on the active profile, and its picture at the bottom of the rail leads there: switch, add and remove profiles at its foot. Switching there also changes the profile the page shows; the <a href="demo/#/settings">live demo</a> has two to try. From a terminal, use <code>mem profile</code>:</p>
+    <p>Each profile gets a name of two words, such as Quiet Harbor, picked when it is made, and a picture drawn from that name; neither changes. In <code>mem ui</code>, Settings opens on the active profile, and its picture at the bottom of the rail leads there: switch, add and remove profiles at its foot. Switching there also changes the profile the page shows, and first says what it means for running sessions, until you tick <i>Don't show this again</i>; the <a href="demo/#/settings">live demo</a> has two to try. From a terminal, use <code>mem profile</code>:</p>
 <pre><code>mem profile                                   list them; * marks the active one
 mem profile add ~/repos/agent-memory-work [--remote URL]   prints the name it got
 mem profile use quiet-harbor                  sessions use Quiet Harbor from their next message
@@ -152,6 +152,7 @@ mem doctor                      check the installation</code></pre>
         <tr><td><code>profiles</code>, <code>profile</code></td><td>each profile's name and folder, and which one is active; written by <code>mem profile</code> and Settings</td></tr>
         <tr><td><code>keyword_stopwords</code></td><td>words never used as keywords</td></tr>
         <tr><td><code>check_updates</code></td><td><code>false</code> turns off the daily check for a new release</td></tr>
+        <tr><td><code>switch_note</code></td><td><code>false</code> stops saying what a profile switch means for running sessions; <i>Don't show this again</i> sets it</td></tr>
         <tr><td><code>throwaway_patterns</code></td><td>folders treated as throwaway, in place of the built-in ones</td></tr>
         <tr><td><code>embed_model_dir</code></td><td>where the embedding model is, instead of <code>~/.cache/agent-memory/models</code></td></tr>
       </tbody>

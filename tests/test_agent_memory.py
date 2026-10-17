@@ -596,6 +596,11 @@ class UiServerTest(unittest.TestCase):
         self.assertEqual(config.load()["keyword_stopwords"], ["alpha", "beta"])
         self.assertEqual(self.call("/api/settings", {"keyword_stopwords": "alpha"})[0], 400)
         self.call("/api/settings", {"keyword_stopwords": []})
+        self.assertIs(res["switchNote"], True)  # the switch dialog shows until told not to
+        status, res = self.call("/api/settings", {"switch_note": False})
+        self.assertIs(res["switchNote"], False)
+        self.assertIs(config.load()["switch_note"], False)
+        self.assertEqual(self.call("/api/settings", {"switch_note": "no"})[0], 400)
         status, res = self.call("/api/doctor")
         self.assertEqual(status, 200)
         self.assertTrue(res["checks"] and all({"ok", "text"} <= set(c) for c in res["checks"]))
@@ -1248,6 +1253,24 @@ class ProfilesTest(unittest.TestCase):
         self.assertTrue((self.work / ".git").is_dir())  # the folder is left alone
         with self.assertRaises(profiles.ProfileError):
             profiles.remove("default")  # never the last one
+
+    def test_switching_says_what_it_means_for_running_sessions(self):
+        from agent_memory import config, profiles
+
+        def use(profile):
+            out = io.StringIO()
+            with mock.patch("sys.stdout", out):
+                cli.main(["profile", "use", profile])
+            return out.getvalue()
+
+        pid, _ = profiles.add(self.work)
+        said = use("default")
+        self.assertIn("running ones switch with their next message", said)
+        self.assertIn(cli.SWITCH_NOTE, said)
+        config.save({**config.load(), "switch_note": False})  # what Don't show this again sets
+        said = use(pid)
+        self.assertIn("running ones switch with their next message", said)
+        self.assertNotIn(cli.SWITCH_NOTE, said)
 
     def test_names_are_picked_not_given(self):
         from agent_memory import profiles

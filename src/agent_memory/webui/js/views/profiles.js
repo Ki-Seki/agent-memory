@@ -1,7 +1,7 @@
 // Profiles: separate memory repositories, each its own folder and remote. Settings opens on the active one, with
 // the others in its foot; the rail's last button is the active profile's picture, which leads there. A profile's name is picked for it when it is made, and its picture is
 // drawn from the name.
-import { avatar } from "../avatar.js";
+import { avatar, glow } from "../avatar.js";
 import { attrs, html } from "../h.js";
 import { icon } from "../icons.js";
 import { app } from "../store.js";
@@ -41,6 +41,16 @@ export function newProfile() {
       <button type="button" class="btn ghost" data-act="profileCancel"${attrs({ disabled: f.busy })}>Cancel</button>
     </div>
   </form>`;
+}
+
+/** An open session as a row of messages: those so far in `from`'s colours, the next ones in `to`'s. */
+export function switchLine(from, to) {
+  const msgs = (name, n) => Array.from({ length: n }, () => html`<i>${glow(name)}</i>`);
+  return html`<div class="sline" role="img"${attrs({ "aria-label": `An open session: its messages so far used ${from}; from its next message it uses ${to}` })}>
+    <span class="sline-when">So far</span><span class="sline-when next">Next message</span>
+    <span class="sline-msgs">${msgs(from, 3)}</span><span class="sline-msgs next">${msgs(to, 2)}<b>…</b></span>
+    <span class="sline-name">${avatar(from)}${from}</span><span class="sline-name next">${avatar(to)}${to}</span>
+  </div>`;
 }
 
 // ---------------------------------------------------------------- the rail

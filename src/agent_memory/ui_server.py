@@ -173,6 +173,7 @@ class UiApp:
             "remoteUrl": re.sub(r"(://)[^/@]+@", r"\1", url) or None,  # without any credentials in it
             "sync": self.sync_status(),
             "keywordStopwords": config.load().get("keyword_stopwords", []),
+            "switchNote": config.load().get("switch_note", True),
             "model": {
                 "name": ui.MODEL["name"],
                 "ready": ui.model_ready(),
@@ -185,7 +186,7 @@ class UiApp:
         }
 
     def set_settings(self, p):
-        """Change keyword_stopwords, check_updates, or both."""
+        """Change keyword_stopwords, check_updates, switch_note, or several."""
         cfg = config.load()
         if "keyword_stopwords" in p:
             words = p["keyword_stopwords"]
@@ -196,6 +197,10 @@ class UiApp:
             if not isinstance(p["check_updates"], bool):
                 raise ApiError(400, "check_updates must be true or false")
             cfg["check_updates"] = p["check_updates"]
+        if "switch_note" in p:
+            if not isinstance(p["switch_note"], bool):
+                raise ApiError(400, "switch_note must be true or false")
+            cfg["switch_note"] = p["switch_note"]
         config.save(cfg)
         if "keyword_stopwords" in p:
             self.refresh()  # keywords are chosen when the state is built

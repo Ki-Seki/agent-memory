@@ -249,25 +249,36 @@ def _access_note():
         print(f"updated {' and '.join(tools)} so agents can reach every profile's folder")
 
 
+SWITCH_NOTE = "they keep what they've already read; start a new session for a clean slate"
+
+
+def _switched(name):
+    print(f"sessions now use {name}; running ones switch with their next message")
+    if config.load().get("switch_note", True):
+        print(SWITCH_NOTE)
+
+
 def cmd_profile(args):
     if profiles.locked():
         sys.exit("AGENT_MEMORY_DATA picks the data repository here, so profiles do not apply")
     try:
         if args.action == "use":
             pid = profiles.use(args.profile)
-            print(f"new sessions now use {profiles.listing()[0][pid]['name']}")
+            _switched(profiles.listing()[0][pid]["name"])
         elif args.action == "add":
             pid, note = profiles.add(args.folder, remote=args.remote, switch=not args.keep)
             found, active = profiles.listing()
             print(note)
-            print(f"added {found[pid]['name']}" + ("; new sessions now use it" if active == pid else ""))
+            print(f"added {found[pid]['name']}")
+            if active == pid:
+                _switched(found[pid]["name"])
             _access_note()
         elif args.action == "remove":
             found, _ = profiles.listing()
             pid = profiles.find(args.profile, found)
             active = profiles.remove(pid)
             print(f"removed {found[pid]['name']}; {profiles.short(found[pid]['data_dir'])} is left as it is")
-            print(f"new sessions use {profiles.listing()[0][active]['name']}")
+            _switched(profiles.listing()[0][active]["name"])
             _access_note()
         else:
             for p in profiles.summary()["profiles"]:

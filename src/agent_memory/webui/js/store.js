@@ -24,6 +24,9 @@ const SORTERS = {
   az: (a, b) => a.description.localeCompare(b.description),
 };
 
+/** What switching profiles means for the sessions that are running. */
+const SWITCH_NOTE = "What a session has already read stays with it. Start a new session for a clean slate.";
+
 class App {
   data = null;
   bootError = "";
@@ -385,12 +388,25 @@ class App {
     if (this.profiles?.active === id) return this.pform && this.cancelProfile();
     if (!(await this.#leaveEdit())) return;
     const to = this.profiles?.profiles.find((p) => p.id === id);
+    if (!(await this.#switchOk(to?.name ?? id))) return;
     this.switching = id; this.changed();
     try {
       this.#took(await api("/api/profiles/use", { id }));
-      this.toast(`Switched to ${to?.name ?? id}${this.profiles?.demo ? "" : "; new sessions use it too"}`);
+      this.toast(`Switched to ${to?.name ?? id}`);
     } catch (e) { this.toast(e.message, { error: true }); }
     finally { this.switching = ""; this.changed(); }
+  }
+  /** Whether to go on with a switch, once told what it means for sessions that are running; until told not to say. */
+  async #switchOk(name) {
+    if (this.profiles?.demo || this.settings.s?.switchNote === false) return true;
+    const from = this.profiles?.profiles.find((p) => p.active)?.name;
+    const q = { title: `Switch to ${name}?`, timeline: from && { from, to: name }, body: SWITCH_NOTE, action: "Switch", check: "Don't show this again" };
+    if (!(await this.ask(q))) return false;
+    if (q.checked) {
+      try { this.settings.s = await api("/api/settings", { switch_note: false }); }
+      catch (e) { this.toast(e.message, { error: true }); }
+    }
+    return true;
   }
   /** After the server answers a profile change: its list, and the memories of the profile it now shows. */
   async #took(r) {
@@ -423,20 +439,20 @@ class App {
   }
   async saveProfile() {
     const f = this.pform;
-    if (!f || f.busy) return;
+    if (!f || f.busy || !(await this.#switchOk(f.name))) return;
     f.busy = true; f.error = ""; this.changed();
     try {
       const r = await api("/api/profiles/add", { name: f.name, folder: f.folder, remote: f.remote.trim() || null });
       const made = r.profiles.find((p) => p.id === r.id)?.name ?? f.name;
       await this.#took(r);
-      this.toast(r.demo || r.active !== r.id ? `${made}: ${r.message}` : `${made}: ${r.message} New sessions use it.`);
+      this.toast(`${made}: ${r.message}`);
     } catch (e) { f.busy = false; f.error = e.message; this.changed(); }
   }
   /** Forget the profile the page shows, after asking; its folder and remote stay. */
   async removeProfile() {
     const p = this.profiles?.profiles.find((x) => x.active);
     if (!p) return;
-    const ok = await this.ask({ title: `Remove the ${p.name} profile?`, body: `agent-memory stops using it. The folder ${p.dataDir} and its memories stay on disk, and any remote is not touched; add the folder again later to bring it back.`, action: "Remove", danger: true });
+    const ok = await this.ask({ title: `Remove the ${p.name} profile?`, body: `agent-memory stops using it. The folder ${p.dataDir} and its memories stay on disk, and any remote is not touched; add the folder again later to bring it back. Running sessions move to the profile left active with their next message.`, action: "Remove", danger: true });
     if (!ok) return;
     try { await this.#took(await api("/api/profiles/remove", { id: p.id })); this.toast(`Removed ${p.name}`); }
     catch (e) { this.toast(e.message, { error: true }); }
@@ -453,7 +469,8 @@ class App {
     this.changed();
   }
   dismiss(id) { this.toasts = this.toasts.filter((t) => t.id !== id); this.changed(); }
-  ask(q) { return new Promise((resolve) => { this.asking = { ...q, resolve }; this.changed(); }); }
+  /** Ask in a dialog; resolves true or false, and with `check` set leaves the box's state in q.checked. */
+  ask(q) { return new Promise((resolve) => { this.asking = Object.assign(q, { resolve }); this.changed(); }); }
   answer(ok) { const a = this.asking; this.asking = null; a?.resolve(ok); this.changed(); }
 }
 

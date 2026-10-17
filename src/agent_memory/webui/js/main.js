@@ -102,6 +102,7 @@ const ACTIONS = {
   removePicked: () => app.remove([...app.picked]),
   undoToast: (id) => { const t = app.toasts.find((x) => String(x.id) === id); if (t) { app.dismiss(t.id); app.undo(t.undo); } },
   answer: (v) => app.answer(v === "yes"),
+  askCheck: () => { if (app.asking) { app.asking.checked = !app.asking.checked; app.changed(); } },
   compare: (i) => { app.comparing = duplicatePairs()[Number(i)] ?? null; app.changed(); },
   closeCompare: () => { app.comparing = null; app.changed(); },
   removeCompared: (id) => { app.comparing = null; app.remove([id]); },
