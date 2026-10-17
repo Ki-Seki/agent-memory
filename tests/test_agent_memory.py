@@ -551,6 +551,29 @@ class UiServerTest(unittest.TestCase):
         self.assertTrue(all(self.mem(i) is not None for i in ids))
 
 
+class UiSyncStatusTest(unittest.TestCase):
+    def test_finished_push_clears_not_pushed(self):
+        from agent_memory import gitsync, ui, ui_server
+
+        data, bare = ROOT / "ui-sync-data", ROOT / "ui-sync.git"
+        for path in (data, bare):
+            shutil.rmtree(path, ignore_errors=True)
+        subprocess.run(["git", "init", "-q", "--bare", "-b", "main", str(bare)], check=True)
+        install.init_data(data)
+        gitsync.git(data, "remote", "add", "origin", str(bare))
+        gitsync.git(data, "push", "-q", "-u", "origin", "main")
+        path = data / "memories" / "2026" / "10" / "fresh.md"
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text("---\nid: fresh\ntype: user\nscope: global\ndescription: fresh\n---\nfresh\n")
+        gitsync.commit(data, "memory: fresh")
+
+        with mock.patch.object(ui, "model_ready", return_value=False):
+            app = ui_server.UiApp(data, semantic=False)
+            self.assertEqual(app.current()["sync"], {"remote": True, "ahead": 1})
+            gitsync.git(data, "push", "-q")  # what the background push does after a commit
+            self.assertEqual(app.current()["sync"], {"remote": True, "ahead": 0})
+
+
 class DoctorTest(unittest.TestCase):
     def test_only_recent_hook_errors_count(self):
         import datetime as dt
