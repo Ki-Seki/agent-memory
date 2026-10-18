@@ -26,6 +26,7 @@ Do not save:
 
 - progress or status updates, what you did this turn, or a recap of the conversation
 - the result of one run, live metrics, or anything else that should be looked up again rather than remembered
+- an instruction that holds only while something else is true, such as "leave the GPUs alone, another job is using them" or "don't push this week": that is state, not a preference; when you can't tell whether an instruction is standing or just for now, ask before saving it
 - code structure, paths you can rediscover, debugging recipes, git history, or anything already in the repository, its docs, CLAUDE.md or AGENTS.md
 - generic advice, or anything that matters only to the current conversation
 - secrets
