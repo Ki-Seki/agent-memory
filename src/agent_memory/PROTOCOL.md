@@ -40,8 +40,8 @@ Write one file per memory into this session's staging directory, with a short ke
 ```markdown
 ---
 name: kebab-case-slug
-type: feedback
-scope: global
+type: project
+scope: here
 description: One line (under 150 characters) saying what this memory is; it becomes the index entry
 ---
 The fact itself, in one or two sentences.
@@ -69,6 +69,8 @@ Keep the body under about 1,500 characters. A memory is a conclusion, not a log:
 
 - `global`: in every session. Use it for who the user is and for preferences not tied to one project.
 - `here`: only in this folder, its parent and child folders, and other checkouts of the same git remote. When the index marks the location as a throwaway folder (a scratch workspace or a Codex per-thread folder), `here` memories are filed under the project folder this session worked in most, so use `here` for project facts there too.
+
+A `project` or `reference` memory is `here` unless it holds in every project you could work in; a fact about one project, its repository or its tools stays `here`, however important it seems. Most `user` and `feedback` memories are `global`.
 
 Leave out ids, dates and provenance (session, host, folder, git remote). When your turn ends a hook adds them, moves the file into the repository and commits it.
 
