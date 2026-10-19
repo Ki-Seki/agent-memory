@@ -16,6 +16,7 @@ const PATHS = {
   "arrow-left": `<path d="m12 19-7-7 7-7"/><path d="M19 12H5"/>`,
   "arrow-right": `<path d="M5 12h14"/><path d="m12 5 7 7-7 7"/>`,
   "arrow-up": `<path d="m5 12 7-7 7 7"/><path d="M12 19V5"/>`,
+  "arrow-up-right": `<path d="M7 7h10v10"/><path d="M7 17 17 7"/>`,
   "chart-column": `<path d="M3 3v16a2 2 0 0 0 2 2h16"/><path d="M18 17V9"/><path d="M13 17V5"/><path d="M8 17v-3"/>`,
   "check": `<path d="M20 6 9 17l-5-5"/>`,
   "chevron-down": `<path d="m6 9 6 6 6-6"/>`,
