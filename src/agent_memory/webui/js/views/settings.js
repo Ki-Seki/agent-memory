@@ -123,6 +123,15 @@ function doctor() {
   </section>`;
 }
 
+// ---------------------------------------------------------------- where agent-memory lives
+
+/** The project's site and repository, as [project.urls] in pyproject.toml has them. */
+const LINKS = [["Website", "https://ki-seki.github.io/agent-memory/"], ["GitHub", "https://github.com/Ki-Seki/agent-memory"]];
+
+function about() {
+  return html`<nav class="about" aria-label="agent-memory">${LINKS.map(([text, href], i) => html`${i ? html`<span class="sep">·</span>` : ""}<a${attrs({ href, target: "_blank", rel: "noopener noreferrer" })}>${text}${icon("arrow-up-right")}</a>`)}</nav>`;
+}
+
 export function settingsPage() {
-  return html`<div class="settings">${hero()}${prefs()}${doctor()}</div>`;
+  return html`<div class="settings">${hero()}${prefs()}${doctor()}${about()}</div>`;
 }
