@@ -120,7 +120,7 @@
       "similar": [
        {
         "i": 1,
-        "s": 0.449
+        "s": 0.466
        }
       ],
       "keywords": [
@@ -173,15 +173,15 @@
       "similar": [
        {
         "i": 0,
-        "s": 0.449
+        "s": 0.466
        },
        {
         "i": 6,
-        "s": 0.431
+        "s": 0.461
        },
        {
         "i": 4,
-        "s": 0.076
+        "s": 0.364
        }
       ],
       "keywords": [
@@ -236,15 +236,15 @@
       "similar": [
        {
         "i": 3,
-        "s": 0.133
+        "s": 0.379
        },
        {
         "i": 10,
-        "s": 0.078
+        "s": 0.364
        },
        {
         "i": 8,
-        "s": 0.068
+        "s": 0.361
        }
       ],
       "keywords": [
@@ -312,27 +312,27 @@
       "similar": [
        {
         "i": 12,
-        "s": 0.319
+        "s": 0.43
        },
        {
         "i": 10,
-        "s": 0.26
+        "s": 0.414
        },
        {
         "i": 6,
-        "s": 0.246
+        "s": 0.41
        },
        {
         "i": 8,
-        "s": 0.219
+        "s": 0.403
        },
        {
         "i": 5,
-        "s": 0.208
+        "s": 0.4
        },
        {
         "i": 11,
-        "s": 0.197
+        "s": 0.397
        }
       ],
       "keywords": [
@@ -390,27 +390,27 @@
       "similar": [
        {
         "i": 5,
-        "s": 0.895
+        "s": 0.587
        },
        {
         "i": 6,
-        "s": 0.819
+        "s": 0.566
        },
        {
         "i": 9,
-        "s": 0.551
+        "s": 0.493
        },
        {
         "i": 3,
-        "s": 0.149
+        "s": 0.383
        },
        {
         "i": 1,
-        "s": 0.076
+        "s": 0.364
        },
        {
         "i": 12,
-        "s": 0.041
+        "s": 0.354
        }
       ],
       "keywords": [
@@ -479,27 +479,27 @@
       "similar": [
        {
         "i": 4,
-        "s": 0.895
+        "s": 0.587
        },
        {
         "i": 6,
-        "s": 0.723
+        "s": 0.54
        },
        {
         "i": 9,
-        "s": 0.58
+        "s": 0.501
        },
        {
         "i": 12,
-        "s": 0.451
+        "s": 0.466
        },
        {
         "i": 3,
-        "s": 0.208
+        "s": 0.4
        },
        {
         "i": 10,
-        "s": 0.166
+        "s": 0.388
        }
       ],
       "keywords": [
@@ -566,27 +566,27 @@
       "similar": [
        {
         "i": 4,
-        "s": 0.819
+        "s": 0.566
        },
        {
         "i": 5,
-        "s": 0.723
+        "s": 0.54
        },
        {
         "i": 1,
-        "s": 0.431
+        "s": 0.461
        },
        {
         "i": 9,
-        "s": 0.293
+        "s": 0.423
        },
        {
         "i": 3,
-        "s": 0.246
+        "s": 0.41
        },
        {
         "i": 12,
-        "s": 0.139
+        "s": 0.381
        }
       ],
       "keywords": [
@@ -641,27 +641,27 @@
       "similar": [
        {
         "i": 12,
-        "s": 1.0
+        "s": 0.616
        },
        {
         "i": 11,
-        "s": 0.66
+        "s": 0.523
        },
        {
         "i": 8,
-        "s": 0.477
+        "s": 0.473
        },
        {
         "i": 10,
-        "s": 0.244
+        "s": 0.409
        },
        {
         "i": 3,
-        "s": 0.105
+        "s": 0.371
        },
        {
         "i": 9,
-        "s": 0.082
+        "s": 0.365
        }
       ],
       "keywords": [
@@ -733,27 +733,27 @@
       "similar": [
        {
         "i": 11,
-        "s": 0.664
+        "s": 0.524
        },
        {
         "i": 7,
-        "s": 0.477
+        "s": 0.473
        },
        {
         "i": 10,
-        "s": 0.296
+        "s": 0.424
        },
        {
         "i": 3,
-        "s": 0.219
+        "s": 0.403
        },
        {
         "i": 12,
-        "s": 0.181
+        "s": 0.392
        },
        {
         "i": 2,
-        "s": 0.068
+        "s": 0.361
        }
       ],
       "keywords": [
@@ -821,23 +821,23 @@
       "similar": [
        {
         "i": 5,
-        "s": 0.58
+        "s": 0.501
        },
        {
         "i": 4,
-        "s": 0.551
+        "s": 0.493
        },
        {
         "i": 6,
-        "s": 0.293
+        "s": 0.423
        },
        {
         "i": 11,
-        "s": 0.127
+        "s": 0.377
        },
        {
         "i": 7,
-        "s": 0.082
+        "s": 0.365
        }
       ],
       "keywords": [
@@ -892,27 +892,27 @@
       "similar": [
        {
         "i": 12,
-        "s": 0.47
+        "s": 0.471
        },
        {
         "i": 11,
-        "s": 0.359
+        "s": 0.441
        },
        {
         "i": 8,
-        "s": 0.296
+        "s": 0.424
        },
        {
         "i": 3,
-        "s": 0.26
+        "s": 0.414
        },
        {
         "i": 7,
-        "s": 0.244
+        "s": 0.409
        },
        {
         "i": 5,
-        "s": 0.166
+        "s": 0.388
        }
       ],
       "keywords": [
@@ -970,27 +970,27 @@
       "similar": [
        {
         "i": 8,
-        "s": 0.664
+        "s": 0.524
        },
        {
         "i": 7,
-        "s": 0.66
+        "s": 0.523
        },
        {
         "i": 10,
-        "s": 0.359
+        "s": 0.441
        },
        {
         "i": 12,
-        "s": 0.357
+        "s": 0.44
        },
        {
         "i": 3,
-        "s": 0.197
+        "s": 0.397
        },
        {
         "i": 9,
-        "s": 0.127
+        "s": 0.377
        }
       ],
       "keywords": [
@@ -1058,27 +1058,27 @@
       "similar": [
        {
         "i": 7,
-        "s": 1.0
+        "s": 0.616
        },
        {
         "i": 10,
-        "s": 0.47
+        "s": 0.471
        },
        {
         "i": 5,
-        "s": 0.451
+        "s": 0.466
        },
        {
         "i": 11,
-        "s": 0.357
+        "s": 0.44
        },
        {
         "i": 3,
-        "s": 0.319
+        "s": 0.43
        },
        {
         "i": 8,
-        "s": 0.181
+        "s": 0.392
        }
       ],
       "keywords": [
@@ -1136,7 +1136,7 @@
       }
      }
     ],
-    "stamp": "a248460::13:1792226757972187690",
+    "stamp": "a248460::13:1792396646539114954",
     "sync": {
      "remote": true,
      "ahead": 0
@@ -1275,28 +1275,28 @@
    "previews": {
     "": {
      "text": "# Shared memory index\nprofile: Quiet Harbor (other profiles' memories are kept apart and not listed here)\nmemories: ~/agent-memory-data/memories\nstaging (write new memories here): ~/agent-memory-data/staging/<session>\nmem: ~/.local/bin/mem\nlocation: cwd=?, host=?\n\n## Global (8)\n- [user] Alex 在上海；对话默认用中文回复，代码、注释和提交信息用英文 → 2026/08/20260804-reply-language-xdnc.md\n- [user] Alex is a backend engineer working mostly in Python and TypeScript; prefers short answers with the code first → 2026/08/20260804-alex-profile-ujzd.md\n- [feedback] 长任务开跑时要报预计完成时间，用上海时间 → 2026/09/20260902-report-eta-is2j.md\n- [feedback] Run the tests before saying a change works, and quote the failing output when they fail → 2026/08/20260820-tests-before-done-odzd.md\n- [feedback] Ask before every git push, and keep each commit to one change → 2026/08/20260812-ask-before-push-pf3d.md\n- [reference] On-call runbook for payment failures: docs.example.com/runbooks/payments → 2026/10/20261012-payments-runbook-4syw.md\n- [reference] Design tokens (colours, spacing, type) live in git.example.com/design-tokens and sync into shop-web weekly → 2026/09/20260922-design-tokens-source-uvw7.md\n- [reference] etl-jobs run history and alerts: the Grafana dashboard at grafana.example.com/d/etl-runs → 2026/08/20260828-etl-dashboard-72ce.md\n\n## This location (0)\n(none)\n",
-     "chars": 1492,
+     "chars": 1490,
      "limit": 10000,
      "global": 8,
      "here": 0
     },
     "git.example.com/shop-web": {
      "text": "# Shared memory index\nprofile: Quiet Harbor (other profiles' memories are kept apart and not listed here)\nmemories: ~/agent-memory-data/memories\nstaging (write new memories here): ~/agent-memory-data/staging/<session>\nmem: ~/.local/bin/mem\nlocation: cwd=/Users/alex/code/shop-web, remote=git.example.com/shop-web, host=alex-laptop\n\n## Global (8)\n- [user] Alex 在上海；对话默认用中文回复，代码、注释和提交信息用英文 → 2026/08/20260804-reply-language-xdnc.md\n- [user] Alex is a backend engineer working mostly in Python and TypeScript; prefers short answers with the code first → 2026/08/20260804-alex-profile-ujzd.md\n- [feedback] 长任务开跑时要报预计完成时间，用上海时间 → 2026/09/20260902-report-eta-is2j.md\n- [feedback] Run the tests before saying a change works, and quote the failing output when they fail → 2026/08/20260820-tests-before-done-odzd.md\n- [feedback] Ask before every git push, and keep each commit to one change → 2026/08/20260812-ask-before-push-pf3d.md\n- [reference] On-call runbook for payment failures: docs.example.com/runbooks/payments → 2026/10/20261012-payments-runbook-4syw.md\n- [reference] Design tokens (colours, spacing, type) live in git.example.com/design-tokens and sync into shop-web weekly → 2026/09/20260922-design-tokens-source-uvw7.md\n- [reference] etl-jobs run history and alerts: the Grafana dashboard at grafana.example.com/d/etl-runs → 2026/08/20260828-etl-dashboard-72ce.md\n\n## This location (3)\n- [project] shop-web: staging deploys from the release branch, production only from version tags → 2026/09/20260910-shop-web-deploys-dn73.md\n- [project] shop-web v3 feature freeze on 2026-11-01: no schema migrations after that date → 2026/10/20261002-shop-web-v3-freeze-5xtp.md\n- [project] shop-web checkout moved to the Stripe Payment Element in September; the old Charges API code path is dead → 2026/09/20260908-shop-web-stripe-checkout-lgmx.md\n",
-     "chars": 2000,
+     "chars": 1998,
      "limit": 10000,
      "global": 8,
      "here": 3
     },
     "git.example.com/etl-jobs": {
      "text": "# Shared memory index\nprofile: Quiet Harbor (other profiles' memories are kept apart and not listed here)\nmemories: ~/agent-memory-data/memories\nstaging (write new memories here): ~/agent-memory-data/staging/<session>\nmem: ~/.local/bin/mem\nlocation: cwd=/Users/alex/code/etl-jobs, remote=git.example.com/etl-jobs, host=alex-laptop\n\n## Global (8)\n- [user] Alex 在上海；对话默认用中文回复，代码、注释和提交信息用英文 → 2026/08/20260804-reply-language-xdnc.md\n- [user] Alex is a backend engineer working mostly in Python and TypeScript; prefers short answers with the code first → 2026/08/20260804-alex-profile-ujzd.md\n- [feedback] 长任务开跑时要报预计完成时间，用上海时间 → 2026/09/20260902-report-eta-is2j.md\n- [feedback] Run the tests before saying a change works, and quote the failing output when they fail → 2026/08/20260820-tests-before-done-odzd.md\n- [feedback] Ask before every git push, and keep each commit to one change → 2026/08/20260812-ask-before-push-pf3d.md\n- [reference] On-call runbook for payment failures: docs.example.com/runbooks/payments → 2026/10/20261012-payments-runbook-4syw.md\n- [reference] Design tokens (colours, spacing, type) live in git.example.com/design-tokens and sync into shop-web weekly → 2026/09/20260922-design-tokens-source-uvw7.md\n- [reference] etl-jobs run history and alerts: the Grafana dashboard at grafana.example.com/d/etl-runs → 2026/08/20260828-etl-dashboard-72ce.md\n\n## This location (2)\n- [project] etl-jobs 的 Parquet 按日期分区而不是按客户；改分区前要先迁移历史数据 → 2026/09/20260915-etl-parquet-partitioning-seh2.md\n- [project] etl-jobs: the nightly orders export must finish before 06:00 because finance reads it at 06:30 → 2026/08/20260827-etl-orders-export-deadline-pft7.md\n",
-     "chars": 1821,
+     "chars": 1819,
      "limit": 10000,
      "global": 8,
      "here": 2
     }
    },
    "settings": {
-    "version": "0.1.7",
+    "version": "0.1.13",
     "dataDir": "~/agent-memory-data",
     "name": "agent-memory-data",
     "lastCommit": "2026-10-12T09:40:00+08:00",
@@ -1307,6 +1307,7 @@
      "ahead": 0
     },
     "keywordStopwords": [],
+    "switchNote": true,
     "model": {
      "name": "Qwen3-Embedding-0.6B (int8 ONNX)",
      "ready": true,
@@ -1510,11 +1511,11 @@
       "similar": [
        {
         "i": 1,
-        "s": 1.0
+        "s": 0.454
        },
        {
         "i": 4,
-        "s": 0.456
+        "s": 0.4
        }
       ],
       "keywords": [
@@ -1569,15 +1570,15 @@
       "similar": [
        {
         "i": 0,
-        "s": 1.0
+        "s": 0.454
        },
        {
         "i": 3,
-        "s": 0.869
+        "s": 0.441
        },
        {
         "i": 4,
-        "s": 0.187
+        "s": 0.373
        }
       ],
       "keywords": [
@@ -1683,11 +1684,11 @@
       "similar": [
        {
         "i": 1,
-        "s": 0.869
+        "s": 0.441
        },
        {
         "i": 4,
-        "s": 0.716
+        "s": 0.426
        }
       ],
       "keywords": [],
@@ -1727,15 +1728,15 @@
       "similar": [
        {
         "i": 3,
-        "s": 0.716
+        "s": 0.426
        },
        {
         "i": 0,
-        "s": 0.456
+        "s": 0.4
        },
        {
         "i": 1,
-        "s": 0.187
+        "s": 0.373
        }
       ],
       "keywords": [],
@@ -1768,7 +1769,7 @@
       }
      }
     ],
-    "stamp": "1923ed1::5:1792226762545142888",
+    "stamp": "1923ed1::5:1792396655392307012",
     "sync": {
      "remote": true,
      "ahead": 0
@@ -1826,28 +1827,28 @@
    "previews": {
     "": {
      "text": "# Shared memory index\nprofile: Sunny Orchard (other profiles' memories are kept apart and not listed here)\nmemories: ~/agent-memory-personal/memories\nstaging (write new memories here): ~/agent-memory-personal/staging/<session>\nmem: ~/.local/bin/mem\nlocation: cwd=?, host=?\n\n## Global (3)\n- [user] 个人项目里先给两三个方案和各自的取舍，Alex 选定后再动手写 → 2026/10/20261004-options-first-7hcx.md\n- [feedback] In personal repositories such as the blog and homelab, commit and push without asking first → 2026/09/20260906-push-personal-repos-w8re.md\n- [reference] Home server nas.home.arpa: Jellyfin on port 8096, nightly backups of /srv to the USB drive at 03:00 → 2026/09/20260921-home-server-n2vb.md\n\n## This location (0)\n(none)\n",
-     "chars": 865,
+     "chars": 863,
      "limit": 10000,
      "global": 3,
      "here": 0
     },
     "/Users/alex/Documents/thesis": {
      "text": "# Shared memory index\nprofile: Sunny Orchard (other profiles' memories are kept apart and not listed here)\nmemories: ~/agent-memory-personal/memories\nstaging (write new memories here): ~/agent-memory-personal/staging/<session>\nmem: ~/.local/bin/mem\nlocation: cwd=/Users/alex/Documents/thesis, host=alex-laptop\n\n## Global (3)\n- [user] 个人项目里先给两三个方案和各自的取舍，Alex 选定后再动手写 → 2026/10/20261004-options-first-7hcx.md\n- [feedback] In personal repositories such as the blog and homelab, commit and push without asking first → 2026/09/20260906-push-personal-repos-w8re.md\n- [reference] Home server nas.home.arpa: Jellyfin on port 8096, nightly backups of /srv to the USB drive at 03:00 → 2026/09/20260921-home-server-n2vb.md\n\n## This location (1)\n- [project] Thesis: LaTeX in ~/Documents/thesis, figures come from plots.py; chapter 3 is due to the advisor on Nov 15 → 2026/10/20261009-thesis-setup-fr6e.md\n",
-     "chars": 1054,
+     "chars": 1052,
      "limit": 10000,
      "global": 3,
      "here": 1
     },
     "git.example.com/blog": {
      "text": "# Shared memory index\nprofile: Sunny Orchard (other profiles' memories are kept apart and not listed here)\nmemories: ~/agent-memory-personal/memories\nstaging (write new memories here): ~/agent-memory-personal/staging/<session>\nmem: ~/.local/bin/mem\nlocation: cwd=/Users/alex/code/blog, remote=git.example.com/blog, host=alex-laptop\n\n## Global (3)\n- [user] 个人项目里先给两三个方案和各自的取舍，Alex 选定后再动手写 → 2026/10/20261004-options-first-7hcx.md\n- [feedback] In personal repositories such as the blog and homelab, commit and push without asking first → 2026/09/20260906-push-personal-repos-w8re.md\n- [reference] Home server nas.home.arpa: Jellyfin on port 8096, nightly backups of /srv to the USB drive at 03:00 → 2026/09/20260921-home-server-n2vb.md\n\n## This location (1)\n- [project] blog: posts are Markdown in content/posts and a push to main publishes them; drafts stay in content/drafts → 2026/08/20260816-blog-publishing-k3qm.md\n",
-     "chars": 1079,
+     "chars": 1077,
      "limit": 10000,
      "global": 3,
      "here": 1
     }
    },
    "settings": {
-    "version": "0.1.7",
+    "version": "0.1.13",
     "dataDir": "~/agent-memory-personal",
     "name": "agent-memory-personal",
     "lastCommit": "2026-10-09T22:10:00+08:00",
@@ -1858,6 +1859,7 @@
      "ahead": 0
     },
     "keywordStopwords": [],
+    "switchNote": true,
     "model": {
      "name": "Qwen3-Embedding-0.6B (int8 ONNX)",
      "ready": true,
