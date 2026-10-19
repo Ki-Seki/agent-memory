@@ -316,19 +316,15 @@ def embed(data_dir, texts):
 
 
 def closeness(vectors):
-    """Cosine similarity rescaled so a typical pair is 0 and the closest pair is 1.
+    """The cosine similarity of every pair of unit rows, as it is (below 0 reads as 0), and what a typical pair
+    scores: the median over pairs of different memories. Pairs at or below it are not listed as similar.
 
-    Embedding cosines bunch together (most unrelated pairs still score 0.3-0.5),
-    so the raw number says little; the rescaled one reads like a percentage.
+    It is not rescaled: rescaling made the closest pair 100% however far apart it was.
     """
-    raw = vectors @ vectors.T
-    off = raw[~np.eye(len(raw), dtype=bool)]
-    if not len(off):
-        return np.ones_like(raw)
-    lo, hi = np.percentile(off, 50), off.max()
-    sim = np.clip((raw - lo) / max(hi - lo, 1e-6), 0, 1)
+    sim = np.clip(vectors @ vectors.T, 0, 1)
+    off = sim[~np.eye(len(sim), dtype=bool)]
     np.fill_diagonal(sim, 1)
-    return sim
+    return sim, float(np.median(off)) if len(off) else 0.0
 
 
 # ------------------------------------------------------------ page data
@@ -366,13 +362,9 @@ def build(data_dir, semantic=True, vectors_out=None):
     x, vocab = vectorize(docs)
     forms = _display_forms(clean(t + " " + b) for t, b in docs)
     vectors = embed(data_dir, [prose(t, b) for t, b in docs]) if semantic else None
-    if vectors is not None:
-        sim, space = closeness(vectors), vectors
-        method = f"{MODEL['name']}, local"
-    else:
-        sim, space = np.clip(x @ x.T, 0, 1), x
-        np.fill_diagonal(sim, 1)
-        method = "keywords only (no local model)"
+    space = vectors if vectors is not None else x
+    sim, typical = closeness(space)
+    method = f"{MODEL['name']}, local" if vectors is not None else "keywords only (no local model)"
     if vectors_out is not None:
         vectors_out[:] = [space]
 
@@ -399,7 +391,7 @@ def build(data_dir, semantic=True, vectors_out=None):
                 "host": src.get("host") or "",
                 "created": m["created"],
                 "updated": m["updated"],
-                "similar": [{"i": j, "s": round(float(sim[i, j]), 3)} for j in order if sim[i, j] > 0],
+                "similar": [{"i": j, "s": round(float(sim[i, j]), 3)} for j in order if sim[i, j] > typical],
                 "keywords": [{"k": vocab[j], "t": forms.get(vocab[j], vocab[j])} for j in picks[i]],
                 "terms": [vocab[j] for j in np.flatnonzero(x[i])],
                 "issues": [message for _, message in lint.check(m, body, names)],
