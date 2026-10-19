@@ -365,18 +365,15 @@ class UiTest(unittest.TestCase):
         picks = self.ui.keyword_picks(x, vocab, forms, k=3)[0]
         self.assertEqual([vocab[j] for j in picks], ["gpu", "检索", "choose"])  # "actually" is generic
 
-    def test_closeness_spreads_bunched_cosines(self):
+    def test_closeness_is_plain_cosine(self):
         import numpy as np
 
-        rng = np.random.default_rng(1)
-        base = rng.normal(size=16)
-        v = base + 0.6 * rng.normal(size=(12, 16))  # every pair similar, like raw embeddings
-        v /= np.linalg.norm(v, axis=1, keepdims=True)
-        c = self.ui.closeness(v)
-        off = c[~np.eye(12, dtype=bool)]
-        self.assertAlmostEqual(float(off.max()), 1.0)
-        self.assertLess(float(np.median(off)), 0.01)  # a typical pair reads as about 0
-        self.assertTrue((np.diag(c) == 1).all())
+        v = np.array([[1, 0], [0.6, 0.8], [0, 1], [-1, 0]], dtype=float)
+        sim, typical = self.ui.closeness(v)
+        self.assertAlmostEqual(float(sim[0, 1]), 0.6)  # the cosine itself: the closest pair is not made 100%
+        self.assertEqual(float(sim[0, 3]), 0.0)  # opposite reads as unrelated, never below 0
+        self.assertTrue((np.diag(sim) == 1).all())
+        self.assertAlmostEqual(typical, float(np.median(sim[~np.eye(4, dtype=bool)])))
 
     def test_prose_drops_bookkeeping(self):
         body = (

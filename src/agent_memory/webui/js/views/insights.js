@@ -136,7 +136,7 @@ export function insightsPage() {
     <section class="card span2"><h2>Possible duplicates</h2><p class="card-note">Pairs that read alike; compare them side by side and keep one.</p>
       ${pairs.length ? pairs.map((p, i) => html`<div class="pair"><div class="pair-text"><span class="truncate">${p[0].description}</span><span class="truncate faint2">${p[1].description}</span></div>
         <span class="count">${Math.round(p[2] * 100)}%</span><button type="button" class="btn sm" data-act="compare" data-arg="${i}">Compare</button></div>`)
-        : html`<p class="card-note">No two memories are more than 45% alike.</p>`}
+        : html`<p class="card-note">No likely duplicates: no two memories are ${Math.round(DUPLICATE * 100)}% alike or more.</p>`}
     </section>
 
     <section class="card span2"><h2>Changes per week</h2>${chart("changes", changes, WHO, TOOL_COLORS, WHO_LABELS, `No memory changes in the past ${WEEKS} weeks.`)}</section>
@@ -153,9 +153,13 @@ export function insightsPage() {
   </div>`;
 }
 
+/** Cosine similarity at or above which two memories may say the same thing. Set from pairs that were merged as
+ *  duplicates (0.69-0.70 with the embedding model) and related ones that were not (0.63 and below). */
+const DUPLICATE = 0.65;
+
 /** The pairs shown under Possible duplicates, so Compare can find its pair by position. */
 export function duplicatePairs() {
   const M = app.M, pairs = [];
-  M.forEach((m, i) => m.similar.forEach((s) => { if (s.i > i && s.s >= 0.45 && M[s.i]) pairs.push([m, M[s.i], s.s]); }));
+  M.forEach((m, i) => m.similar.forEach((s) => { if (s.i > i && s.s >= DUPLICATE && M[s.i]) pairs.push([m, M[s.i], s.s]); }));
   return pairs.sort((a, b) => b[2] - a[2]).slice(0, 5);
 }

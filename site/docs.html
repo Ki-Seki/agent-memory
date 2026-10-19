@@ -107,7 +107,7 @@ mem install</code></pre>
   <section id="mem-ui">
     <h2>mem ui</h2>
     <p><code>mem ui</code> serves the page on <code>127.0.0.1</code> while its terminal stays open. Every API request needs the token from the link it prints, new each run, so other web pages cannot read or change memories. Each change is one git commit with Undo; if an agent edits the same file meanwhile, saving is refused rather than overwriting.</p>
-    <p>Search by meaning and similar memories use Qwen3-Embedding-0.6B (int8 ONNX) on the CPU, in a separate <code>uv run --with onnxruntime --with tokenizers</code> environment. Get the model once with <code>mem ui --fetch-model</code> (about 625 MB; a pinned revision, its weights checked by SHA-256). Without it, or with <code>--keywords-only</code>, similar memories come from keywords and search matches words only. Keywords are the words that most set a memory apart (TF-IDF); words that should never be keywords, such as your own name, go in Settings.</p>
+    <p>Search by meaning and similar memories use Qwen3-Embedding-0.6B (int8 ONNX) on the CPU, in a separate <code>uv run --with onnxruntime --with tokenizers</code> environment. Get the model once with <code>mem ui --fetch-model</code> (about 625 MB; a pinned revision, its weights checked by SHA-256). Without it, or with <code>--keywords-only</code>, similar memories come from keywords and search matches words only. The percentages beside similar memories are plain cosine similarity; Insights lists pairs at 65% or more as possible duplicates. Keywords are the words that most set a memory apart (TF-IDF); words that should never be keywords, such as your own name, go in Settings.</p>
   </section>
 
   <section id="profiles">
