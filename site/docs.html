@@ -77,7 +77,7 @@ scope: here</mark><mark data-n="2">description: "shop-web v3 feature freeze on 2
       <div class="rung"><span>The session runs inside its folder</span><i style="--w:70%"></i><b>70</b></div>
       <div class="rung"><span>Its folder is inside the session's</span><i style="--w:60%"></i><b>60</b></div>
     </figure>
-    <p>Your home folder and its direct children, such as <code>~/repos</code>, are too broad to match by containment. Sessions in throwaway folders (Claude Code scratch workspaces, Codex per-thread folders) file their <code>here</code> memories under the project folder they worked in most, keeping the original as <code>source.original_cwd</code>; <code>mem relocate</code> does the same for existing memories. <code>mem index</code> shows what a session started in the current folder would see.</p>
+    <p>Your home folder and its direct children, such as <code>~/repos</code>, are too broad to match by containment. Sessions in throwaway folders (Claude Code scratch workspaces, Codex per-thread folders) file their <code>here</code> memories under the project folder they worked in most, keeping the original as <code>source.original_cwd</code>. A memory written before the session has touched a project on this machine stays in the throwaway folder until a later turn finds one; <code>mem relocate</code> does the same for existing memories. <code>mem index</code> shows what a session started in the current folder would see.</p>
   </section>
 
   <section id="install">
