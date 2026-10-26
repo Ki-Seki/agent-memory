@@ -7,6 +7,7 @@ import shutil
 import subprocess
 import sys
 import tempfile
+import time
 import unittest
 from pathlib import Path
 from unittest import mock
@@ -239,6 +240,34 @@ class EndToEndTest(unittest.TestCase):
             DATA / "memories" / {m["name"]: m for m in store.load_all(DATA)}["eval-set"]["rel"]
         ).unlink()  # the class shares DATA
         subprocess.run(["git", "-C", str(DATA), "commit", "-qam", "test: drop eval-set"], check=True)
+
+    def test_orphans_without_session_info_get_it_from_their_folder(self):
+        # an agent wrote into another session's staging folder (from an older index), so it has no .session.json
+        sdir = capture.session_dir(DATA, "claude-code", "s-older")
+        sdir.mkdir(parents=True)
+        (sdir / "found-later.md").write_text(
+            "---\nname: found-later\ntype: project\nscope: here\ndescription: written into an old folder\n---\nFact.\n",
+            "utf-8",
+        )
+        transcript = ROOT / "claude" / "projects" / "-work" / "s-older.jsonl"
+        transcript.parent.mkdir(parents=True, exist_ok=True)
+        transcript.write_text(json.dumps({"type": "user", "cwd": self.proj, "sessionId": "s-older"}) + "\n")
+        old = time.time() - capture.ORPHAN_AGE - 60
+        os.utime(sdir, (old, old))
+
+        self.assertTrue(capture.recover_orphans(DATA))
+        m = {m["name"]: m for m in store.load_all(DATA)}["found-later"]
+        src = m["source"]
+        self.assertEqual((src["tool"], src["session_id"]), ("claude-code", "s-older"))
+        self.assertEqual(
+            (src["cwd"], src["git_remote"]), (self.proj, "github.com/ki-seki/proj")
+        )  # so `here` has a place
+        self.assertEqual(src["transcript"], str(transcript))
+        subject = subprocess.run(["git", "-C", str(DATA), "log", "-1", "--format=%s"], capture_output=True, text=True)
+        self.assertIn("(claude-code", subject.stdout)  # not "(manual)"
+
+        (DATA / "memories" / m["rel"]).unlink()  # the class shares DATA
+        subprocess.run(["git", "-C", str(DATA), "commit", "-qam", "test: drop found-later"], check=True)
 
 
 class WorkdirTest(unittest.TestCase):
