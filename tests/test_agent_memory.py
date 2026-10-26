@@ -195,6 +195,51 @@ class EndToEndTest(unittest.TestCase):
         with mock.patch("agent_memory.hooks.session_start", side_effect=RuntimeError("boom")):
             self.assertEqual(run_hook("session-start", "codex", {"session_id": "x"}), "")
 
+    def test_a_later_turn_moves_memories_out_of_a_throwaway_folder(self):
+        from agent_memory import workdir
+
+        home = Path(os.path.realpath(ROOT)) / "home-later"
+        scratch = home / "Library/Application Support/Claude/scratch-workspaces/w/s/scratch-1"
+        scratch.mkdir(parents=True, exist_ok=True)
+        proj = make_repo(home / "repos" / "glyph")
+        transcript = ROOT / "later.jsonl"
+
+        def call(text):
+            return json.dumps({"type": "response_item", "payload": {"type": "function_call", "arguments": text}}) + "\n"
+
+        def source():
+            return {m["name"]: m for m in store.load_all(DATA)}["eval-set"]["source"]
+
+        transcript.write_text(call("ssh devbox ls /home/coder/glyph"))  # so far, work on another machine only
+        payload = {"session_id": "s-later", "cwd": str(scratch), "transcript_path": str(transcript)}
+        with mock.patch.object(workdir, "HOME", home):
+            run_hook("session-start", "codex", payload)
+            (capture.session_dir(DATA, "codex", "s-later") / "eval-set.md").write_text(
+                "---\nname: eval-set\ntype: project\nscope: here\ndescription: the glyph eval set\n---\nFact.\n",
+                "utf-8",
+            )
+            run_hook("stop", "codex", payload)
+            self.assertEqual(source()["cwd"], str(scratch))  # no project to point at yet
+
+            with transcript.open("a") as f:
+                f.write("".join(call(f"cat {proj}/eval_{i}.py") for i in range(5)))
+            run_hook("stop", "codex", payload)  # a later turn worked in the project: the memory moves there
+            src = source()
+            self.assertEqual((src["cwd"], src["git_root"], src["original_cwd"]), (proj, proj, str(scratch)))
+            self.assertEqual((src["tool"], src["session_id"]), ("codex", "s-later"))
+            self.assertEqual(list(src)[-1], "transcript")  # in the order the hook writes a source
+            status = subprocess.run(
+                ["git", "-C", str(DATA), "status", "--porcelain", "--", "memories"], capture_output=True, text=True
+            ).stdout
+            self.assertEqual(status, "")  # committed with that turn
+            run_hook("stop", "codex", payload)
+            self.assertEqual(source(), src)  # moved once
+
+        (
+            DATA / "memories" / {m["name"]: m for m in store.load_all(DATA)}["eval-set"]["rel"]
+        ).unlink()  # the class shares DATA
+        subprocess.run(["git", "-C", str(DATA), "commit", "-qam", "test: drop eval-set"], check=True)
+
 
 class WorkdirTest(unittest.TestCase):
     def setUp(self):

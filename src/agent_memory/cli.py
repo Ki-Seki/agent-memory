@@ -129,12 +129,7 @@ def cmd_relocate(args):
         if args.dry_run:
             continue
         meta, body = store.read(mdir / m["rel"])
-        source = dict(meta.get("source") or {})
-        for key in ("cwd", "git_root", "git_remote", "git_branch"):
-            source.pop(key, None)
-            if ctx.get(key):
-                source[key] = ctx[key]
-        source["original_cwd"] = ctx["original_cwd"]
+        source = capture.relocated(dict(meta.get("source") or {}), ctx)
         if transcript:
             source.setdefault("transcript", transcript)
         meta["source"] = source

@@ -7,7 +7,7 @@ from pathlib import Path
 
 from . import frontmatter, gitsync, sessions, workdir
 from .context import detect
-from .store import memories_dir, normalize, read, staging_dir
+from .store import load_all, memories_dir, normalize, read, staging_dir
 from .util import atomic_write, id_path, log, new_id, now, now_iso
 
 SESSION_FILE = ".session.json"
@@ -124,6 +124,49 @@ def promote(data_dir, sdir, session=None):
     return count
 
 
+PLACE_KEYS = ("cwd", "original_cwd", "git_root", "git_remote", "git_branch", "git_commit")
+
+
+def relocated(source, ctx):
+    """`source` moved to the project `ctx` points at (a context from relocate()), in the order _source() writes."""
+    items = [(k, v) for k, v in source.items() if k not in PLACE_KEYS]
+    place = [(k, ctx[k]) for k in PLACE_KEYS if k != "git_commit" and ctx.get(k)]
+    at = next((i for i, (k, _) in enumerate(items) if k == "transcript"), len(items))
+    return dict(items[:at] + place + items[at:])
+
+
+def rehome(data_dir, session):
+    """Move this session's `here` memories still filed under its throwaway folder to the project it worked in.
+
+    promote() decides from the transcript so far, which finds nothing when a memory is written before the
+    session touches a project folder on this machine; each later turn tries again. Returns how many moved.
+    """
+    ctx = session.get("ctx") or {}
+    tool, sid = session.get("tool"), session.get("session_id")
+    if not sid or not workdir.is_throwaway(ctx.get("cwd")):
+        return 0
+    left = [
+        m
+        for m in load_all(data_dir)
+        if m["scope"] == "here"
+        and m["source"].get("session_id") == sid
+        and m["source"].get("tool") == tool
+        and workdir.is_throwaway(m["source"].get("cwd"))
+        and not m["source"].get("original_cwd")
+    ]
+    if not left:
+        return 0
+    moved = relocate(ctx, session.get("transcript_path") or sessions.transcript_path(tool, sid))
+    if not moved.get("original_cwd"):
+        return 0  # still no project to point at
+    for m in left:
+        path = memories_dir(data_dir) / m["rel"]
+        meta, body = read(path)
+        meta["source"] = relocated(meta["source"], moved)
+        atomic_write(path, frontmatter.join(meta, body))
+    return len(left)
+
+
 def stamp_updates(data_dir):
     """Set `updated` on tracked memory files that were edited in place."""
     r = gitsync.git(data_dir, "status", "--porcelain", "-z", "--", "memories")
@@ -175,6 +218,7 @@ def flush(data_dir, sdir, final=False, lock_timeout=5.0):
             return False
         session = read_session(sdir)
         n = promote(data_dir, sdir, session)
+        rehome(data_dir, session)
         committed = commit(data_dir, session)
         if final and Path(sdir).is_dir() and not any(Path(sdir).glob("*.md")):
             shutil.rmtree(sdir, ignore_errors=True)
