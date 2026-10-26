@@ -53,6 +53,26 @@ def transcript_path(tool, session_id):
     return str(hits[0]) if hits else ""
 
 
+def cwd(tool, session_id, transcript=None):
+    """The folder a session ran in: Codex's thread record, or the first Claude transcript line that names one."""
+    if tool == "codex":
+        return _codex_thread(session_id, "cwd")
+    try:
+        with open(transcript, encoding="utf-8", errors="replace") as f:
+            for raw in f:
+                if '"cwd"' not in raw:
+                    continue
+                try:
+                    found = json.loads(raw).get("cwd")
+                except ValueError:
+                    continue
+                if found:
+                    return found
+    except (OSError, TypeError):
+        pass
+    return ""
+
+
 def title(tool, session_id, transcript=None):
     if tool == "codex":
         name = _codex_title(session_id)

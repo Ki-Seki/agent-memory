@@ -227,6 +227,31 @@ def flush(data_dir, sdir, final=False, lock_timeout=5.0):
         return committed
 
 
+TOOLS = ("claude-code", "codex")  # the prefixes of staging folder names: <tool>-<session id>
+
+
+def adopt(sdir):
+    """Session info for a staging folder that has none, from its name and that session's transcript.
+
+    An agent can write into a staging folder that is not its session's own, such as the one named in the older
+    index of a session it was continued from; the folder it makes has no .session.json, and without this the
+    memories in it are committed with no provenance at all. They are credited to the folder's session.
+    """
+    name = Path(sdir).name
+    tool = next((t for t in TOOLS if name.startswith(t + "-")), None)
+    if not tool:
+        return
+    sid = name[len(tool) + 1 :]
+    transcript = sessions.transcript_path(tool, sid)
+    info = {"tool": tool, "session_id": sid, "transcript_path": transcript}
+    folder = sessions.cwd(tool, sid, transcript)
+    if folder:
+        ctx = detect(folder)
+        ctx.pop("git_commit", None)  # HEAD now, not what the session saw
+        info["ctx"] = ctx
+    write_session(sdir, info)
+
+
 def recover_orphans(data_dir, keep=None):
     """Promote staging dirs left by sessions that ended without a final flush."""
     root = staging_dir(data_dir)
@@ -240,6 +265,8 @@ def recover_orphans(data_dir, keep=None):
         age = time.time() - (marker.stat().st_mtime if marker.exists() else sdir.stat().st_mtime)
         has_files = any(sdir.glob("*.md"))
         if has_files and age > ORPHAN_AGE:
+            if not marker.exists():
+                adopt(sdir)
             committed |= flush(data_dir, sdir, final=True, lock_timeout=1.0)
         elif not has_files and age > STALE_AGE:
             shutil.rmtree(sdir, ignore_errors=True)
