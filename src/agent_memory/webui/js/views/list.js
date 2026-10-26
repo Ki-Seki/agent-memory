@@ -52,7 +52,7 @@ function facet(def) {
       ${options.map((o) => {
         const on = values.includes(o.value);
         return html`<button type="button" role="menuitemcheckbox" class="${cx("menu-item", !o.count && !on && "faint")}"${attrs({ "aria-checked": String(on), "data-act": "toggle", "data-arg": `${def.key}:${o.value}`, "data-key": `${def.key}:${o.value}` })}>
-          <span class="tick">${on ? icon("check", "", 3) : ""}</span><span class="grow">${o.label}</span><span class="count">${o.count}</span></button>`;
+          <span class="tick">${on ? icon("check", "", 3) : ""}</span><span class="grow truncate"${attrs({ title: o.label })}>${o.label}</span><span class="count">${o.count}</span></button>`;
       })}
     </div>
     ${values.length ? html`<div class="menu-foot"><button type="button" class="menu-wide" data-act="setList" data-arg="${def.key}">Clear ${def.label.toLowerCase()}</button></div>` : ""}`;
@@ -73,7 +73,7 @@ function added() {
       ${opts.map((o) => {
         const on = v === o.value;
         return html`<button type="button" role="radio" class="${cx("menu-item", !o.count && !on && "faint")}"${attrs({ "aria-checked": String(on), "data-act": "setAdded", "data-arg": on ? "" : o.value })}>
-          <span class="radio">${on ? html`<i></i>` : ""}</span><span class="grow">${o.label}</span><span class="count">${o.count}</span></button>`;
+          <span class="radio">${on ? html`<i></i>` : ""}</span><span class="grow truncate"${attrs({ title: o.label })}>${o.label}</span><span class="count">${o.count}</span></button>`;
       })}
     </div>
     <div class="menu-range">
