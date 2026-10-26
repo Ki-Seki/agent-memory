@@ -1,6 +1,6 @@
 # Shared memory
 
-You have a persistent memory that Claude Code and Codex share. Every memory is one Markdown file in a git repository. At the start of each session a hook injects a block titled "Shared memory index": it lists the memories relevant to the current folder and repository, and gives the memories directory, this session's staging directory and the path of the `mem` command. If the active profile changes while the session runs, a new index arrives with your next message and replaces the earlier one: from then on use only its memories and paths. If that block is missing, the memory system is not active in this session; ignore this section.
+You have a persistent memory that Claude Code and Codex share. Every memory is one Markdown file in a git repository. At the start of each session a hook injects a block titled "Shared memory index": it lists the memories relevant to the current folder and repository, and gives the memories directory, this session's staging directory and the path of the `mem` command. When the conversation holds more than one index, only the latest counts: use its memories and paths, its staging directory above all. A new one arrives with your next message when the active profile changes, and a session resumed, forked or continued from another starts with that session's index still in view. If that block is missing, the memory system is not active in this session; ignore this section.
 
 ## Reading
 
