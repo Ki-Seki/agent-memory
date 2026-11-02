@@ -444,7 +444,8 @@ def install(dry_run=False, claude=True, codex=True):
     _save_state(state)
     print(f"installed; backups in {config.CONFIG_DIR / 'backups' / stamp}")
     if state.get("codex"):
-        print("Codex: open /hooks in Codex once and trust the three agent-memory hooks.")
+        names = ", ".join(event for event, _, _ in HOOK_EVENTS)
+        print(f"Codex: open /hooks in Codex once and trust agent-memory's {len(HOOK_EVENTS)} hooks ({names}).")
 
 
 def uninstall(dry_run=False):
