@@ -269,11 +269,12 @@ def cmd_profile(args):
                 _switched(found[pid]["name"])
             _access_note()
         elif args.action == "remove":
-            found, _ = profiles.listing()
+            found, before = profiles.listing()
             pid = profiles.find(args.profile, found)
             active = profiles.remove(pid)
             print(f"removed {found[pid]['name']}; {profiles.short(found[pid]['data_dir'])} is left as it is")
-            _switched(profiles.listing()[0][active]["name"])
+            if active != before:  # only removing the active profile switches sessions to another
+                _switched(profiles.listing()[0][active]["name"])
             _access_note()
         else:
             for p in profiles.summary()["profiles"]:

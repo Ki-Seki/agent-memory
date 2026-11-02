@@ -1343,6 +1343,18 @@ class ProfilesTest(unittest.TestCase):
         self.assertIn("running ones switch with their next message", said)
         self.assertNotIn(cli.SWITCH_NOTE, said)
 
+        def remove(profile):
+            out = io.StringIO()
+            with mock.patch("sys.stdout", out), mock.patch("agent_memory.install.refresh_access", return_value=[]):
+                cli.main(["profile", "remove", profile])
+            return out.getvalue()
+
+        other, _ = profiles.add(self.root / "third", switch=False)
+        said = remove(other)  # not the active one: nothing switches, so nothing is said about switching
+        self.assertIn("is left as it is", said)
+        self.assertNotIn("running ones switch", said)
+        self.assertIn("running ones switch", remove(pid))  # the active one: sessions move to another
+
     def test_names_are_picked_not_given(self):
         from agent_memory import profiles
 
