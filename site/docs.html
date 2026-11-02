@@ -88,7 +88,7 @@ mem import claude --dry-run              # preview, then run without --dry-run
 mem import codex --dry-run
 mem install --dry-run                    # every change, as a diff
 mem install</code></pre>
-    <p>Codex asks you to trust new hooks once: open <code>/hooks</code> in Codex and enable the three agent-memory hooks. A remote is optional: give the data repository a private one to share memories across machines, or leave it out and everything is still committed, on this machine only. <a href="https://github.com/Ki-Seki/agent-memory-data-demo">agent-memory-data-demo</a> shows what one with a remote looks like: the demo memories, committed the way the hooks commit them. <code>mem install</code> edits these files and records each edit in <code>~/.config/agent-memory/install-state.json</code>:</p>
+    <p>Codex asks you to trust new hooks once: open <code>/hooks</code> in Codex and enable the four agent-memory hooks (SessionStart, UserPromptSubmit, Stop and SessionEnd). A remote is optional: give the data repository a private one to share memories across machines, or leave it out and everything is still committed, on this machine only. <a href="https://github.com/Ki-Seki/agent-memory-data-demo">agent-memory-data-demo</a> shows what one with a remote looks like: the demo memories, committed the way the hooks commit them. <code>mem install</code> edits these files and records each edit in <code>~/.config/agent-memory/install-state.json</code>:</p>
     <table>
       <thead><tr><th>File</th><th>Change</th></tr></thead>
       <tbody>

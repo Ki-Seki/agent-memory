@@ -779,6 +779,12 @@ class DemoTest(unittest.TestCase):
 
 
 class SiteTest(unittest.TestCase):
+    def test_pages_count_the_hooks_codex_must_trust(self):
+        site = Path(__file__).resolve().parent.parent / "site"
+        n = ["zero", "one", "two", "three", "four", "five", "six"][len(install.HOOK_EVENTS)]
+        for page in ("index.html", "docs.html"):
+            self.assertIn(f"enable the {n} agent-memory hooks", (site / page).read_text("utf-8"), page)
+
     def test_site_builds_with_a_demo_that_matches_the_demo_memories(self):
         from agent_memory import demo, profiles
 
