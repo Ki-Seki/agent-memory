@@ -933,6 +933,42 @@ class UpdateTest(unittest.TestCase):
         self.assertFalse(newer("0.1.2", "0.1.3"))
         self.assertFalse(newer(None, "0.1.3"))
 
+    def test_mem_update_upgrades_like_the_settings_button(self):
+        u = self.update
+
+        def run(latest, method="uv-tool", result=None):
+            out = io.StringIO()
+            with (
+                mock.patch.object(u, "current", return_value="0.1.3"),
+                mock.patch.object(u, "how_installed", return_value=method),
+                mock.patch.object(u, "fetch_latest", return_value=latest),
+                mock.patch.object(u, "upgrade", return_value=result) as up,
+                mock.patch("sys.stdout", out),
+            ):
+                try:
+                    code = cli.main(["update"])
+                except SystemExit as e:
+                    code = e.code
+            return code, out.getvalue(), up.called
+
+        code, said, upgraded = run("0.1.3")
+        self.assertEqual((code, upgraded), (0, False))  # already the latest: uv is not run
+        self.assertIn("0.1.3 is the latest release", said)
+
+        done = {"ok": True, "from": "0.1.3", "to": "0.1.4", "changed": True, "error": None, "log": ""}
+        code, said, upgraded = run("0.1.4", result=done)
+        self.assertEqual((code, upgraded), (0, True))
+        self.assertIn("updated agent-memory 0.1.3 to 0.1.4", said)
+
+        failed = {"ok": False, "error": "mem install failed after the upgrade.", "log": "boom"}
+        code, said, _ = run("0.1.4", result=failed)
+        self.assertEqual(code, "mem install failed after the upgrade.")
+        self.assertIn("boom", said)
+
+        code, _, upgraded = run("0.1.4", method="uvx")  # not a uv tool install: say how instead
+        self.assertIn("not installed with `uv tool`", code)
+        self.assertFalse(upgraded)
+
     def test_check_is_cached_and_can_be_turned_off(self):
         from agent_memory import config
 

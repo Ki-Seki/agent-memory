@@ -230,6 +230,29 @@ def cmd_import(args):
     importers.run(args.source, _data(), dry_run=args.dry_run)
 
 
+def cmd_update(args):
+    """Update agent-memory as Update in mem ui's Settings does: upgrade with uv, then run mem install."""
+    from . import update
+
+    st = update.status(force=True)
+    if not st["oneClick"]:
+        sys.exit(f"this copy of mem was not installed with `uv tool`; update it with: {st['command']}")
+    if st["latest"] and not st["available"]:
+        print(f"agent-memory {st['current']} is the latest release")
+        return 0
+    print(f"updating agent-memory {st['current']} to {st['latest'] or 'the latest release'}…", flush=True)
+    r = update.upgrade()
+    if not r["ok"]:
+        if r.get("log"):
+            print(r["log"])
+        sys.exit(r["error"])
+    if r["changed"]:
+        print(f"updated agent-memory {r['from']} to {r['to']}; mem install refreshed the hooks and the protocol")
+    else:
+        print(f"agent-memory {r['from']} is the latest release")
+    return 0
+
+
 def cmd_doctor(args):
     from .install import doctor
 
@@ -379,6 +402,9 @@ def main(argv=None):
 
     sp = sub.add_parser("doctor", help="check the installation")
     sp.set_defaults(fn=cmd_doctor)
+
+    sp = sub.add_parser("update", help="update to the latest release, then run mem install")
+    sp.set_defaults(fn=cmd_update)
 
     sp = sub.add_parser("profile", help="list, switch, add or remove profiles: separate memory repositories")
     psub = sp.add_subparsers(dest="action")

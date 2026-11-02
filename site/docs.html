@@ -100,7 +100,7 @@ mem install</code></pre>
         <tr><td><code>~/.zshrc</code> or <code>~/.bashrc</code></td><td>a marked block putting <code>~/.local/bin</code> on PATH, only if a new login shell lacks it</td></tr>
       </tbody>
     </table>
-    <p><b>Upgrading.</b> Use Update in <code>mem ui</code>'s Settings, or run <code>uv tool upgrade agent-memory-git</code> and then <code>mem install</code>, which refreshes the protocol copies. <code>mem doctor</code> says when they are out of date.</p>
+    <p><b>Upgrading.</b> Run <code>mem update</code>, or use Update in <code>mem ui</code>'s Settings: both upgrade with uv and then run <code>mem install</code>, which refreshes the hooks and the protocol copies. <code>mem doctor</code> says when they are out of date.</p>
     <p><b>Uninstalling.</b> <code>mem uninstall</code> reverts exactly those edits, keeping other changes the tools made since, and puts each tool's own memory settings back as they were. The data repository is never touched.</p>
   </section>
 
@@ -125,6 +125,7 @@ mem profile remove quiet-harbor               forget it; the folder and remote s
     <h2>Commands</h2>
 <pre><code>mem init DIR                    create the data repository and the config
 mem install [--dry-run]         wire the hooks and the protocol into both tools
+mem update                      update to the latest release, then mem install
 mem uninstall [--dry-run]       put those files back as they were
 mem import claude|codex         bring in each tool's existing memories
 mem index [--cwd DIR]           what a session started here would see
