@@ -65,6 +65,7 @@ scope: here</mark><mark data-n="2">description: "shop-web v3 feature freeze on 2
       </ol>
     </figure>
     <p>Agents write new memories into a per-session staging folder and edit existing files in place. At the end of each turn the Stop hook stamps ids and provenance, moves staged files into <code>memories/</code>, commits, and pushes in the background when the repository has a remote.</p>
+    <p><b>Retiring.</b> A memory that no longer holds is retired rather than deleted: <code>mem retire</code>, Retire in <code>mem ui</code>, or a newer memory's <code>supersedes</code> adds <code>retired</code>, <code>retired_reason</code> and <code>replaced_by</code> to its frontmatter. It stays in place and in git, but leaves the session index, similar memories and default searches. <code>--retired</code> on <code>mem search</code> and <code>mem list</code>, or Status → Retired in <code>mem ui</code>, shows it again, and <code>mem restore</code> or Restore makes it live. Delete only what was wrong from the start, or what you want forgotten.</p>
   </section>
 
   <section id="where-memories-load">
@@ -129,9 +130,11 @@ mem update                      update to the latest release, then mem install
 mem uninstall [--dry-run]       put those files back as they were
 mem import claude|codex         bring in each tool's existing memories
 mem index [--cwd DIR]           what a session started here would see
-mem list [--global|--here] [--all] [--type T]
-mem search WORDS... [--all]     full-text search; --all includes other places
+mem list [--global|--here] [--all] [--retired] [--type T]
+mem search WORDS... [--all]     full-text search; --all includes other places, --retired retired memories
 mem show ID|NAME|PATH
+mem retire KEY... [--reason R]  retire memories that no longer hold; they stay findable
+mem restore KEY...              bring retired memories back
 mem add --name N --type T --scope S --description D BODY|-
 mem flush                       commit anything left in staging
 mem relocate [PATH...]          re-file memories recorded in throwaway folders

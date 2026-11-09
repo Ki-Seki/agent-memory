@@ -40,8 +40,8 @@
   [Profiles](https://ki-seki.github.io/agent-memory/docs.html#profiles) keep separate sets of
   memories in repositories of their own, and a switch reaches running sessions too.
 - **Nothing to run.** Two hooks and git. No service, no account; search by meaning runs on your CPU.
-- **A page to keep it tidy.** `mem ui` searches by words and by meaning, edits with undo, and shows
-  what changed week by week.
+- **A page to keep it tidy.** `mem ui` searches by words and by meaning, edits with undo, retires
+  what no longer holds without losing it, and shows what changed week by week.
 
 ## Quick start
 
