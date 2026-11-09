@@ -4,12 +4,13 @@ import json
 from pathlib import Path
 
 from . import frontmatter
-from .util import SCOPES, TYPES, atomic_write
+from .util import SCOPES, TYPES, atomic_write, now_iso
 
 MEMORIES = "memories"
 STAGING = "staging"
 CACHE = ".cache"
 SCHEMA = 2  # of the cached entries in load_all; 2 added the retired fields
+RETIRED_KEYS = ("retired", "retired_reason", "replaced_by")
 
 
 def memories_dir(data_dir):
@@ -93,6 +94,29 @@ def load_all(data_dir, retired=False):
         except OSError:
             pass
     return out
+
+
+def set_retired(path, reason="", replaced_by=""):
+    """Retire the memory at `path` in place, the fields placed ahead of its source; False if it already was."""
+    meta, body = read(path)
+    if meta.get("retired"):
+        return False
+    fields = [("retired", now_iso())] + [
+        (k, v) for k, v in (("retired_reason", reason), ("replaced_by", replaced_by)) if v
+    ]
+    items = [(k, v) for k, v in meta.items() if k not in RETIRED_KEYS]
+    at = next((i for i, (k, _) in enumerate(items) if k == "source"), len(items))
+    atomic_write(path, frontmatter.join(dict(items[:at] + fields + items[at:]), body))
+    return True
+
+
+def clear_retired(path):
+    """Bring a retired memory back; False if it was not retired."""
+    meta, body = read(path)
+    if not meta.get("retired"):
+        return False
+    atomic_write(path, frontmatter.join({k: v for k, v in meta.items() if k not in RETIRED_KEYS}, body))
+    return True
 
 
 def find(data_dir, key):

@@ -319,6 +319,34 @@ class RetireTest(unittest.TestCase):
         self.assertIn("old-fact", self.cli("search", "old", "manifest", "--all", "--retired"))
         self.assertTrue(self.cli("show", "old-fact").startswith("# retired: no longer holds; do not rely on it"))
 
+    def test_retire_and_restore_from_the_command_line(self):
+        def git(*args):
+            return subprocess.run(
+                ["git", "-C", str(self.data), *args], capture_output=True, text=True, check=True
+            ).stdout
+
+        git("config", "user.email", "test@example.com")
+        git("config", "user.name", "Test")
+        git("add", "-A")
+        git("commit", "-qm", "start")
+
+        said = self.cli("retire", "live-fact", "--reason", "manifest dropped", "--replaced-by", "20261101-new-cccc")
+        self.assertEqual(said.strip(), "retired 20261101-live-fact-aaaa")
+        self.assertEqual(store.load_all(self.data), [])  # both retired now
+        m = store.find(self.data, "live-fact")
+        self.assertEqual((m["retired_reason"], m["replaced_by"]), ("manifest dropped", "20261101-new-cccc"))
+        self.assertEqual(git("log", "-1", "--format=%s"), "memory: retire 20261101-live-fact-aaaa (cli)\n")
+        self.assertIn("is already retired", self.cli("retire", "live-fact"))
+
+        self.assertEqual(
+            self.cli("restore", "live-fact", "old-fact").split(),
+            ["restored", "20261101-live-fact-aaaa", "restored", "20261101-old-fact-bbbb"],
+        )
+        self.assertEqual(sorted(m["name"] for m in store.load_all(self.data)), ["live-fact", "old-fact"])
+        self.assertNotIn("retired", (self.mdir / "20261101-old-fact-bbbb.md").read_text("utf-8"))
+        self.assertEqual(git("log", "-1", "--format=%s"), "memory: restore 2 memories (cli)\n")
+        self.assertIn("is not retired", self.cli("restore", "live-fact"))
+
 
 class WorkdirTest(unittest.TestCase):
     def setUp(self):

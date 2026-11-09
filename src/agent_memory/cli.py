@@ -77,6 +77,42 @@ def cmd_show(args):
     print(path.read_text("utf-8"), end="")
 
 
+def _set_retired(args, restore):
+    data = _data()
+    mdir = store.memories_dir(data)
+    verb = "restore" if restore else "retire"
+    changed = []
+    with gitsync.Lock(data, timeout=30) as locked:
+        if not locked:
+            sys.exit("the data repository is busy (a hook is committing); try again")
+        for key in args.keys:
+            m = store.find(data, key)
+            if not m:
+                sys.exit(f"no memory {key!r}")
+            path = mdir / m["rel"]
+            done = store.clear_retired(path) if restore else store.set_retired(path, args.reason, args.replaced_by)
+            print(f"{verb}d {m['id']}" if done else f"{m['id']} is {'not retired' if restore else 'already retired'}")
+            if done:
+                changed.append(m)
+        if changed:
+            what = changed[0]["id"] if len(changed) == 1 else f"{len(changed)} memories"
+            why = "" if restore or not args.reason else f"\n\n{args.reason}"
+            listed = "\n".join(f"- {m['id']}: {m['description']}" for m in changed)
+            gitsync.commit(data, f"memory: {verb} {what} (cli){why}\n\n{listed}\n\nTool: cli")
+    if changed and gitsync.has_remote(data):
+        gitsync.spawn_sync(data, push=True)
+
+
+def cmd_retire(args):
+    """Retire memories in place: kept and searchable with --retired, but out of the index and default searches."""
+    _set_retired(args, restore=False)
+
+
+def cmd_restore(args):
+    """Bring retired memories back."""
+    _set_retired(args, restore=True)
+
+
 def cmd_index(args):
     data = _data()
     ctx = detect(args.cwd)
@@ -336,6 +372,16 @@ def main(argv=None):
     sp.add_argument("terms", nargs="+")
     scoped(sp)
     sp.set_defaults(fn=cmd_search)
+
+    sp = sub.add_parser("retire", help="retire memories that no longer hold; they stay findable with --retired")
+    sp.add_argument("keys", nargs="+", metavar="key", help="id, name or path")
+    sp.add_argument("--reason", default="", help="why, such as 'project finished'")
+    sp.add_argument("--replaced-by", default="", help="the id of the memory that replaces it")
+    sp.set_defaults(fn=cmd_retire)
+
+    sp = sub.add_parser("restore", help="bring retired memories back")
+    sp.add_argument("keys", nargs="+", metavar="key", help="id, name or path")
+    sp.set_defaults(fn=cmd_restore)
 
     sp = sub.add_parser("show", help="print one memory")
     sp.add_argument("key", help="id, name or path")
