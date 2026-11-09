@@ -370,6 +370,7 @@ def build(data_dir, semantic=True, vectors_out=None):
 
     picks = keyword_picks(x, vocab, forms)
     names = {m["name"] for m, _, _, _ in items if m["name"]}
+    retired = {m["name"] for m in store.load_all(data_dir, retired=True) if m["retired"] and m["name"]}
     rows, places = [], {}
     for i, (m, raw, meta, body) in enumerate(items):
         order = [int(j) for j in np.argsort(-sim[i]) if j != i][:NEIGHBORS]
@@ -394,7 +395,7 @@ def build(data_dir, semantic=True, vectors_out=None):
                 "similar": [{"i": j, "s": round(float(sim[i, j]), 3)} for j in order if sim[i, j] > typical],
                 "keywords": [{"k": vocab[j], "t": forms.get(vocab[j], vocab[j])} for j in picks[i]],
                 "terms": [vocab[j] for j in np.flatnonzero(x[i])],
-                "issues": [message for _, message in lint.check(m, body, names)],
+                "issues": [message for _, message in lint.check(m, body, names, retired)],
             }
         )
         if m["scope"] == "here" and (src.get("git_remote") or src.get("cwd")):

@@ -323,6 +323,14 @@ class RetireTest(unittest.TestCase):
         self.assertIn("old-fact", self.cli("search", "old", "manifest", "--all", "--retired"))
         self.assertTrue(self.cli("show", "old-fact").startswith("# retired: no longer holds; do not rely on it"))
 
+    def test_links_to_retired_memories_are_flagged_apart_from_broken_ones(self):
+        from agent_memory import lint
+
+        live = store.find(self.data, "live-fact")
+        issues = dict(lint.check(live, "See [[old-fact]] and [[never-was]].", {"live-fact"}, {"old-fact"}))
+        self.assertEqual(issues["retired-links"], "links to [[old-fact]], which is retired")
+        self.assertEqual(issues["links"], "links to [[never-was]], which no memory is named")
+
     def test_retire_and_restore_from_the_command_line(self):
         def git(*args):
             return subprocess.run(

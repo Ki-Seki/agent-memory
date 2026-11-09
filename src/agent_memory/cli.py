@@ -186,6 +186,7 @@ def cmd_lint(args):
     mdir = store.memories_dir(data)
     memories = store.load_all(data)
     names = {m["name"] for m in memories if m["name"]}
+    retired = {m["name"] for m in store.load_all(data, retired=True) if m["retired"] and m["name"]}
     picked = [
         m for m in memories if not args.only or any(k in (m["id"], m["name"]) or k in m["rel"] for k in args.only)
     ]
@@ -195,7 +196,7 @@ def cmd_lint(args):
             _, body = store.read(mdir / m["rel"])
         except OSError:
             continue
-        issues = lint.check(m, body, names)
+        issues = lint.check(m, body, names, retired)
         if not issues:
             continue
         flagged += 1
