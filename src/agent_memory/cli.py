@@ -36,7 +36,7 @@ def _filter(memories, args, ctx):
 def cmd_list(args):
     data = _data()
     ctx = detect(args.cwd)
-    for m in _filter(store.load_all(data), args, ctx)[: args.limit]:
+    for m in _filter(store.load_all(data, retired=args.retired), args, ctx)[: args.limit]:
         print(select.line(m))
 
 
@@ -46,7 +46,7 @@ def cmd_search(args):
     terms = [t.lower() for t in args.terms]
     mdir = store.memories_dir(data)
     hits = 0
-    for m in _filter(store.load_all(data), args, ctx):
+    for m in _filter(store.load_all(data, retired=args.retired), args, ctx):
         try:
             meta, body = store.read(mdir / m["rel"])
         except OSError:
@@ -71,6 +71,8 @@ def cmd_show(args):
     if not m:
         sys.exit(f"no memory {args.key!r}")
     path = store.memories_dir(data) / m["rel"]
+    if m["retired"]:
+        print(f"# retired: no longer holds; do not rely on it{select.retired_note(m).replace(' (retired', ' (')}")
     print(f"# {path}")
     print(path.read_text("utf-8"), end="")
 
@@ -323,6 +325,7 @@ def main(argv=None):
         g.add_argument("--global", dest="glob", action="store_true", help="global memories only")
         g.add_argument("--here", action="store_true", help="memories of this location only")
         sp.add_argument("--all", action="store_true", help="include memories from other locations")
+        sp.add_argument("--retired", action="store_true", help="include retired memories, marked as such")
         sp.add_argument("--limit", type=int, default=50)
 
     sp = sub.add_parser("list", help="list memories visible from here")

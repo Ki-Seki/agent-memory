@@ -270,6 +270,56 @@ class EndToEndTest(unittest.TestCase):
         subprocess.run(["git", "-C", str(DATA), "commit", "-qam", "test: drop found-later"], check=True)
 
 
+class RetireTest(unittest.TestCase):
+    """Retired memories stay in place, out of the index and the default searches, and can come back."""
+
+    def setUp(self):
+        self.data = Path(make_repo(ROOT / "retire" / self._testMethodName))
+        self.mdir = self.data / "memories" / "2026" / "11"
+        self.mdir.mkdir(parents=True)
+        self.write("20261101-live-fact-aaaa", "live-fact", "the build uses a frozen manifest")
+        self.write(
+            "20261101-old-fact-bbbb",
+            "old-fact",
+            "the build used the old manifest",
+            retired="2026-11-09T10:00:00+08:00",
+            retired_reason="project finished",
+            replaced_by="20261101-live-fact-aaaa",
+        )
+        patcher = mock.patch.dict(os.environ, {"AGENT_MEMORY_DATA": str(self.data)})
+        patcher.start()
+        self.addCleanup(patcher.stop)
+
+    def write(self, mid, name, description, **extra):
+        meta = {"id": mid, "name": name, "type": "project", "scope": "global", "description": description, **extra}
+        (self.mdir / f"{mid}.md").write_text(frontmatter.join(meta, f"{description}.\n"), "utf-8")
+
+    def cli(self, *argv):
+        out = io.StringIO()
+        with mock.patch("sys.stdout", out):
+            cli.main(list(argv))
+        return out.getvalue()
+
+    def test_retired_memories_stay_out_unless_asked_for(self):
+        self.assertEqual([m["name"] for m in store.load_all(self.data)], ["live-fact"])
+        both = {m["name"]: m for m in store.load_all(self.data, retired=True)}
+        self.assertEqual(both["old-fact"]["retired_reason"], "project finished")
+        self.assertEqual(store.find(self.data, "old-fact")["replaced_by"], "20261101-live-fact-aaaa")
+
+        index = select.render(store.load_all(self.data), {}, {"memories": "m", "staging": "s", "mem": "x"})
+        self.assertIn("live-fact", index)
+        self.assertNotIn("old-fact", index)
+
+        self.assertNotIn("old-fact", self.cli("list", "--all"))
+        listed = self.cli("list", "--all", "--retired")
+        self.assertIn(
+            "old-fact-bbbb.md (retired 2026-11-09: project finished; replaced by 20261101-live-fact-aaaa)", listed
+        )
+        self.assertIn("no matches", self.cli("search", "old", "manifest", "--all"))
+        self.assertIn("old-fact", self.cli("search", "old", "manifest", "--all", "--retired"))
+        self.assertTrue(self.cli("show", "old-fact").startswith("# retired: no longer holds; do not rely on it"))
+
+
 class WorkdirTest(unittest.TestCase):
     def setUp(self):
         from agent_memory import workdir

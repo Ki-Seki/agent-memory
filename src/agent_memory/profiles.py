@@ -18,7 +18,7 @@ import secrets
 import shutil
 from pathlib import Path
 
-from . import config, gitsync
+from . import config, gitsync, store
 from .context import normalize_remote
 from .util import HOME
 
@@ -293,7 +293,7 @@ def describe(pid, p, active):
         "dataDir": short(folder),
         "active": pid == active,
         "ready": ready,
-        "memories": sum(1 for _ in memories.rglob("*.md")) if memories.is_dir() else 0,
+        "memories": len(store.load_all(folder)) if memories.is_dir() else 0,  # retired ones not counted
         "remote": normalize_remote(url) if url else None,
     }
 
