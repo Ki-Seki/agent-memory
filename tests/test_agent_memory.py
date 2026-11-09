@@ -179,7 +179,7 @@ class EndToEndTest(unittest.TestCase):
         self.assertIn("updated", meta)
         self.assertIn("revised", body)
 
-        # supersedes deletes the replaced memory
+        # supersedes retires the replaced memory, pointing at the new one
         sdir2 = capture.session_dir(DATA, "claude-code", "s2")
         (sdir2 / "new.md").write_text(
             f"---\nname: local-fact-v2\ntype: project\nscope: here\n"
@@ -190,6 +190,10 @@ class EndToEndTest(unittest.TestCase):
         names = {m["name"] for m in store.load_all(DATA)}
         self.assertIn("local-fact-v2", names)
         self.assertNotIn("local-fact", names)
+        old = store.find(DATA, mems["local-fact"]["id"])
+        new = store.find(DATA, "local-fact-v2")
+        self.assertEqual((old["retired_reason"], old["replaced_by"]), ("superseded", new["id"]))
+        self.assertTrue(old["retired"])
         self.assertFalse(sdir2.exists())
 
     def test_hook_never_raises(self):
