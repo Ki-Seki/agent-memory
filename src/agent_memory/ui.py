@@ -22,7 +22,7 @@ from pathlib import Path
 
 import numpy as np
 
-from . import config, lint, store
+from . import config, frontmatter, lint, store
 from .util import HOME
 
 WORKER = Path(__file__).with_name("embed_worker.py")
@@ -355,6 +355,7 @@ def build(data_dir, semantic=True, vectors_out=None):
         items.append((m, raw, meta, body))
         docs.append((f"{m['description']} {m['name'].replace('-', ' ')}", body))
     base = {"generated": now.isoformat(timespec="minutes"), "dataDir": _short(str(data_dir))}
+    base["retired"] = _retired_rows(data_dir, mdir)
     if not items:
         return {**base, "memories": [], "places": [], "method": "", "semantic": False}
 
@@ -370,6 +371,7 @@ def build(data_dir, semantic=True, vectors_out=None):
 
     picks = keyword_picks(x, vocab, forms)
     names = {m["name"] for m, _, _, _ in items if m["name"]}
+    retired = {m["name"] for m in store.load_all(data_dir, retired=True) if m["retired"] and m["name"]}
     rows, places = [], {}
     for i, (m, raw, meta, body) in enumerate(items):
         order = [int(j) for j in np.argsort(-sim[i]) if j != i][:NEIGHBORS]
@@ -394,7 +396,7 @@ def build(data_dir, semantic=True, vectors_out=None):
                 "similar": [{"i": j, "s": round(float(sim[i, j]), 3)} for j in order if sim[i, j] > typical],
                 "keywords": [{"k": vocab[j], "t": forms.get(vocab[j], vocab[j])} for j in picks[i]],
                 "terms": [vocab[j] for j in np.flatnonzero(x[i])],
-                "issues": [message for _, message in lint.check(m, body, names)],
+                "issues": [message for _, message in lint.check(m, body, names, retired)],
             }
         )
         if m["scope"] == "here" and (src.get("git_remote") or src.get("cwd")):
@@ -415,6 +417,47 @@ def build(data_dir, semantic=True, vectors_out=None):
         "semantic": vectors is not None,
         "places": sorted(places.values(), key=lambda p: (-p["count"], p["key"])),
     }
+
+
+def _retired_rows(data_dir, mdir):
+    """Retired memories as the page lists them on request: no keywords, similar memories or format checks."""
+    rows = []
+    for m in store.load_all(data_dir, retired=True):
+        if not m["retired"]:
+            continue
+        try:
+            raw = (mdir / m["rel"]).read_text("utf-8", errors="replace")
+        except OSError:
+            continue
+        meta, body = frontmatter.split(raw)
+        src = m["source"]
+        rows.append(
+            {
+                "id": m["id"],
+                "rel": m["rel"],
+                "path": str(mdir / m["rel"]),
+                "hash": hashlib.sha1(raw.encode()).hexdigest()[:16],
+                "raw": raw,
+                "meta": json.loads(json.dumps(meta, default=str)),
+                "body": body,
+                "description": m["description"],
+                "type": m["type"],
+                "scope": m["scope"],
+                "place": _place(src) if m["scope"] == "here" else "",
+                "tool": src.get("tool") or "",
+                "host": src.get("host") or "",
+                "created": m["created"],
+                "updated": m["updated"],
+                "retired": m["retired"],
+                "retiredReason": m["retired_reason"],
+                "replacedBy": m["replaced_by"],
+                "similar": [],
+                "keywords": [],
+                "terms": [],
+                "issues": [],
+            }
+        )
+    return rows
 
 
 # ------------------------------------------------------------ query embedding

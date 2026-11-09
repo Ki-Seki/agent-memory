@@ -258,7 +258,7 @@ def codex_items():
 
 def run(which, data_dir, dry_run=False):
     items = list(claude_items() if which == "claude" else codex_items())
-    seen = {m["source"].get("original") for m in load_all(data_dir)}
+    seen = {m["source"].get("original") for m in load_all(data_dir, retired=True)}  # a retired one stays imported
     fresh = [it for it in items if it[1]["source"].get("original") not in seen]
     for _, meta, _ in fresh:
         src = meta["source"]

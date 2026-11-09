@@ -58,7 +58,16 @@ def line(m):
     desc = " ".join(m["description"].split())
     if len(desc) > 150:
         desc = desc[:149] + "…"
-    return f"- [{m['type']}] {desc} → {m['rel']}"
+    return f"- [{m['type']}] {desc} → {m['rel']}{retired_note(m)}"
+
+
+def retired_note(m):
+    """' (retired 2026-11-09: why; replaced by <id>)' for a retired memory, else ''."""
+    if not m.get("retired"):
+        return ""
+    why = f": {m['retired_reason']}" if m.get("retired_reason") else ""
+    by = f"; replaced by {m['replaced_by']}" if m.get("replaced_by") else ""
+    return f" (retired {m['retired'][:10]}{why}{by})"
 
 
 def _take(items, budget):

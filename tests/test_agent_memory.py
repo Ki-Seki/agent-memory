@@ -179,7 +179,7 @@ class EndToEndTest(unittest.TestCase):
         self.assertIn("updated", meta)
         self.assertIn("revised", body)
 
-        # supersedes deletes the replaced memory
+        # supersedes retires the replaced memory, pointing at the new one
         sdir2 = capture.session_dir(DATA, "claude-code", "s2")
         (sdir2 / "new.md").write_text(
             f"---\nname: local-fact-v2\ntype: project\nscope: here\n"
@@ -190,6 +190,10 @@ class EndToEndTest(unittest.TestCase):
         names = {m["name"] for m in store.load_all(DATA)}
         self.assertIn("local-fact-v2", names)
         self.assertNotIn("local-fact", names)
+        old = store.find(DATA, mems["local-fact"]["id"])
+        new = store.find(DATA, "local-fact-v2")
+        self.assertEqual((old["retired_reason"], old["replaced_by"]), ("superseded", new["id"]))
+        self.assertTrue(old["retired"])
         self.assertFalse(sdir2.exists())
 
     def test_hook_never_raises(self):
@@ -268,6 +272,92 @@ class EndToEndTest(unittest.TestCase):
 
         (DATA / "memories" / m["rel"]).unlink()  # the class shares DATA
         subprocess.run(["git", "-C", str(DATA), "commit", "-qam", "test: drop found-later"], check=True)
+
+
+class RetireTest(unittest.TestCase):
+    """Retired memories stay in place, out of the index and the default searches, and can come back."""
+
+    def setUp(self):
+        self.data = Path(make_repo(ROOT / "retire" / self._testMethodName))
+        self.mdir = self.data / "memories" / "2026" / "11"
+        self.mdir.mkdir(parents=True)
+        self.write("20261101-live-fact-aaaa", "live-fact", "the build uses a frozen manifest")
+        self.write(
+            "20261101-old-fact-bbbb",
+            "old-fact",
+            "the build used the old manifest",
+            retired="2026-11-09T10:00:00+08:00",
+            retired_reason="project finished",
+            replaced_by="20261101-live-fact-aaaa",
+        )
+        patcher = mock.patch.dict(os.environ, {"AGENT_MEMORY_DATA": str(self.data)})
+        patcher.start()
+        self.addCleanup(patcher.stop)
+
+    def write(self, mid, name, description, **extra):
+        meta = {"id": mid, "name": name, "type": "project", "scope": "global", "description": description, **extra}
+        (self.mdir / f"{mid}.md").write_text(frontmatter.join(meta, f"{description}.\n"), "utf-8")
+
+    def cli(self, *argv):
+        out = io.StringIO()
+        with mock.patch("sys.stdout", out):
+            cli.main(list(argv))
+        return out.getvalue()
+
+    def test_retired_memories_stay_out_unless_asked_for(self):
+        self.assertEqual([m["name"] for m in store.load_all(self.data)], ["live-fact"])
+        both = {m["name"]: m for m in store.load_all(self.data, retired=True)}
+        self.assertEqual(both["old-fact"]["retired_reason"], "project finished")
+        self.assertEqual(store.find(self.data, "old-fact")["replaced_by"], "20261101-live-fact-aaaa")
+
+        index = select.render(store.load_all(self.data), {}, {"memories": "m", "staging": "s", "mem": "x"})
+        self.assertIn("live-fact", index)
+        self.assertNotIn("old-fact", index)
+
+        self.assertNotIn("old-fact", self.cli("list", "--all"))
+        listed = self.cli("list", "--all", "--retired")
+        self.assertIn(
+            "old-fact-bbbb.md (retired 2026-11-09: project finished; replaced by 20261101-live-fact-aaaa)", listed
+        )
+        self.assertIn("no matches", self.cli("search", "old", "manifest", "--all"))
+        self.assertIn("old-fact", self.cli("search", "old", "manifest", "--all", "--retired"))
+        self.assertTrue(self.cli("show", "old-fact").startswith("# retired: no longer holds; do not rely on it"))
+
+    def test_links_to_retired_memories_are_flagged_apart_from_broken_ones(self):
+        from agent_memory import lint
+
+        live = store.find(self.data, "live-fact")
+        issues = dict(lint.check(live, "See [[old-fact]] and [[never-was]].", {"live-fact"}, {"old-fact"}))
+        self.assertEqual(issues["retired-links"], "links to [[old-fact]], which is retired")
+        self.assertEqual(issues["links"], "links to [[never-was]], which no memory is named")
+
+    def test_retire_and_restore_from_the_command_line(self):
+        def git(*args):
+            return subprocess.run(
+                ["git", "-C", str(self.data), *args], capture_output=True, text=True, check=True
+            ).stdout
+
+        git("config", "user.email", "test@example.com")
+        git("config", "user.name", "Test")
+        git("add", "-A")
+        git("commit", "-qm", "start")
+
+        said = self.cli("retire", "live-fact", "--reason", "manifest dropped", "--replaced-by", "20261101-new-cccc")
+        self.assertEqual(said.strip(), "retired 20261101-live-fact-aaaa")
+        self.assertEqual(store.load_all(self.data), [])  # both retired now
+        m = store.find(self.data, "live-fact")
+        self.assertEqual((m["retired_reason"], m["replaced_by"]), ("manifest dropped", "20261101-new-cccc"))
+        self.assertEqual(git("log", "-1", "--format=%s"), "memory: retire 20261101-live-fact-aaaa (cli)\n")
+        self.assertIn("is already retired", self.cli("retire", "live-fact"))
+
+        self.assertEqual(
+            self.cli("restore", "live-fact", "old-fact").split(),
+            ["restored", "20261101-live-fact-aaaa", "restored", "20261101-old-fact-bbbb"],
+        )
+        self.assertEqual(sorted(m["name"] for m in store.load_all(self.data)), ["live-fact", "old-fact"])
+        self.assertNotIn("retired", (self.mdir / "20261101-old-fact-bbbb.md").read_text("utf-8"))
+        self.assertEqual(git("log", "-1", "--format=%s"), "memory: restore 2 memories (cli)\n")
+        self.assertIn("is not retired", self.cli("restore", "live-fact"))
 
 
 class WorkdirTest(unittest.TestCase):
@@ -620,6 +710,39 @@ class UiServerTest(unittest.TestCase):
             ["git", "-C", str(self.data), "log", "--format=%s", "-3"], capture_output=True, text=True
         ).stdout
         self.assertIn("memory: undo", log)
+
+    def test_retire_restore_and_undo_on_the_page(self):
+        status, res = self.call(
+            "/api/create", {"type": "project", "scope": "global", "description": "to retire", "body": "R."}
+        )
+        self.assertEqual(status, 200, res)
+        mid, base = res["id"], self.mem(res["id"])["hash"]
+
+        def retired(mid):
+            return next((m for m in self.call("/api/state")[1]["retired"] if m["id"] == mid), None)
+
+        status, done = self.call("/api/retire", {"id": mid, "base": base, "reason": "project finished"})
+        self.assertEqual(status, 200, done)
+        self.assertIsNone(self.mem(mid))  # out of the list, the index and similar memories
+        r = retired(mid)
+        self.assertEqual((r["retiredReason"], r["similar"], r["issues"]), ("project finished", [], []))
+        self.assertTrue(r["retired"])
+        self.assertEqual(self.call("/api/retire", {"id": mid, "base": r["hash"]})[0], 400)  # already retired
+        self.assertEqual(self.call("/api/retire", {"id": mid, "base": base})[0], 409)  # changed since it was opened
+
+        self.call("/api/undo", {"commit": done["commit"]})
+        self.assertIsNotNone(self.mem(mid))
+        self.assertIsNone(retired(mid))
+
+        self.call("/api/retire", {"items": [{"id": mid, "base": self.mem(mid)["hash"]}]})
+        status, back = self.call("/api/restore", {"id": mid, "base": retired(mid)["hash"]})
+        self.assertEqual(status, 200, back)
+        self.assertIsNotNone(self.mem(mid))
+        self.assertEqual(self.call("/api/restore", {"id": mid, "base": self.mem(mid)["hash"]})[0], 400)
+        log = subprocess.run(
+            ["git", "-C", str(self.data), "log", "--format=%s", "-2"], capture_output=True, text=True
+        ).stdout
+        self.assertEqual(log.split("\n")[:2], [f"memory: restore {mid} (ui)", f"memory: retire {mid} (ui)"])
 
     def test_bulk_delete_is_one_commit(self):
         ids = []

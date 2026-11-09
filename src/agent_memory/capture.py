@@ -7,7 +7,7 @@ from pathlib import Path
 
 from . import frontmatter, gitsync, sessions, workdir
 from .context import detect
-from .store import load_all, memories_dir, normalize, read, staging_dir
+from .store import load_all, memories_dir, normalize, read, set_retired, staging_dir
 from .util import atomic_write, id_path, log, new_id, now, now_iso
 
 SESSION_FILE = ".session.json"
@@ -73,15 +73,15 @@ def _source(session):
     return {k: v for k, v in src.items() if v}
 
 
-def _delete_ids(data_dir, ids):
+def _retire_ids(data_dir, ids, replaced_by):
+    """Retire the memories a new one supersedes, pointing at it; they stay findable with --retired."""
     if not ids:
         return 0
-    wanted, removed = set(ids), 0
+    wanted, retired = set(ids), 0
     for path in memories_dir(data_dir).rglob("*.md"):
-        if path.stem in wanted:
-            path.unlink(missing_ok=True)
-            removed += 1
-    return removed
+        if path.stem in wanted and set_retired(path, "superseded", replaced_by):
+            retired += 1
+    return retired
 
 
 def promote(data_dir, sdir, session=None):
@@ -119,7 +119,7 @@ def promote(data_dir, sdir, session=None):
         target = memories_dir(data_dir) / id_path(memory_id)
         atomic_write(target, frontmatter.join(out, body))
         path.unlink(missing_ok=True)
-        _delete_ids(data_dir, m["supersedes"])
+        _retire_ids(data_dir, m["supersedes"], memory_id)
         count += 1
     return count
 

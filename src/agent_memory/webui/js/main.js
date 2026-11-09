@@ -83,6 +83,8 @@ const ACTIONS = {
   startEdit: () => app.startEdit(),
   cancelEdit: () => app.cancelEdit(),
   removeOpen: () => app.open && app.remove([app.open.id]),
+  retireOpen: () => app.open && app.retire([app.open.id]),
+  restoreOpen: () => app.open && app.restore(app.open.id),
   copyPath: () => app.open && copy(app.open.path, "Path copied"),
   copy: (text) => copy(text),
   open: (id) => { if (app.comparing) { app.comparing = null; } app.openMemory(id); },
@@ -100,6 +102,7 @@ const ACTIONS = {
   pickAll: () => app.pickAll(app.rows.map((m) => m.id)),
   clearPicked: () => app.clearPicked(),
   removePicked: () => app.remove([...app.picked]),
+  retirePicked: () => app.retire([...app.picked]),
   undoToast: (id) => { const t = app.toasts.find((x) => String(x.id) === id); if (t) { app.dismiss(t.id); app.undo(t.undo); } },
   answer: (v) => app.answer(v === "yes"),
   askCheck: () => { if (app.asking) { app.asking.checked = !app.asking.checked; app.changed(); } },
@@ -148,6 +151,7 @@ const INPUTS = {
   search: (v) => app.search(v),
   menuQuery: (v) => { app.menuQuery = v; app.changed(); },
   word: (v) => { settings.word = v; },
+  askValue: (v) => { if (app.asking) app.asking.value = v; },
   remoteDraft: (v) => { settings.remoteDraft = v; app.changed(); },
 };
 const CHANGES = {

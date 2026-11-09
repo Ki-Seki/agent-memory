@@ -19,15 +19,16 @@ KINDS = {
     "heading": "opening with a heading",
     "description": "with a description the index cuts",
     "links": "with broken links",
+    "retired-links": "linking to retired memories",
     "empty": "empty",
 }
 
 
-def check(m, body, names):
+def check(m, body, names, retired=frozenset()):
     """What is wrong with one memory, as (kind, message) pairs; empty when nothing is.
 
-    m is a memory as store.load_all returns it; names holds every memory's name,
-    for checking [[links]].
+    m is a memory as store.load_all returns it; names holds every live memory's name and
+    retired every retired one's, for checking [[links]].
     """
     out = []
     desc = " ".join(m["description"].split())
@@ -45,7 +46,10 @@ def check(m, body, names):
         missing = [label for label, rx in (("**Why:**", _WHY), ("**How to apply:**", _HOW)) if not rx.search(body)]
         if missing:
             out.append(("reason", "no " + " or ".join(missing)))
-    broken = sorted({n.strip() for n in _WIKI.findall(body)} - set(names))
+    linked = {n.strip() for n in _WIKI.findall(body)} - set(names)
+    broken, gone = sorted(linked - set(retired)), sorted(linked & set(retired))
     if broken:
         out.append(("links", "links to " + ", ".join(f"[[{n}]]" for n in broken) + ", which no memory is named"))
+    if gone:
+        out.append(("retired-links", "links to " + ", ".join(f"[[{n}]]" for n in gone) + ", which is retired"))
     return out

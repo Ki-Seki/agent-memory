@@ -418,6 +418,37 @@ class UiApp:
 
         return self._write(write)
 
+    def retire(self, p):
+        """Retire one memory ({id, base, reason}) or several ({items: [...], reason}) in place, in one commit."""
+        items = p.get("items") if isinstance(p.get("items"), list) else [p]
+        reason = str(p.get("reason") or "").strip()[:200]
+        if not items or len(items) > 200:
+            raise ApiError(400, "Nothing to retire.")
+
+        def write():
+            loaded = [self._load(it.get("id"), it.get("base")) for it in items]  # all or nothing
+            done = [(it, meta) for it, (path, meta, _) in zip(items, loaded) if store.set_retired(path, reason)]
+            if not done:
+                raise ApiError(400, "Already retired.")
+            what = done[0][0].get("id") if len(done) == 1 else f"{len(done)} memories"
+            listed = "\n".join(f"- {it.get('id')}: {meta.get('description', '')}" for it, meta in done)
+            message = f"memory: retire {what} (ui)\n\n" + (f"{reason}\n\n" if reason else "") + listed
+            return {"commit": self._commit([path for path, _, _ in loaded], message)}
+
+        return self._write(write)
+
+    def restore(self, p):
+        """Bring a retired memory ({id, base}) back."""
+
+        def write():
+            path, meta, _ = self._load(p.get("id"), p.get("base"))
+            if not store.clear_retired(path):
+                raise ApiError(400, "This memory is not retired.")
+            message = f"memory: restore {p.get('id')} (ui)\n\n{meta.get('description', '')}"
+            return {"commit": self._commit(path, message)}
+
+        return self._write(write)
+
     def undo(self, p):
         rev = str(p.get("commit") or "")
         if not rev or len(rev) > 40 or any(c not in "0123456789abcdef" for c in rev):
@@ -508,6 +539,8 @@ class Handler(BaseHTTPRequestHandler):
         "/api/create": "create",
         "/api/edit": "edit",
         "/api/delete": "delete",
+        "/api/retire": "retire",
+        "/api/restore": "restore",
         "/api/undo": "undo",
         "/api/settings": "set_settings",
         "/api/sync": "sync",

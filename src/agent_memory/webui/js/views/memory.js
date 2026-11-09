@@ -21,7 +21,7 @@ const pairs = (list) => html`<dl class="pairs">${list.map(([k, v]) => html`<dt>$
 function detail(m) {
   const source = m.meta.source ?? {};
   const provenance = SOURCE.map(([k, label]) => [label, String(source[k] ?? "")]).filter(([, v]) => v);
-  const details = Object.entries(m.meta).filter(([k]) => !["source", "description", "type", "scope"].includes(k)).map(([k, v]) => [k, Array.isArray(v) ? v.join(", ") : String(v)]);
+  const details = Object.entries(m.meta).filter(([k]) => !["source", "description", "type", "scope", "retired", "retired_reason", "replaced_by"].includes(k)).map(([k, v]) => [k, Array.isArray(v) ? v.join(", ") : String(v)]);
   const similar = m.similar.filter((s) => s.s > 0.05).slice(0, 5).map((s) => ({ m: app.M[s.i], s: s.s })).filter((x) => x.m);
   const show = (text) => text.replace(/\*\*([^*]+?):?\*\*/g, "“$1”");
   const tab = (v, label) => html`<button type="button" role="tab"${attrs({ "aria-selected": String(app.tab === v), "data-act": "tab", "data-arg": v })}>${label}</button>`;
@@ -30,6 +30,7 @@ function detail(m) {
       <span class="file-path" title="${m.path}">memories/${m.rel}</span>
       ${iconButton("copy", "Copy file path", "copyPath")}
       ${iconButton("pencil", "Edit (e)", "startEdit")}
+      ${m.retired ? "" : iconButton("archive", "Retire: agents stop seeing it, it stays findable", "retireOpen")}
       ${iconButton("trash", "Delete", "removeOpen")}
     </div>
     <h1 class="memory-title">${m.description}</h1>
@@ -41,6 +42,7 @@ function detail(m) {
       <span>Added ${longDay(m.created)}</span>
       ${m.updated ? html`<span class="faint">· changed ${longDay(m.updated)}</span>` : ""}
     </div>
+    ${m.retired ? retiredNote(m) : ""}
     ${m.keywords.length ? html`<div class="keywords">${m.keywords.map((k) => {
       const on = app.filters.kw.includes(k.k);
       return html`<button type="button"${attrs({ class: cx("kw", on && "on"), title: on ? `Stop filtering by ${k.t}` : `Only memories that mention ${k.t}`, "data-act": "toggle", "data-arg": `kw:${k.k}` })}>${k.t}</button>`;
@@ -54,6 +56,17 @@ function detail(m) {
       <section class="facts"><h2>Details</h2>${pairs(details)}</section>
       ${similar.length ? html`<section class="facts similar"><h2>Similar</h2>${similar.map((x) => html`<button type="button" data-act="open" data-arg="${x.m.id}"><span class="grow">${x.m.description}</span><span class="count">${Math.round(x.s * 100)}%</span></button>`)}</section>` : ""}`}
   </article>`;
+}
+
+/** Under a retired memory's title: when and why, what replaced it, and a way back. */
+function retiredNote(m) {
+  const by = m.replacedBy ? app.byId.get(m.replacedBy) : null;
+  return html`<div class="callout retired">${icon("archive")}<div class="grow">
+      <div class="callout-title">Retired ${longDay(m.retired)}${m.retiredReason ? ` · ${m.retiredReason}` : ""}</div>
+      <div>Agents no longer see it${by ? html`. Replaced by <a href="#/memories/${encodeURIComponent(by.id)}" data-act="open" data-arg="${by.id}">${by.description}</a>` : ""}.</div>
+    </div>
+    <button type="button" class="btn sm" data-act="restoreOpen">${icon("archive-restore")}Restore</button>
+  </div>`;
 }
 
 const OTHER = "__folder";
