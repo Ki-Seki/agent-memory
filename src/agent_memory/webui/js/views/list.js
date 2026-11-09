@@ -62,7 +62,7 @@ function facet(def) {
 /** When a memory was added: one recent period, or a date range with either end open. */
 function added() {
   const v = app.filters.added;
-  const opts = addedOptions(app.M, app.filters, app.termSets);
+  const opts = addedOptions(app.M.concat(app.R), app.filters, app.termSets);
   const range = v.startsWith("range:") ? v.split(":").slice(1) : ["", ""];
   const fmt = (s) => new Date(`${s}T00:00`).toLocaleDateString(undefined, { day: "numeric", month: "short" });
   const shown = !v ? "Any time"
@@ -126,7 +126,7 @@ function row(m, words) {
     <span class="${cx("row-check", (app.picked.size > 0 || picked) && "shown")}">${checkbox(picked, "Select", "pick", m.id)}</span>
     <div class="row-main">
       <div class="row-title">${highlight(m.description, words)}</div>
-      <div class="row-meta">${typeDot(m.type, true)}<span>·</span><span class="truncate"${attrs({ title: m.scope === "global" ? "Loads in every session" : m.place })}>${place}</span><span>·</span><span class="nowrap">${date}</span></div>
+      <div class="row-meta">${typeDot(m.type, true)}<span>·</span><span class="truncate"${attrs({ title: m.scope === "global" ? "Loads in every session" : m.place })}>${place}</span><span>·</span><span class="nowrap">${date}</span>${m.retired ? html`<span>·</span><span class="retired-tag">Retired</span>` : ""}</div>
       ${snip ? html`<div class="row-snip">${highlight(snip, words)}</div>` : ""}
     </div>
   </div>`;

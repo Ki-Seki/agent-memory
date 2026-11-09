@@ -85,17 +85,19 @@ class App {
   rows = [];
   #derive() {
     const M = (this.M = this.data?.memories ?? []);
-    this.byId = new Map(M.map((m) => [m.id, m]));
-    this.byName = new Map(M.map((m) => [String(m.meta?.name ?? ""), m]));
-    this.termSets = new Map(M.map((m) => [m.id, new Set(m.terms)]));
+    const R = (this.R = this.data?.retired ?? []);  // retired memories: listed only under Status, Retired
+    const all = M.concat(R);
+    this.byId = new Map(all.map((m) => [m.id, m]));
+    this.byName = new Map([...R, ...M].map((m) => [String(m.meta?.name ?? ""), m]));  // a live memory wins a name
+    this.termSets = new Map(all.map((m) => [m.id, new Set(m.terms)]));
     this.kwName = new Map(M.flatMap((m) => m.keywords.map((k) => [k.k, k.t])));
     this.places = this.data?.places ?? [];
-    this.filterDefs = listFilters(M, this.places, this.filters, this.termSets, this.kwName);
+    this.filterDefs = listFilters(all, this.places, this.filters, this.termSets, this.kwName);
     // the list: word matches (or every memory, sorted), then memories close in meaning that matched no word
     const ok = (m) => passes(m, this.filters, this.termSets.get(m.id));
-    if (!this.q.trim()) this.groups = [{ title: null, items: M.filter(ok).sort(SORTERS[this.sort] ?? SORTERS.new) }];
+    if (!this.q.trim()) this.groups = [{ title: null, items: all.filter(ok).sort(SORTERS[this.sort] ?? SORTERS.new) }];
     else {
-      const lex = lexical(M, this.q).map((i) => M[i]).filter(ok);
+      const lex = lexical(all, this.q).map((i) => all[i]).filter(ok);
       const seen = new Set(lex.map((m) => m.id));
       const sem = this.sem.map((h) => this.byId.get(h.id)).filter((m) => m && !seen.has(m.id) && ok(m)).slice(0, 8);
       this.groups = [{ title: null, items: lex }, ...(sem.length ? [{ title: "Close in meaning", items: sem }] : [])];
@@ -118,7 +120,8 @@ class App {
       const [words, meaning] = this.groups;
       return `${plural(words.items.length, "match", "matches")}${meaning ? ` · ${meaning.items.length} close in meaning` : ""}${this.semPending ? " · searching by meaning…" : ""}`;
     }
-    return this.rows.length === this.M.length ? plural(this.M.length, "memory", "memories") : `${this.rows.length} of ${this.M.length}`;
+    const total = this.M.length + (this.filters.status.includes("retired") ? this.R.length : 0);
+    return this.rows.length === total ? plural(total, "memory", "memories") : `${this.rows.length} of ${total}`;
   }
 
   // ------------------------------------------------------------ loading and routing
@@ -143,7 +146,7 @@ class App {
   }
   async reload() {
     this.data = await api("/api/state");
-    const ids = new Set(this.data.memories.map((m) => m.id));
+    const ids = new Set([...this.data.memories, ...(this.data.retired ?? [])].map((m) => m.id));
     for (const id of this.picked) if (!ids.has(id)) this.picked.delete(id);
     if (this.openId && !ids.has(this.openId) && this.mode !== "new") { this.openId = null; this.mode = "view"; this.#writeRoute(); }
     const keys = new Set((this.data.places ?? []).map((p) => "place:" + p.key));
@@ -335,6 +338,31 @@ class App {
       if (this.openId && ms.some((m) => m.id === this.openId)) { this.openId = null; this.autoId = null; this.mode = "view"; this.#writeRoute(); }
       await this.reload();
       this.toast(ms.length === 1 ? "Memory deleted" : `${ms.length} memories deleted`, { undo: r.commit });
+    } catch (e) { this.toast(e.message, { error: true }); }
+  }
+  /** Retire memories in place, after asking why (optional); they stay listed under Status, Retired. */
+  async retire(ids) {
+    const ms = ids.map((id) => this.byId.get(id)).filter((m) => m && !m.retired);
+    if (!ms.length) return;
+    const q = { title: ms.length === 1 ? "Retire this memory?" : `Retire ${ms.length} memories?`,
+      body: (ms.length === 1 ? ms[0].description : ms.slice(0, 5).map((m) => `• ${m.description}`).join("\n") + (ms.length > 5 ? `\n…and ${ms.length - 5} more` : ""))
+        + "\n\nAgents stop seeing it; it stays under Status, Retired.",
+      input: "Why it no longer holds (optional)", action: ms.length === 1 ? "Retire" : `Retire ${ms.length}` };
+    if (!(await this.ask(q))) return;
+    try {
+      const r = await api("/api/retire", { items: ms.map((m) => ({ id: m.id, base: m.hash })), reason: (q.value ?? "").trim() });
+      for (const m of ms) this.picked.delete(m.id);
+      await this.reload();
+      this.toast(ms.length === 1 ? "Memory retired" : `${ms.length} memories retired`, { undo: r.commit });
+    } catch (e) { this.toast(e.message, { error: true }); }
+  }
+  async restore(id) {
+    const m = this.byId.get(id);
+    if (!m?.retired) return;
+    try {
+      const r = await api("/api/restore", { id: m.id, base: m.hash });
+      await this.reload();
+      this.toast("Memory restored", { undo: r.commit });
     } catch (e) { this.toast(e.message, { error: true }); }
   }
   togglePick(id) { if (this.picked.has(id)) this.picked.delete(id); else this.picked.add(id); this.changed(); }

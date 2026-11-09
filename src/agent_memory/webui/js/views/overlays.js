@@ -1,6 +1,6 @@
 // What floats over the page: the bar for selected memories, toasts, and the two dialogs.
 import { longDay } from "../format.js";
-import { html } from "../h.js";
+import { attrs, html } from "../h.js";
 import { icon } from "../icons.js";
 import { parse, renderBlocks } from "../markdown.js";
 import { app } from "../store.js";
@@ -15,6 +15,7 @@ export function selectionBar() {
     <span class="selection-n">${app.picked.size} selected</span>
     ${rest ? html`<button type="button" data-act="pickAll">Select all ${shown.length}</button>` : ""}
     <button type="button" data-act="clearPicked">Clear</button>
+    <button type="button" data-act="retirePicked">Retire</button>
     <button type="button" class="danger" data-act="removePicked">Delete</button>
   </div>`;
 }
@@ -32,6 +33,7 @@ export function confirmDialog() {
   return html`<h2 class="dialog-title">${a.title}</h2>
     ${a.timeline ? switchLine(a.timeline.from, a.timeline.to) : ""}
     ${a.body ? html`<p class="dialog-body">${a.body}</p>` : ""}
+    ${a.input ? html`<input class="input dialog-input" type="text" data-input="askValue"${attrs({ placeholder: a.input, value: a.value ?? "", "aria-label": a.input })}>` : ""}
     ${a.check ? html`<button type="button" role="checkbox" class="dialog-check" aria-checked="${String(!!a.checked)}" data-act="askCheck"><span class="check" aria-hidden="true">${a.checked ? icon("check", "", 3) : ""}</span>${a.check}</button>` : ""}
     <div class="dialog-actions">
       <button type="button" class="btn" data-act="answer" data-arg="no">Cancel</button>

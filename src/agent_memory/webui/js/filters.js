@@ -10,7 +10,7 @@ export const TYPE_HELP = {
   reference: "Where to find things",
 };
 export const ADDED = [["today", "Today"], ["7", "Past 7 days"], ["30", "Past 30 days"], ["90", "Past 3 months"], ["365", "Past year"]];
-export const STATUS = [["tidy", "Needs tidying"], ["stale", "Unchanged 60+ days"]];
+export const STATUS = [["tidy", "Needs tidying"], ["stale", "Unchanged 60+ days"], ["retired", "Retired"]];
 export const SORTS = [["new", "Newest first"], ["old", "Oldest first"], ["edited", "Recently changed"], ["az", "A to Z"]];
 export const LISTS = ["type", "loads", "tool", "kw", "status"];
 
@@ -25,7 +25,7 @@ const TEST = {
   loads: (m, v) => (v === "global" ? m.scope === "global" : m.scope === "here" && m.place === v.slice(6)),
   tool: (m, v) => m.tool === v,
   kw: (_m, v, terms) => terms.has(v),
-  status: (m, v) => (v === "tidy" ? m.issues.length > 0 : stale(m)),
+  status: (m, v) => (v === "retired" ? !!m.retired : !m.retired && (v === "tidy" ? m.issues.length > 0 : stale(m))),
 };
 
 export function addedOk(m, added) {
@@ -42,6 +42,7 @@ export function addedOk(m, added) {
 
 /** Whether m passes the filters; skip leaves one filter out, to count what its options would show. */
 export function passes(m, f, terms, skip) {
+  if (m.retired && skip !== "status" && !f.status.includes("retired")) return false;  // listed only on request
   for (const key of LISTS) {
     if (key !== skip && f[key].length && !f[key].some((v) => TEST[key](m, v, terms))) return false;
   }

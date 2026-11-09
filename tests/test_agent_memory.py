@@ -711,6 +711,39 @@ class UiServerTest(unittest.TestCase):
         ).stdout
         self.assertIn("memory: undo", log)
 
+    def test_retire_restore_and_undo_on_the_page(self):
+        status, res = self.call(
+            "/api/create", {"type": "project", "scope": "global", "description": "to retire", "body": "R."}
+        )
+        self.assertEqual(status, 200, res)
+        mid, base = res["id"], self.mem(res["id"])["hash"]
+
+        def retired(mid):
+            return next((m for m in self.call("/api/state")[1]["retired"] if m["id"] == mid), None)
+
+        status, done = self.call("/api/retire", {"id": mid, "base": base, "reason": "project finished"})
+        self.assertEqual(status, 200, done)
+        self.assertIsNone(self.mem(mid))  # out of the list, the index and similar memories
+        r = retired(mid)
+        self.assertEqual((r["retiredReason"], r["similar"], r["issues"]), ("project finished", [], []))
+        self.assertTrue(r["retired"])
+        self.assertEqual(self.call("/api/retire", {"id": mid, "base": r["hash"]})[0], 400)  # already retired
+        self.assertEqual(self.call("/api/retire", {"id": mid, "base": base})[0], 409)  # changed since it was opened
+
+        self.call("/api/undo", {"commit": done["commit"]})
+        self.assertIsNotNone(self.mem(mid))
+        self.assertIsNone(retired(mid))
+
+        self.call("/api/retire", {"items": [{"id": mid, "base": self.mem(mid)["hash"]}]})
+        status, back = self.call("/api/restore", {"id": mid, "base": retired(mid)["hash"]})
+        self.assertEqual(status, 200, back)
+        self.assertIsNotNone(self.mem(mid))
+        self.assertEqual(self.call("/api/restore", {"id": mid, "base": self.mem(mid)["hash"]})[0], 400)
+        log = subprocess.run(
+            ["git", "-C", str(self.data), "log", "--format=%s", "-2"], capture_output=True, text=True
+        ).stdout
+        self.assertEqual(log.split("\n")[:2], [f"memory: restore {mid} (ui)", f"memory: retire {mid} (ui)"])
+
     def test_bulk_delete_is_one_commit(self):
         ids = []
         for desc in ("bulk one", "bulk two"):
